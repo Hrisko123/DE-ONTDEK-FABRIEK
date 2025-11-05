@@ -27,12 +27,26 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  void _navigateToStage() {
-    Navigator.of(context).push(
+  bool _minigameCompleted = false;
+
+  Future<void> _navigateToStage() async {
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => const StagePage(),
+        builder: (context) => StagePage(
+          onMinigameCompleted: () {
+            setState(() {
+              _minigameCompleted = true;
+            });
+          },
+        ),
       ),
     );
+    
+    if (result == true || _minigameCompleted) {
+      setState(() {
+        _minigameCompleted = true;
+      });
+    }
   }
 
   @override
@@ -47,105 +61,882 @@ class _MyHomePageState extends State<MyHomePage> {
           Positioned(
             top: 16,
             left: 16,
-            child: GestureDetector(
-              onTap: _navigateToStage,
-              child: Container(
+            child: ColorFiltered(
+              colorFilter: _minigameCompleted
+                  ? const ColorFilter.mode(Colors.transparent, BlendMode.color)
+                  : const ColorFilter.matrix([
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0,      0,      0,      1, 0,
+                    ]),
+              child: GestureDetector(
+                onTap: _navigateToStage,
+                child: Container(
                 width: squareSize,
                 height: squareSize,
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.black, width: 2),
-                  color: const Color.fromARGB(255, 120, 118, 118),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
+                child: Stack(
+                  children: [
+                    // Backdrop/curtains
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: squareSize * 0.4,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.deepPurple[800]!,
+                              Colors.purple[700]!,
+                            ],
+                          ), 
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(6),
+                            topRight: Radius.circular(6),
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            // Curtain folds
+                            Positioned(
+                              left: squareSize * 0.1,
+                              top: 0,
+                              bottom: 0,
+                              width: 2,
+                              child: Container(color: Colors.black26),
+                            ),
+                            Positioned(
+                              right: squareSize * 0.1,
+                              top: 0,
+                              bottom: 0,
+                              width: 2,
+                              child: Container(color: Colors.black26),
+                            ),
+                            // Stage lights
+                            Positioned(
+                              top: 8,
+                              left: squareSize * 0.2,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.yellow.withValues(alpha: 0.6),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.yellow.withValues(alpha: 0.5),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: squareSize * 0.2,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.yellow.withValues(alpha: 0.6),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.yellow.withValues(alpha: 0.5),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Stage floor 
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: squareSize * 0.6,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 139, 90, 43),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(6),
+                            bottomRight: Radius.circular(6),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            // Wood planks
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.brown[800]!.withValues(alpha: 0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.brown[800]!.withValues(alpha: 0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Microphone stand
+                    Positioned(
+                      bottom: squareSize * 0.15,
+                      left: squareSize * 0.5 - 8,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.grey[800],
+                              border: Border.all(color: Colors.black, width: 1),
+                            ),
+                          ),
+                          Container(
+                            width: 2,
+                            height: squareSize * 0.3,
+                            color: Colors.grey[700],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Stage label
+                    Positioned(
+                      bottom: 8,
+                      left: 0,
+                      right: 0,
                 child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                   child: Text(
                     'stage',
-                    style: Theme.of(context).textTheme.titleLarge,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: squareSize * 0.08,
+                              fontWeight: FontWeight.bold,
                   ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+            ),
           ),
           
+          // Toilet square 
           Positioned(
             top: 16,
             right: 16,
-            child: Container(
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0,      0,      0,      1, 0,
+              ]),
+              child: Container(
               width: squareSize,
               height: squareSize,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.black, width: 2),
-                color: const Color.fromARGB(255, 120, 118, 118),
+                borderRadius: BorderRadius.circular(8),
+                color: const Color.fromARGB(255, 240, 240, 240),
+              ),
+              child: Stack(
+                children: [
+                  // Two toilet huts
+                  Positioned(
+                    left: squareSize * 0.1,
+                    bottom: squareSize * 0.15,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Roof
+                        Container(
+                          width: squareSize * 0.32,
+                          height: squareSize * 0.15,
+                          decoration: BoxDecoration(
+                            color: Colors.brown[800],
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
+                            ),
+                          ),
+                          child: ClipPath(
+                            clipper: TriangleClipper(),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.brown[900],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Hut body
+                        Container(
+                          width: squareSize * 0.32,
+                          height: squareSize * 0.45,
+                          decoration: BoxDecoration(
+                            color: Colors.brown[600],
+                            border: Border.all(color: Colors.brown[900]!, width: 2),
+                          ),
+                          child: Stack(
+                            children: [
+                              // Door
+                              Positioned(
+                                bottom: squareSize * 0.05,
+                                left: squareSize * 0.05,
+                                right: squareSize * 0.05,
+                                child: Container(
+                                  height: squareSize * 0.35,
+                                  decoration: BoxDecoration(
+                                    color: Colors.brown[800],
+                                    border: Border.all(color: Colors.brown[900]!, width: 2),
+                                    borderRadius: BorderRadius.circular(2),
               ),
               child: Center(
+                                    child: Icon(
+                                      Icons.wc,
+                                      size: squareSize * 0.2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    right: squareSize * 0.1,
+                    bottom: squareSize * 0.15,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Roof
+                        Container(
+                          width: squareSize * 0.32,
+                          height: squareSize * 0.15,
+                          decoration: BoxDecoration(
+                            color: Colors.brown[800],
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
+                            ),
+                          ),
+                          child: ClipPath(
+                            clipper: TriangleClipper(),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.brown[900],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Hut body
+                        Container(
+                          width: squareSize * 0.32,
+                          height: squareSize * 0.45,
+                          decoration: BoxDecoration(
+                            color: Colors.brown[600],
+                            border: Border.all(color: Colors.brown[900]!, width: 2),
+                          ),
+                          child: Stack(
+                            children: [
+                              // Door
+                              Positioned(
+                                bottom: squareSize * 0.05,
+                                left: squareSize * 0.05,
+                                right: squareSize * 0.05,
+                                child: Container(
+                                  height: squareSize * 0.35,
+                                  decoration: BoxDecoration(
+                                    color: Colors.brown[800],
+                                    border: Border.all(color: Colors.brown[900]!, width: 2),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.wc,
+                                      size: squareSize * 0.2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Label
+                  Positioned(
+                    bottom: 8,
+                    left: 0,
+                    right: 0,
+              child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                 child: Text(
                   'toilet',
-                  style: Theme.of(context).textTheme.titleLarge,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: squareSize * 0.08,
+                            fontWeight: FontWeight.bold,
                 ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
             ),
           ),
           
+          // Waste square 
           Positioned(
             top: 16,
             left: 0,
             right: 0,
             child: Center(
-              child: Container(
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.matrix([
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0,      0,      0,      1, 0,
+                ]),
+                child: Container(
                 width: squareSize,
                 height: squareSize,
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.black, width: 2),
-                  color: const Color.fromARGB(255, 120, 118, 118),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color.fromARGB(255, 245, 245, 245),
+                ),
+                child: Stack(
+                  children: [
+                    // Two trash bins
+                    Positioned(
+                      left: squareSize * 0.2,
+                      bottom: squareSize * 0.15,
+                      child: Container(
+                        width: squareSize * 0.25,
+                        height: squareSize * 0.6,
+                        decoration: BoxDecoration(
+                          color: Colors.blue[700],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black, width: 2),
+                        ),
+                        child: Stack(
+                          children: [
+                            // Lid
+                            Positioned(
+                              top: -4,
+                              left: -4,
+                              right: -4,
+                              height: squareSize * 0.12,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[900],
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.black, width: 2),
                 ),
                 child: Center(
+                                  child: Container(
+                                    width: squareSize * 0.15,
+                                    height: squareSize * 0.08,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Recycle symbol
+                            Positioned(
+                              top: squareSize * 0.25,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: Icon(
+                                  Icons.recycling,
+                                  size: squareSize * 0.2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: squareSize * 0.2,
+                      bottom: squareSize * 0.15,
+                      child: Container(
+                        width: squareSize * 0.25,
+                        height: squareSize * 0.6,
+                        decoration: BoxDecoration(
+                          color: Colors.green[700],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.black, width: 2),
+                        ),
+                        child: Stack(
+                          children: [
+                            // Lid
+                            Positioned(
+                              top: -4,
+                              left: -4,
+                              right: -4,
+                              height: squareSize * 0.12,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.green[900],
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.black, width: 2),
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    width: squareSize * 0.15,
+                                    height: squareSize * 0.08,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Recycle symbol
+                            Positioned(
+                              top: squareSize * 0.25,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: Icon(
+                                  Icons.recycling,
+                                  size: squareSize * 0.2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Label
+                    Positioned(
+                      top: 8,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                   child: Text(
                     'waste',
-                    style: Theme.of(context).textTheme.titleLarge,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: squareSize * 0.08,
+                              fontWeight: FontWeight.bold,
                   ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+            ),
           ),
           
+          // Hang out square 
           Positioned(
             bottom: 16,
             left: 0,
             right: 0,
             child: Center(
-              child: Container(
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.matrix([
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0,      0,      0,      1, 0,
+                ]),
+                child: Container(
                 width: squareSize,
                 height: squareSize,
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.black, width: 2),
-                  color: const Color.fromARGB(255, 120, 118, 118),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color.fromARGB(255, 200, 230, 200),
                 ),
+                child: Stack(
+                  children: [
+                    // Tree
+                    Positioned(
+                      left: squareSize * 0.15,
+                      bottom: squareSize * 0.2,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Tree top (leaves)
+                          Container(
+                            width: squareSize * 0.4,
+                            height: squareSize * 0.4,
+                            decoration: BoxDecoration(
+                              color: Colors.green[700],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Stack(
+                              children: [
+                                // Highlights
+                                Positioned(
+                                  top: squareSize * 0.08,
+                                  left: squareSize * 0.1,
+                                  child: Container(
+                                    width: squareSize * 0.15,
+                                    height: squareSize * 0.15,
+                                    decoration: BoxDecoration(
+                                      color: Colors.green[400]!.withValues(alpha: 0.5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          // Tree trunk
+                          Container(
+                            width: squareSize * 0.12,
+                            height: squareSize * 0.3,
+                            decoration: BoxDecoration(
+                              color: Colors.brown[700],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Bench
+                    Positioned(
+                      right: squareSize * 0.1,
+                      bottom: squareSize * 0.15,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Bench seat
+                          Container(
+                            width: squareSize * 0.4,
+                            height: squareSize * 0.08,
+                            decoration: BoxDecoration(
+                              color: Colors.brown[800],
+                              borderRadius: BorderRadius.circular(2),
+                              border: Border.all(color: Colors.brown[900]!, width: 1),
+                            ),
+                          ),
+                          // Bench legs
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Container(
+                                width: squareSize * 0.04,
+                                height: squareSize * 0.15,
+                                decoration: BoxDecoration(
+                                  color: Colors.brown[900],
+                                ),
+                              ),
+                              SizedBox(width: squareSize * 0.32),
+                              Container(
+                                width: squareSize * 0.04,
+                                height: squareSize * 0.15,
+                                decoration: BoxDecoration(
+                                  color: Colors.brown[900],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Label
+                    Positioned(
+                      top: 8,
+                      left: 0,
+                      right: 0,
                 child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                   child: Text(
                     'hang out',
-                    style: Theme.of(context).textTheme.titleLarge,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: squareSize * 0.08,
+                              fontWeight: FontWeight.bold,
                   ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+            ),
           ),
           
+          // Food truck square 
           Positioned(
             bottom: 16,
             right: 16,
-            child: Container(
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0.2126, 0.7152, 0.0722, 0, 0,
+                0,      0,      0,      1, 0,
+              ]),
+              child: Container(
               width: squareSize,
               height: squareSize,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.black, width: 2),
-                color: const Color.fromARGB(255, 120, 118, 118),
+                borderRadius: BorderRadius.circular(8),
+                color: const Color.fromARGB(255, 250, 250, 250),
+              ),
+              child: Stack(
+                children: [
+                  // Food truck body
+                  Positioned(
+                    bottom: squareSize * 0.15,
+                    left: squareSize * 0.1,
+                    right: squareSize * 0.1,
+                    height: squareSize * 0.5,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.orange[700],
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.black, width: 2),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Truck window
+                          Positioned(
+                            top: squareSize * 0.08,
+                            left: squareSize * 0.12,
+                            width: squareSize * 0.25,
+                            height: squareSize * 0.2,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue[200],
+                                borderRadius: BorderRadius.circular(2),
+                                border: Border.all(color: Colors.black, width: 1),
+                              ),
+                            ),
+                          ),
+                          // Serving window
+                          Positioned(
+                            top: squareSize * 0.15,
+                            right: squareSize * 0.08,
+                            width: squareSize * 0.18,
+                            height: squareSize * 0.25,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.yellow[100],
+                                borderRadius: BorderRadius.circular(2),
+                                border: Border.all(color: Colors.black, width: 1),
               ),
               child: Center(
+                                child: Icon(
+                                  Icons.restaurant,
+                                  size: squareSize * 0.15,
+                                  color: Colors.brown[800],
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Decorative stripes
+                          Positioned(
+                            top: squareSize * 0.08,
+                            left: squareSize * 0.4,
+                            right: squareSize * 0.3,
+                            height: 3,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: squareSize * 0.13,
+                            left: squareSize * 0.4,
+                            right: squareSize * 0.3,
+                            height: 3,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Truck wheels
+                  Positioned(
+                    bottom: squareSize * 0.08,
+                    left: squareSize * 0.15,
+                    child: Container(
+                      width: squareSize * 0.18,
+                      height: squareSize * 0.18,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black, width: 2),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: squareSize * 0.1,
+                          height: squareSize * 0.1,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[600],
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: squareSize * 0.08,
+                    right: squareSize * 0.15,
+                    child: Container(
+                      width: squareSize * 0.18,
+                      height: squareSize * 0.18,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black, width: 2),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: squareSize * 0.1,
+                          height: squareSize * 0.1,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[600],
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Label
+                  Positioned(
+                    top: 8,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                 child: Text(
                   'food truck',
-                  style: Theme.of(context).textTheme.titleLarge,
-                  textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: squareSize * 0.08,
+                            fontWeight: FontWeight.bold,
+                          ),
                 ),
               ),
+            ),
+          ),
+        ],
+              ),
+            ),
             ),
           ),
         ],
@@ -180,7 +971,9 @@ class StageQuestion {
 }
 
 class StagePage extends StatefulWidget {
-  const StagePage({super.key});
+  final VoidCallback onMinigameCompleted;
+  
+  const StagePage({super.key, required this.onMinigameCompleted});
 
   @override
   State<StagePage> createState() => _StagePageState();
@@ -299,9 +1092,12 @@ class _StagePageState extends State<StagePage> {
       if (!isLastQuestion) {
         _currentQuestionIndex++;
       } else {
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => ResultPage(score: _ecoScore),
+            builder: (context) => ResultPage(
+              score: _ecoScore,
+              onMinigameCompleted: widget.onMinigameCompleted,
+            ),
           ),
         );
       }
@@ -531,8 +1327,9 @@ class _StagePageState extends State<StagePage> {
 
 class ResultPage extends StatelessWidget {
   final int score;
+  final VoidCallback onMinigameCompleted;
 
-  const ResultPage({super.key, required this.score});
+  const ResultPage({super.key, required this.score, required this.onMinigameCompleted});
 
   String get _title {
     if (score >= 7) {
@@ -589,13 +1386,11 @@ class ResultPage extends StatelessWidget {
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
-                // Back to festival map
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (context) => const MyHomePage(),
-                  ),
-                  (route) => false,
-                );
+                // Call the callback to mark minigame as completed
+                onMinigameCompleted();
+                // Back to festival map - pop twice (ResultPage -> StagePage -> MyHomePage)
+                Navigator.of(context).pop(true);
+                Navigator.of(context).pop(true);
               },
               child: const Text('Back to festival map'),
             ),
@@ -604,6 +1399,21 @@ class ResultPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class TriangleClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(size.width / 2, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
 
