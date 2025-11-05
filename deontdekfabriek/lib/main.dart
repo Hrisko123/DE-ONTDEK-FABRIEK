@@ -273,9 +273,6 @@ class _StagePageState extends State<StagePage> {
   int _ecoScore = 0;
 
   // Current visual configuration of the stage
-  String _lightsType = 'basic';   // 'basic', 'led', 'mixed', 'halogen'
-  String _powerType = 'grid';     // 'solar', 'greenGrid', 'grid', 'diesel'
-  String _floorType = 'plastic';  // 'reusedWood', 'wood', 'plastic';
   Color _colorForScore(int scoreChange) {
     if (scoreChange >= 3) {
       return Colors.green;        // very eco
@@ -292,24 +289,10 @@ class _StagePageState extends State<StagePage> {
 
   void _onOptionSelected(int optionIndex, StageOption option) {
     setState(() {
-      final currentQuestion = _questions[_currentQuestionIndex];
-
       // 1) update score
       _ecoScore += option.scoreChange;
 
-      // 2) update how the stage looks based on which question we are in
-      if (currentQuestion.category == 'Lights') {
-        // you currently have 2 options: index 0 = LED, 1 = Halogen
-        _lightsType = (optionIndex == 0) ? 'led' : 'halogen';
-      } else if (currentQuestion.category == 'Power') {
-        // 0 = Solar, 1 = Diesel
-        _powerType = (optionIndex == 0) ? 'solar' : 'diesel';
-      } else if (currentQuestion.category == 'Materials') {
-        // 0 = Reused wood, 1 = Plastic
-        _floorType = (optionIndex == 0) ? 'reusedWood' : 'plastic';
-      }
-
-      // 3) next question 
+      // 2) next question 
       final bool isLastQuestion =
           _currentQuestionIndex == _questions.length - 1;
 
@@ -325,157 +308,112 @@ class _StagePageState extends State<StagePage> {
     });
   }
 
+  Widget _bandMember(Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // head
+        const CircleAvatar(
+          radius: 10,
+          backgroundColor: Colors.white,
+        ),
+        const SizedBox(height: 4),
+        // body
+        Container(
+          width: 14,
+          height: 20,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildStage() {
-    // Decide colors / shapes based on the type strings
-
-    // Lights
-    Color lightsColor;
-    int lightsCount;
-    switch (_lightsType) {
-      case 'led':
-        lightsColor = Colors.greenAccent;
-        lightsCount = 6;
-        break;
-      case 'halogen':
-        lightsColor = Colors.orange;
-        lightsCount = 3;
-        break;
-      default:
-        lightsColor = Colors.white;
-        lightsCount = 4;
-    }
-
-    // Floor
-    Color floorColor;
-    String floorLabel;
-    switch (_floorType) {
-      case 'reusedWood':
-        floorColor = Colors.brown.shade700;
-        floorLabel = 'Reused wood';
-        break;
-      case 'plastic':
-      default:
-        floorColor = Colors.grey.shade700;
-        floorLabel = 'Plastic panels';
-        break;
-    }
-
-    // Power
-    Color powerColor;
-    String powerLabel;
-    switch (_powerType) {
-      case 'solar':
-        powerColor = Colors.green.shade700;
-        powerLabel = 'Solar';
-        break;
-      case 'diesel':
-        powerColor = Colors.red.shade700;
-        powerLabel = 'Diesel';
-        break;
-      default:
-        powerColor = Colors.blueGrey;
-        powerLabel = 'Grid';
-    }
-
     return Center(
       child: Container(
-        height: 220,
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 16),
+        width: 260,  
+        height: 170,
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 20, 20, 20),
+          color: Colors.black87,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.black, width: 2),
         ),
         child: Stack(
           children: [
-            // Stage floor
-            Positioned(
-              bottom: 16,
-              left: 32,
-              right: 32,
-              child: Column(
-                children: [
-                  Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: floorColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    floorLabel,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Lights row at the top
-            Positioned(
-              top: 24,
-              left: 32,
-              right: 32,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  lightsCount,
-                  (_) => Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: lightsColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Power box on the left
+            // wall
             Positioned(
               left: 16,
-              bottom: 72,
-              child: Column(
+              right: 16,
+              top: 20,
+              bottom: 50,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+
+            // floor
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.brown[600],
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+
+            // Band
+            Positioned(
+              bottom: 40,
+              left: 40,
+              right: 40,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: powerColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    powerLabel,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
+                  _bandMember(const Color.fromARGB(255, 217, 96, 191)),
+                  _bandMember(const Color.fromARGB(255, 85, 212, 231)),
+                  _bandMember(const Color.fromARGB(255, 240, 193, 105)),
                 ],
               ),
             ),
 
-            // Stage label
+            // musical notes
             const Positioned(
-              bottom: 72,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Text(
-                  'MAIN STAGE',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              top: 24,
+              left: 50,
+              child: Icon(
+                Icons.music_note,
+                color: Colors.white70,
+                size: 20,
+              ),
+            ),
+            const Positioned(
+              top: 32,
+              right: 60,
+              child: Icon(
+                Icons.music_note,
+                color: Colors.white70,
+                size: 18,
+              ),
+            ),
+            const Positioned(
+              top: 18,
+              right: 40,
+              child: Icon(
+                Icons.music_note,
+                color: Colors.white54,
+                size: 16,
               ),
             ),
           ],
@@ -499,89 +437,89 @@ class _StagePageState extends State<StagePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Mini stage arriba
             _buildStage(),
-            // Progress text
-            Text(
-              'Decision ${_currentQuestionIndex + 1} of ${_questions.length}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-
-            // Simple score display 
-            Text(
-              'Eco score: $_ecoScore',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
             const SizedBox(height: 16),
 
-            // Category title
-            Text(
-              current.category,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            // Pregunta centrada (sin "Lights")
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Text(
+                  current.questionText,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 20),
 
-            // Question text
-            Text(
-              current.questionText,
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 24),
-
-            // Options list
+            // Lista de opciones
             Expanded(
               child: ListView.builder(
                 itemCount: current.options.length,
                 itemBuilder: (context, index) {
                   final option = current.options[index];
-                        return Card(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: InkWell(
-          onTap: () => _onOptionSelected(index, option),
-          child: Row(
-            children: [
-              // Barra de color según lo eco que es (basado en scoreChange)
-              Container(
-                width: 10,
-                height: 80,
-                color: _colorForScore(option.scoreChange),
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: () => _onOptionSelected(index, option),
+                      child: Row(
+                        children: [
+                          // Barra de color según lo eco que es (basado en scoreChange)
+                          Container(
+                            width: 12,
+                            height: 63,
+                            color: _colorForScore(option.scoreChange),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 10.0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    option.name,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    option.description,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 10.0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        option.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        option.description,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ],
+            ),
+
+            // Texto final: decisión + eco score, centrado y pequeño
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Center(
+                child: Text(
+                  'Decision ${_currentQuestionIndex + 1} of ${_questions.length}   |   Eco score: $_ecoScore',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      );
-                },
               ),
             ),
           ],
@@ -589,7 +527,8 @@ class _StagePageState extends State<StagePage> {
       ),
     );
   }
-}
+} 
+
 class ResultPage extends StatelessWidget {
   final int score;
 
