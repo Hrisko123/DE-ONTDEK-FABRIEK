@@ -87,186 +87,45 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ),
                 child: Stack(
-                  children: [
-                    // Backdrop/curtains
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: squareSize * 0.4,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.deepPurple[800]!,
-                              Colors.purple[700]!,
-                            ],
-                          ), 
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(6),
-                            topRight: Radius.circular(6),
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Curtain folds
-                            Positioned(
-                              left: squareSize * 0.1,
-                              top: 0,
-                              bottom: 0,
-                              width: 2,
-                              child: Container(color: Colors.black26),
-                            ),
-                            Positioned(
-                              right: squareSize * 0.1,
-                              top: 0,
-                              bottom: 0,
-                              width: 2,
-                              child: Container(color: Colors.black26),
-                            ),
-                            // Stage lights
-                            Positioned(
-                              top: 8,
-                              left: squareSize * 0.2,
-                              child: Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.yellow.withValues(alpha: 0.6),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.yellow.withValues(alpha: 0.5),
-                                      blurRadius: 8,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: squareSize * 0.2,
-                              child: Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.yellow.withValues(alpha: 0.6),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.yellow.withValues(alpha: 0.5),
-                                      blurRadius: 8,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Stage floor 
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: squareSize * 0.6,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 139, 90, 43),
-                          borderRadius: const BorderRadius.only(
-                            bottomLeft: Radius.circular(6),
-                            bottomRight: Radius.circular(6),
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            // Wood planks
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.brown[800]!.withValues(alpha: 0.3),
-                                      width: 1,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.brown[800]!.withValues(alpha: 0.3),
-                                      width: 1,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Microphone stand
-                    Positioned(
-                      bottom: squareSize * 0.15,
-                      left: squareSize * 0.5 - 8,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.grey[800],
-                              border: Border.all(color: Colors.black, width: 1),
-                            ),
-                          ),
-                          Container(
-                            width: 2,
-                            height: squareSize * 0.3,
-                            color: Colors.grey[700],
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Stage label
-                    Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                  child: Text(
-                    'stage',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: squareSize * 0.08,
-                              fontWeight: FontWeight.bold,
-                  ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+  children: [
+    // your drawing as background
+    ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.asset(
+        'assets/Images/Festival_Colour.png', // <- your colored stage image
+        fit: BoxFit.cover,        // or BoxFit.contain if you prefer
+      ),
+    ),
+
+    // keep the stage label overlay
+    Positioned(
+      bottom: 8,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 4,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            'stage',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: squareSize * 0.08,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    ),
+  ],
+),
+
               ),
             ),
             ),
