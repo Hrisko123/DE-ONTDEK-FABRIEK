@@ -143,171 +143,44 @@ class _MyHomePageState extends State<MyHomePage> {
                 0,      0,      0,      1, 0,
               ]),
               child: Container(
-              width: squareSize,
-              height: squareSize,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(8),
-                color: const Color.fromARGB(255, 240, 240, 240),
-              ),
-              child: Stack(
-                children: [
-                  // Two toilet huts
-                  Positioned(
-                    left: squareSize * 0.1,
-                    bottom: squareSize * 0.15,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Roof
-                        Container(
-                          width: squareSize * 0.32,
-                          height: squareSize * 0.15,
-                          decoration: BoxDecoration(
-                            color: Colors.brown[800],
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(4),
-                              topRight: Radius.circular(4),
-                            ),
-                          ),
-                          child: ClipPath(
-                            clipper: TriangleClipper(),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.brown[900],
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Hut body
-                        Container(
-                          width: squareSize * 0.32,
-                          height: squareSize * 0.45,
-                          decoration: BoxDecoration(
-                            color: Colors.brown[600],
-                            border: Border.all(color: Colors.brown[900]!, width: 2),
-                          ),
-                          child: Stack(
-                            children: [
-                              // Door
-                              Positioned(
-                                bottom: squareSize * 0.05,
-                                left: squareSize * 0.05,
-                                right: squareSize * 0.05,
-                                child: Container(
-                                  height: squareSize * 0.35,
-                                  decoration: BoxDecoration(
-                                    color: Colors.brown[800],
-                                    border: Border.all(color: Colors.brown[900]!, width: 2),
-                                    borderRadius: BorderRadius.circular(2),
-              ),
-              child: Center(
-                                    child: Icon(
-                                      Icons.wc,
-                                      size: squareSize * 0.2,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    right: squareSize * 0.1,
-                    bottom: squareSize * 0.15,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Roof
-                        Container(
-                          width: squareSize * 0.32,
-                          height: squareSize * 0.15,
-                          decoration: BoxDecoration(
-                            color: Colors.brown[800],
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(4),
-                              topRight: Radius.circular(4),
-                            ),
-                          ),
-                          child: ClipPath(
-                            clipper: TriangleClipper(),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.brown[900],
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Hut body
-                        Container(
-                          width: squareSize * 0.32,
-                          height: squareSize * 0.45,
-                          decoration: BoxDecoration(
-                            color: Colors.brown[600],
-                            border: Border.all(color: Colors.brown[900]!, width: 2),
-                          ),
-                          child: Stack(
-                            children: [
-                              // Door
-                              Positioned(
-                                bottom: squareSize * 0.05,
-                                left: squareSize * 0.05,
-                                right: squareSize * 0.05,
-                                child: Container(
-                                  height: squareSize * 0.35,
-                                  decoration: BoxDecoration(
-                                    color: Colors.brown[800],
-                                    border: Border.all(color: Colors.brown[900]!, width: 2),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.wc,
-                                      size: squareSize * 0.2,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Label
-                  Positioned(
-                    bottom: 8,
-                    left: 0,
-                    right: 0,
-              child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                child: Text(
-                  'toilet',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: squareSize * 0.08,
-                            fontWeight: FontWeight.bold,
+                width: squareSize,
+                height: squareSize,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black, width: 2),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color.fromARGB(255, 240, 240, 240),
                 ),
+                child: Stack(
+                  children: [
+                    // Label
+                    Positioned(
+                      bottom: 8,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'toilet',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: squareSize * 0.08,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             ),
           ),
           
@@ -325,154 +198,45 @@ class _MyHomePageState extends State<MyHomePage> {
                   0,      0,      0,      1, 0,
                 ]),
                 child: Container(
-                width: squareSize,
-                height: squareSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color.fromARGB(255, 245, 245, 245),
-                ),
-                child: Stack(
-                  children: [
-                    // Two trash bins
-                    Positioned(
-                      left: squareSize * 0.2,
-                      bottom: squareSize * 0.15,
-                      child: Container(
-                        width: squareSize * 0.25,
-                        height: squareSize * 0.6,
-                        decoration: BoxDecoration(
-                          color: Colors.blue[700],
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black, width: 2),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Lid
-                            Positioned(
-                              top: -4,
-                              left: -4,
-                              right: -4,
-                              height: squareSize * 0.12,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[900],
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.black, width: 2),
-                ),
-                child: Center(
-                                  child: Container(
-                                    width: squareSize * 0.15,
-                                    height: squareSize * 0.08,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Recycle symbol
-                            Positioned(
-                              top: squareSize * 0.25,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: Icon(
-                                  Icons.recycling,
-                                  size: squareSize * 0.2,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: squareSize * 0.2,
-                      bottom: squareSize * 0.15,
-                      child: Container(
-                        width: squareSize * 0.25,
-                        height: squareSize * 0.6,
-                        decoration: BoxDecoration(
-                          color: Colors.green[700],
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.black, width: 2),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Lid
-                            Positioned(
-                              top: -4,
-                              left: -4,
-                              right: -4,
-                              height: squareSize * 0.12,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.green[900],
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.black, width: 2),
-                                ),
-                                child: Center(
-                                  child: Container(
-                                    width: squareSize * 0.15,
-                                    height: squareSize * 0.08,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Recycle symbol
-                            Positioned(
-                              top: squareSize * 0.25,
-                              left: 0,
-                              right: 0,
-                              child: Center(
-                                child: Icon(
-                                  Icons.recycling,
-                                  size: squareSize * 0.2,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Label
-                    Positioned(
-                      top: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                  child: Text(
-                    'waste',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: squareSize * 0.08,
-                              fontWeight: FontWeight.bold,
+                  width: squareSize,
+                  height: squareSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color.fromARGB(255, 245, 245, 245),
                   ),
+                  child: Stack(
+                    children: [
+                      // Label
+                      Positioned(
+                        top: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'waste',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: squareSize * 0.08,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
             ),
           ),
           
@@ -490,134 +254,45 @@ class _MyHomePageState extends State<MyHomePage> {
                   0,      0,      0,      1, 0,
                 ]),
                 child: Container(
-                width: squareSize,
-                height: squareSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color.fromARGB(255, 200, 230, 200),
-                ),
-                child: Stack(
-                  children: [
-                    // Tree
-                    Positioned(
-                      left: squareSize * 0.15,
-                      bottom: squareSize * 0.2,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Tree top (leaves)
-                          Container(
-                            width: squareSize * 0.4,
-                            height: squareSize * 0.4,
-                            decoration: BoxDecoration(
-                              color: Colors.green[700],
-                              shape: BoxShape.circle,
-                            ),
-                            child: Stack(
-                              children: [
-                                // Highlights
-                                Positioned(
-                                  top: squareSize * 0.08,
-                                  left: squareSize * 0.1,
-                                  child: Container(
-                                    width: squareSize * 0.15,
-                                    height: squareSize * 0.15,
-                                    decoration: BoxDecoration(
-                                      color: Colors.green[400]!.withValues(alpha: 0.5),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          // Tree trunk
-                          Container(
-                            width: squareSize * 0.12,
-                            height: squareSize * 0.3,
-                            decoration: BoxDecoration(
-                              color: Colors.brown[700],
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Bench
-                    Positioned(
-                      right: squareSize * 0.1,
-                      bottom: squareSize * 0.15,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Bench seat
-                          Container(
-                            width: squareSize * 0.4,
-                            height: squareSize * 0.08,
-                            decoration: BoxDecoration(
-                              color: Colors.brown[800],
-                              borderRadius: BorderRadius.circular(2),
-                              border: Border.all(color: Colors.brown[900]!, width: 1),
-                            ),
-                          ),
-                          // Bench legs
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Container(
-                                width: squareSize * 0.04,
-                                height: squareSize * 0.15,
-                                decoration: BoxDecoration(
-                                  color: Colors.brown[900],
-                                ),
-                              ),
-                              SizedBox(width: squareSize * 0.32),
-                              Container(
-                                width: squareSize * 0.04,
-                                height: squareSize * 0.15,
-                                decoration: BoxDecoration(
-                                  color: Colors.brown[900],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Label
-                    Positioned(
-                      top: 8,
-                      left: 0,
-                      right: 0,
-                child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                  child: Text(
-                    'hang out',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: squareSize * 0.08,
-                              fontWeight: FontWeight.bold,
+                  width: squareSize,
+                  height: squareSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color.fromARGB(255, 200, 230, 200),
                   ),
+                  child: Stack(
+                    children: [
+                      // Label
+                      Positioned(
+                        top: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'hang out',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: squareSize * 0.08,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
             ),
           ),
           
@@ -633,169 +308,44 @@ class _MyHomePageState extends State<MyHomePage> {
                 0,      0,      0,      1, 0,
               ]),
               child: Container(
-              width: squareSize,
-              height: squareSize,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(8),
-                color: const Color.fromARGB(255, 250, 250, 250),
-              ),
-              child: Stack(
-                children: [
-                  // Food truck body
-                  Positioned(
-                    bottom: squareSize * 0.15,
-                    left: squareSize * 0.1,
-                    right: squareSize * 0.1,
-                    height: squareSize * 0.5,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.orange[700],
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.black, width: 2),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Truck window
-                          Positioned(
-                            top: squareSize * 0.08,
-                            left: squareSize * 0.12,
-                            width: squareSize * 0.25,
-                            height: squareSize * 0.2,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.blue[200],
-                                borderRadius: BorderRadius.circular(2),
-                                border: Border.all(color: Colors.black, width: 1),
-                              ),
-                            ),
-                          ),
-                          // Serving window
-                          Positioned(
-                            top: squareSize * 0.15,
-                            right: squareSize * 0.08,
-                            width: squareSize * 0.18,
-                            height: squareSize * 0.25,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.yellow[100],
-                                borderRadius: BorderRadius.circular(2),
-                                border: Border.all(color: Colors.black, width: 1),
-              ),
-              child: Center(
-                                child: Icon(
-                                  Icons.restaurant,
-                                  size: squareSize * 0.15,
-                                  color: Colors.brown[800],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Decorative stripes
-                          Positioned(
-                            top: squareSize * 0.08,
-                            left: squareSize * 0.4,
-                            right: squareSize * 0.3,
-                            height: 3,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: squareSize * 0.13,
-                            left: squareSize * 0.4,
-                            right: squareSize * 0.3,
-                            height: 3,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Truck wheels
-                  Positioned(
-                    bottom: squareSize * 0.08,
-                    left: squareSize * 0.15,
-                    child: Container(
-                      width: squareSize * 0.18,
-                      height: squareSize * 0.18,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black, width: 2),
-                      ),
+                width: squareSize,
+                height: squareSize,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black, width: 2),
+                  borderRadius: BorderRadius.circular(8),
+                  color: const Color.fromARGB(255, 250, 250, 250),
+                ),
+                child: Stack(
+                  children: [
+                    // Label
+                    Positioned(
+                      top: 8,
+                      left: 0,
+                      right: 0,
                       child: Center(
                         child: Container(
-                          width: squareSize * 0.1,
-                          height: squareSize * 0.1,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.grey[600],
-                            shape: BoxShape.circle,
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'food truck',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: squareSize * 0.08,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: squareSize * 0.08,
-                    right: squareSize * 0.15,
-                    child: Container(
-                      width: squareSize * 0.18,
-                      height: squareSize * 0.18,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black, width: 2),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: squareSize * 0.1,
-                          height: squareSize * 0.1,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[600],
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Label
-                  Positioned(
-                    top: 8,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                child: Text(
-                  'food truck',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: squareSize * 0.08,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  ],
                 ),
               ),
-            ),
-          ),
-        ],
-              ),
-            ),
             ),
           ),
         ],
