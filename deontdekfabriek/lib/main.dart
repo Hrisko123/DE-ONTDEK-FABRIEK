@@ -49,6 +49,14 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void _navigateToFoodTruck() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const FoodTruckPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final squareSize = MediaQuery.of(context).size.width * 0.25;
@@ -307,48 +315,204 @@ class _MyHomePageState extends State<MyHomePage> {
                 0.2126, 0.7152, 0.0722, 0, 0,
                 0,      0,      0,      1, 0,
               ]),
-              child: Container(
-                width: squareSize,
-                height: squareSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color.fromARGB(255, 250, 250, 250),
-                ),
-                child: Stack(
-                  children: [
-                    // Label
-                    Positioned(
-                      top: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'food truck',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: squareSize * 0.08,
-                              fontWeight: FontWeight.bold,
+              child: GestureDetector(
+                onTap: _navigateToFoodTruck,
+                child: Container(
+                  width: squareSize,
+                  height: squareSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color.fromARGB(255, 250, 250, 250),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Label
+                      Positioned(
+                        top: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'food truck',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: squareSize * 0.08,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// FOOD TRUCK MINI-GAME
+class FoodTruckPage extends StatefulWidget {
+  const FoodTruckPage({super.key});
+
+  @override
+  State<FoodTruckPage> createState() => _FoodTruckPageState();
+}
+
+class _FoodTruckPageState extends State<FoodTruckPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTruckTap(String name) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$name truck clicked!'),
+        duration: const Duration(milliseconds: 800),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFB3E5FC),
+      appBar: AppBar(
+        title: const Text('Food Truck Run'),
+        backgroundColor: Colors.green.shade700,
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final roadWidth = constraints.maxWidth - 48;
+          final roadHeight = constraints.maxHeight * 0.4;
+          final truckSize = roadHeight * 0.3;
+          final travelDistance = roadWidth - truckSize;
+
+          return Center(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final truckOneX = _controller.value * travelDistance;
+                final truckTwoX = (1 - _controller.value) * travelDistance;
+
+                return SizedBox(
+                  width: roadWidth,
+                  height: roadHeight,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4E4E4E),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: Colors.black, width: 3),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(
+                              5,
+                              (_) => Container(
+                                width: roadWidth * 0.6,
+                                height: 4,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: roadHeight * 0.15,
+                        left: truckOneX,
+                        child: GestureDetector(
+                          onTap: () => _handleTruckTap('Green'),
+                          child: _TruckSquare(
+                            size: truckSize,
+                            color: Colors.greenAccent.shade200,
+                            label: 'Truck 1',
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: roadHeight * 0.15,
+                        left: truckTwoX,
+                        child: GestureDetector(
+                          onTap: () => _handleTruckTap('Purple'),
+                          child: _TruckSquare(
+                            size: truckSize,
+                            color: Colors.deepPurpleAccent.shade100,
+                            label: 'Truck 2',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TruckSquare extends StatelessWidget {
+  final double size;
+  final Color color;
+  final String label;
+
+  const _TruckSquare({
+    required this.size,
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black, width: 3),
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
       ),
     );
   }
