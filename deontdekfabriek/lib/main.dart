@@ -57,6 +57,14 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _navigateToHangout() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const HangoutQuizPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final squareSize = MediaQuery.of(context).size.width * 0.25;
@@ -261,48 +269,52 @@ class _MyHomePageState extends State<MyHomePage> {
                   0.2126, 0.7152, 0.0722, 0, 0,
                   0,      0,      0,      1, 0,
                 ]),
-                child: Container(
-                  width: squareSize,
-                  height: squareSize,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.circular(8),
-                    color: const Color.fromARGB(255, 200, 230, 200),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Label
-                      Positioned(
-                        top: 8,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'hang out',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: squareSize * 0.08,
-                                fontWeight: FontWeight.bold,
+                child: GestureDetector(
+                  onTap: _navigateToHangout,
+                  child: Container(
+                    width: squareSize,
+                    height: squareSize,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black, width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                      color: const Color.fromARGB(255, 200, 230, 200),
+                    ),
+                    child: Stack(
+                      children: [
+                        // Label
+                        Positioned(
+                          top: 8,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'hang out',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: squareSize * 0.08,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
+
           
           // Food truck square 
           Positioned(
@@ -990,3 +1002,366 @@ class TriangleClipper extends CustomClipper<Path> {
 }
 
 
+// HANGOUT AREA MINI-GAME
+class EcoQuestion {
+  final String text;
+  final List<String> options;
+  final int ecoOptionIndex;
+
+  const EcoQuestion({
+    required this.text,
+    required this.options,
+    required this.ecoOptionIndex,
+  });
+}
+
+class HangoutQuizPage extends StatefulWidget {
+  const HangoutQuizPage({super.key});
+
+  @override
+  State<HangoutQuizPage> createState() => _HangoutQuizPageState();
+}
+
+class _HangoutQuizPageState extends State<HangoutQuizPage> {
+  final List<EcoQuestion> _questions = const [
+    EcoQuestion(
+      text: 'What is the most eco-friendly way to get to a festival?',
+      options: [
+        'By car with friends',
+        'By public transport',
+        'By bike or walking',
+      ],
+      ecoOptionIndex: 0,
+    ),
+        EcoQuestion(
+      text: 'What do you do with your empty drink cup?',
+      options: [
+        'Leave it on the grass for staff.',
+        'Return it to the bar / cup return point to be washed.',
+        'Throw it in a random bin without checking.',
+      ],
+      ecoOptionIndex: 1,
+    ),
+    EcoQuestion(
+      text: 'How do you charge your phone?',
+      options: [
+        'Plug into a random staff-only socket.',
+        'Ask for a petrol generator just for you.',
+        'Use the shared solar charging station.',
+      ],
+      ecoOptionIndex: 2,
+    ),
+    EcoQuestion(
+      text: 'How do you keep the hangout area chill?',
+      options: [
+        'Sing and shout over the music all the time.',
+        'Use headphones or move to a quieter corner.',
+        'Blast your own speaker loudly next to people relaxing.',
+      ],
+      ecoOptionIndex: 1,
+    ),
+    EcoQuestion(
+      text: 'You see a cigarette butt on the ground. What do you do?',
+      options: [
+        'Put it in a pocket ashtray or cigarette bin.',
+        'Ignore it, it\'s just one.',
+        'Push it into the soil with your shoe.',
+      ],
+      ecoOptionIndex: 0,
+    ),
+    EcoQuestion(
+      text: 'Snack time! What do you choose?',
+      options: [
+        'Take food and throw half away.',
+        'Many tiny snacks, each wrapped in plastic.',
+        'Food with minimal or reusable packaging.',
+      ],
+      ecoOptionIndex: 2,
+    ),
+    EcoQuestion(
+      text: 'How do you light the hangout area at night?',
+      options: [
+        'Leave all lights on even when nobody is there.',
+        'Use cosy LED string lights on green / solar power.',
+        'Use big old floodlights that waste a lot of energy.',
+      ],
+      ecoOptionIndex: 1,
+    ),
+    EcoQuestion(
+      text: 'You are leaving the hangout park. What do you do?',
+      options: [
+        'Hide trash under the grass or behind trees.',
+        'Leave cups and blankets behind for cleaners.',
+        'Take your things, sort waste and leave it clean.',
+      ],
+      ecoOptionIndex: 2,
+    ),
+  ];
+
+  int _currentIndex = 0;
+  int _gardenStage = 0; // 0–8. Grows when eco option is selected.
+
+  void _onOptionSelected(int optionIndex) {
+    final question = _questions[_currentIndex];
+
+    setState(() {
+      // grow garden only for eco-friendly option
+      if (optionIndex == question.ecoOptionIndex) {
+        _gardenStage++;
+      }
+
+      if (_currentIndex < _questions.length - 1) {
+        _currentIndex++;
+      } else {
+        // finished all questions → simple dialog
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Hangout garden'),
+              content: const Text(
+                  'Thanks! Your decisions helped the hangout garden grow 🌿'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    });
+  }
+// instant positive feedback - garden
+  Widget _buildGarden() {
+    final bool isLastQuestion =
+        _currentIndex == _questions.length - 1;
+
+    // Turn _gardenStage (0–8) into 4 visual levels
+    int stage;
+    if (_gardenStage <= 1) {
+      stage = 0; // little sprout
+    } else if (_gardenStage <= 3) {
+      stage = 1; // small plant
+    } else if (_gardenStage <= 6) {
+      stage = 2; // small tree + some plants
+    } else {
+      stage = 3; // full garden
+    }
+
+    return Container(
+      height: 220,
+      decoration: BoxDecoration(
+        color: const Color(0xFFA8E6A3), // soft pastel green
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.green.shade700, width: 2),
+      ),
+      child: Stack(
+        children: [
+          // soft hills line at bottom 
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              height: 70,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.green.shade500,
+                    Colors.green.shade700,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+              ),
+            ),
+          ),
+
+          // little sprout / tree trunk
+          if (stage >= 0)
+            Align(
+              alignment: const Alignment(0, 0.2),
+              child: Container(
+                width: 6,
+                height: 35,
+                decoration: BoxDecoration(
+                  color: Colors.brown[700],
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+
+          // first leaves
+          if (stage >= 1)
+            Align(
+              alignment: const Alignment(0, 0.0),
+              child: Container(
+                width: 40,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.green.shade600,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+
+          // extra small plants on the hill
+          if (stage >= 2) ...[
+            Positioned(
+              bottom: 62,
+              left: 60,
+              child: Icon(Icons.grass,
+                  color: Colors.green.shade900, size: 22),
+            ),
+            Positioned(
+              bottom: 60,
+              right: 60,
+              child: Icon(Icons.grass,
+                  color: Colors.green.shade900, size: 22),
+            ),
+            Positioned(
+              bottom: 58,
+              left: 120,
+              child: Icon(Icons.local_florist,
+                  color: Colors.pink.shade300, size: 22),
+            ),
+          ],
+ //final animation (last question)
+           if (stage >= 3 || (isLastQuestion && _gardenStage > 0)) ...[
+            // sunshine
+            Positioned(
+              top: 18,
+              left: 40,
+              child: Icon(Icons.wb_sunny,
+                  color: Colors.orange.shade300, size: 30),
+            ),
+            // sparkles
+            Positioned(
+              top: 24,
+              right: 50,
+              child: Icon(Icons.auto_awesome,
+                  color: Colors.yellow.shade200, size: 26),
+            ),
+            Positioned(
+              top: 50,
+              right: 90,
+              child: Icon(Icons.auto_awesome,
+                  color: Colors.white70, size: 20),
+            ),
+            // ladybugs 
+            Positioned(
+              bottom: 72,
+              left: 80,
+              child: Icon(Icons.bug_report,
+                  color: Colors.red.shade400, size: 20),
+            ),
+            Positioned(
+              bottom: 70,
+              right: 80,
+              child: Icon(Icons.bug_report,
+                  color: Colors.black87, size: 20),
+            ),
+            // butterflies
+            Positioned(
+              top: 70,
+              left: 110,
+              child: Icon(Icons.flutter_dash,
+                  color: Colors.lightBlue.shade200, size: 26),
+            ),
+            Positioned(
+              top: 80,
+              right: 110,
+              child: Icon(Icons.flutter_dash,
+                  color: Colors.purple.shade200, size: 26),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Color _colorForOption(int optionIndex, int ecoIndex) {
+    return optionIndex == ecoIndex
+        ? Colors.green.shade400
+        : Colors.grey.shade300;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final question = _questions[_currentIndex];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF8BD28E), 
+      appBar: AppBar(
+        title: const Text('Hangout Park Eco Quiz'),
+        backgroundColor: const Color(0xFF787878),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildGarden(),
+            const SizedBox(height: 16),
+            Text(
+              'Question ${_currentIndex + 1} of ${_questions.length}',
+              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              question.text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // answer options
+            Expanded(
+              child: ListView.builder(
+                itemCount: question.options.length,
+                itemBuilder: (context, index) {
+                  final text = question.options[index];
+                  final ecoIndex = question.ecoOptionIndex;
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: InkWell(
+                      onTap: () => _onOptionSelected(index),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 60,
+                              color: _colorForOption(index, ecoIndex),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                text,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
