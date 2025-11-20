@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'FoodGame.dart';
+import 'FestivalCleanerApp.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +14,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'De Ontdek Fabriek',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 0, 0, 0)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(255, 0, 0, 0),
+        ),
       ),
       home: const MyHomePage(),
     );
@@ -42,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
-    
+
     if (result == true || _minigameCompleted) {
       setState(() {
         _minigameCompleted = true;
@@ -51,30 +54,31 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _navigateToFoodTruck() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const FoodTruckPage(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const FoodTruckPage()));
   }
 
   void _navigateToHangout() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const HangoutQuizPage(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const HangoutQuizPage()));
+  }
+
+  void _navigateToWaste() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const FestivalCleanerApp()));
   }
 
   @override
   Widget build(BuildContext context) {
     final squareSize = MediaQuery.of(context).size.width * 0.25;
-    
+
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 139, 210, 142),
       body: Stack(
         children: [
-          
           Positioned(
             top: 16,
             left: 16,
@@ -82,82 +86,113 @@ class _MyHomePageState extends State<MyHomePage> {
               colorFilter: _minigameCompleted
                   ? const ColorFilter.mode(Colors.transparent, BlendMode.color)
                   : const ColorFilter.matrix([
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0,      0,      0,      1, 0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1,
+                      0,
                     ]),
               child: GestureDetector(
                 onTap: _navigateToStage,
                 child: Container(
-                width: squareSize,
-                height: squareSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  width: squareSize,
+                  height: squareSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // your drawing as background
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/Images/Festival_Colour.png', // <- your colored stage image
+                          fit: BoxFit.cover, // or BoxFit.contain if you prefer
+                        ),
+                      ),
+
+                      // keep the stage label overlay
+                      Positioned(
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'stage',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: squareSize * 0.08,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Stack(
-  children: [
-    // your drawing as background
-    ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Image.asset(
-        'assets/Images/Festival_Colour.png', // <- your colored stage image
-        fit: BoxFit.cover,        // or BoxFit.contain if you prefer
-      ),
-    ),
-
-    // keep the stage label overlay
-    Positioned(
-      bottom: 8,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 4,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            'stage',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: squareSize * 0.08,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    ),
-  ],
-),
-
               ),
             ),
-            ),
           ),
-          
-          // Toilet square 
+
+          // Toilet square
           Positioned(
             top: 16,
             right: 16,
             child: ColorFiltered(
               colorFilter: const ColorFilter.matrix([
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0,      0,      0,      1, 0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
               ]),
               child: Container(
                 width: squareSize,
@@ -200,8 +235,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          
-          // Waste square 
+
+          // Waste square
           Positioned(
             top: 16,
             left: 0,
@@ -209,55 +244,73 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Center(
               child: ColorFiltered(
                 colorFilter: const ColorFilter.matrix([
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0,      0,      0,      1, 0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
                 ]),
-                child: Container(
-                  width: squareSize,
-                  height: squareSize,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.circular(8),
-                    color: const Color.fromARGB(255, 245, 245, 245),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Label
-                      Positioned(
-                        top: 8,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'waste',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: squareSize * 0.08,
-                                fontWeight: FontWeight.bold,
+                child: GestureDetector(
+                  onTap: _navigateToWaste,
+                  child: Container(
+                    width: squareSize,
+                    height: squareSize,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black, width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                      color: const Color.fromARGB(255, 245, 245, 245),
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: 8,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'waste',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: squareSize * 0.08,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-          
-          // Hang out square 
+
+          // Hang out square
           Positioned(
             bottom: 16,
             left: 0,
@@ -265,10 +318,26 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Center(
               child: ColorFiltered(
                 colorFilter: const ColorFilter.matrix([
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0,      0,      0,      1, 0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
                 ]),
                 child: GestureDetector(
                   onTap: _navigateToHangout,
@@ -316,17 +385,32 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
 
-          
-// Food truck square 
+          // Food truck square
           Positioned(
             bottom: 16,
             right: 16,
             child: ColorFiltered(
               colorFilter: const ColorFilter.matrix([
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0,      0,      0,      1, 0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
               ]),
               child: GestureDetector(
                 onTap: _navigateToFoodTruck,
@@ -405,7 +489,7 @@ class StageQuestion {
 
 class StagePage extends StatefulWidget {
   final VoidCallback onMinigameCompleted;
-  
+
   const StagePage({super.key, required this.onMinigameCompleted});
 
   @override
@@ -501,15 +585,15 @@ class _StagePageState extends State<StagePage> {
   // Current visual configuration of the stage
   Color _colorForScore(int scoreChange) {
     if (scoreChange >= 3) {
-      return Colors.green;        // very eco
+      return Colors.green; // very eco
     } else if (scoreChange >= 1) {
-      return Colors.lightGreen;   // good 
+      return Colors.lightGreen; // good
     } else if (scoreChange == 0) {
-      return Colors.amber;        // neutral
+      return Colors.amber; // neutral
     } else if (scoreChange >= -2) {
-      return Colors.orange;       // bad
+      return Colors.orange; // bad
     } else {
-      return Colors.red;          // very bad
+      return Colors.red; // very bad
     }
   }
 
@@ -518,7 +602,7 @@ class _StagePageState extends State<StagePage> {
       // 1) update score
       _ecoScore += option.scoreChange;
 
-      // 2) next question 
+      // 2) next question
       final bool isLastQuestion =
           _currentQuestionIndex == _questions.length - 1;
 
@@ -542,10 +626,7 @@ class _StagePageState extends State<StagePage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         // head
-        const CircleAvatar(
-          radius: 10,
-          backgroundColor: Colors.white,
-        ),
+        const CircleAvatar(radius: 10, backgroundColor: Colors.white),
         const SizedBox(height: 4),
         // body
         Container(
@@ -563,7 +644,7 @@ class _StagePageState extends State<StagePage> {
   Widget _buildStage() {
     return Center(
       child: Container(
-        width: 260,  
+        width: 260,
         height: 170,
         decoration: BoxDecoration(
           color: Colors.black87,
@@ -621,29 +702,17 @@ class _StagePageState extends State<StagePage> {
             const Positioned(
               top: 24,
               left: 50,
-              child: Icon(
-                Icons.music_note,
-                color: Colors.white70,
-                size: 20,
-              ),
+              child: Icon(Icons.music_note, color: Colors.white70, size: 20),
             ),
             const Positioned(
               top: 32,
               right: 60,
-              child: Icon(
-                Icons.music_note,
-                color: Colors.white70,
-                size: 18,
-              ),
+              child: Icon(Icons.music_note, color: Colors.white70, size: 18),
             ),
             const Positioned(
               top: 18,
               right: 40,
-              child: Icon(
-                Icons.music_note,
-                color: Colors.white54,
-                size: 16,
-              ),
+              child: Icon(Icons.music_note, color: Colors.white54, size: 16),
             ),
           ],
         ),
@@ -744,10 +813,7 @@ class _StagePageState extends State<StagePage> {
                 child: Text(
                   'Decision ${_currentQuestionIndex + 1} of ${_questions.length}   |   Eco score: $_ecoScore',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ),
             ),
@@ -756,13 +822,17 @@ class _StagePageState extends State<StagePage> {
       ),
     );
   }
-} 
+}
 
 class ResultPage extends StatelessWidget {
   final int score;
   final VoidCallback onMinigameCompleted;
 
-  const ResultPage({super.key, required this.score, required this.onMinigameCompleted});
+  const ResultPage({
+    super.key,
+    required this.score,
+    required this.onMinigameCompleted,
+  });
 
   String get _title {
     if (score >= 7) {
@@ -800,10 +870,7 @@ class ResultPage extends StatelessWidget {
             Text(
               _title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Text(
@@ -849,7 +916,6 @@ class TriangleClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-
 // HANGOUT AREA MINI-GAME
 class EcoQuestion {
   final String text;
@@ -881,7 +947,7 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       ],
       ecoOptionIndex: 0,
     ),
-        EcoQuestion(
+    EcoQuestion(
       text: 'What do you do with your empty drink cup?',
       options: [
         'Leave it on the grass for staff.',
@@ -968,7 +1034,8 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
             return AlertDialog(
               title: const Text('Hangout garden'),
               content: const Text(
-                  'Thanks! Your decisions helped the hangout garden grow 🌿'),
+                'Thanks! Your decisions helped the hangout garden grow 🌿',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
@@ -981,10 +1048,10 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       }
     });
   }
-// instant positive feedback - garden
+
+  // instant positive feedback - garden
   Widget _buildGarden() {
-    final bool isLastQuestion =
-        _currentIndex == _questions.length - 1;
+    final bool isLastQuestion = _currentIndex == _questions.length - 1;
 
     // Turn _gardenStage (0–8) into 4 visual levels
     int stage;
@@ -1007,17 +1074,14 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       ),
       child: Stack(
         children: [
-          // soft hills line at bottom 
+          // soft hills line at bottom
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
               height: 70,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.green.shade500,
-                    Colors.green.shade700,
-                  ],
+                  colors: [Colors.green.shade500, Colors.green.shade700],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -1061,69 +1125,83 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
             Positioned(
               bottom: 62,
               left: 60,
-              child: Icon(Icons.grass,
-                  color: Colors.green.shade900, size: 22),
+              child: Icon(Icons.grass, color: Colors.green.shade900, size: 22),
             ),
             Positioned(
               bottom: 60,
               right: 60,
-              child: Icon(Icons.grass,
-                  color: Colors.green.shade900, size: 22),
+              child: Icon(Icons.grass, color: Colors.green.shade900, size: 22),
             ),
             Positioned(
               bottom: 58,
               left: 120,
-              child: Icon(Icons.local_florist,
-                  color: Colors.pink.shade300, size: 22),
+              child: Icon(
+                Icons.local_florist,
+                color: Colors.pink.shade300,
+                size: 22,
+              ),
             ),
           ],
- //final animation (last question)
-           if (stage >= 3 || (isLastQuestion && _gardenStage > 0)) ...[
+          //final animation (last question)
+          if (stage >= 3 || (isLastQuestion && _gardenStage > 0)) ...[
             // sunshine
             Positioned(
               top: 18,
               left: 40,
-              child: Icon(Icons.wb_sunny,
-                  color: Colors.orange.shade300, size: 30),
+              child: Icon(
+                Icons.wb_sunny,
+                color: Colors.orange.shade300,
+                size: 30,
+              ),
             ),
             // sparkles
             Positioned(
               top: 24,
               right: 50,
-              child: Icon(Icons.auto_awesome,
-                  color: Colors.yellow.shade200, size: 26),
+              child: Icon(
+                Icons.auto_awesome,
+                color: Colors.yellow.shade200,
+                size: 26,
+              ),
             ),
             Positioned(
               top: 50,
               right: 90,
-              child: Icon(Icons.auto_awesome,
-                  color: Colors.white70, size: 20),
+              child: Icon(Icons.auto_awesome, color: Colors.white70, size: 20),
             ),
-            // ladybugs 
+            // ladybugs
             Positioned(
               bottom: 72,
               left: 80,
-              child: Icon(Icons.bug_report,
-                  color: Colors.red.shade400, size: 20),
+              child: Icon(
+                Icons.bug_report,
+                color: Colors.red.shade400,
+                size: 20,
+              ),
             ),
             Positioned(
               bottom: 70,
               right: 80,
-              child: Icon(Icons.bug_report,
-                  color: Colors.black87, size: 20),
+              child: Icon(Icons.bug_report, color: Colors.black87, size: 20),
             ),
             // butterflies
             Positioned(
               top: 70,
               left: 110,
-              child: Icon(Icons.flutter_dash,
-                  color: Colors.lightBlue.shade200, size: 26),
+              child: Icon(
+                Icons.flutter_dash,
+                color: Colors.lightBlue.shade200,
+                size: 26,
+              ),
             ),
             Positioned(
               top: 80,
               right: 110,
-              child: Icon(Icons.flutter_dash,
-                  color: Colors.purple.shade200, size: 26),
+              child: Icon(
+                Icons.flutter_dash,
+                color: Colors.purple.shade200,
+                size: 26,
+              ),
             ),
           ],
         ],
@@ -1142,7 +1220,7 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
     final question = _questions[_currentIndex];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8BD28E), 
+      backgroundColor: const Color(0xFF8BD28E),
       appBar: AppBar(
         title: const Text('Hangout Park Eco Quiz'),
         backgroundColor: const Color(0xFF787878),
@@ -1161,10 +1239,7 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
             Text(
               question.text,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
