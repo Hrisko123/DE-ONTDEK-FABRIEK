@@ -1018,6 +1018,8 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
 
   int _currentIndex = 0;
   int _gardenStage = 0; // grows only when eco option is selected
+  bool _showIntro = true;
+
 
   void _onOptionSelected(int optionIndex) {
     final question = _questions[_currentIndex];
@@ -1050,6 +1052,49 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       }
     });
   }
+// INTRO SCREEN WIDGET
+Widget _buildIntro() {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Welcome to the Hangout Area!",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            "For each eco-friendly choice, watch the garden bloom",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18),
+          ),
+          const SizedBox(height: 40),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _showIntro = false;   // SWITCH TO QUESTIONS
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color.fromARGB(255, 64, 100, 81),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            ),
+            child: const Text(
+              "Start",
+              style: TextStyle(fontSize: 20, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Color _colorForOption(int optionIndex, int ecoIndex) {
     return optionIndex == ecoIndex
@@ -1059,19 +1104,36 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showIntro) {
+  return Scaffold(
+    backgroundColor: const Color.fromARGB(255, 143, 172, 122),
+    appBar: AppBar(
+      title: const Text('Hangout Intro'),
+      backgroundColor: const Color.fromARGB(255, 64, 100, 81),
+    ),
+    body: _buildIntro(),
+  );
+}
+
     final question = _questions[_currentIndex];
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 172, 215, 175),
+      backgroundColor: const Color.fromARGB(255, 143, 172, 122),
       appBar: AppBar(
         title: const Text('Hangout Park Eco Quiz'),
-        backgroundColor: const Color(0xFF787878),
+        backgroundColor: const Color.fromARGB(255, 64, 100, 81),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            AnimatedGarden(stage: _gardenStage),
+            Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5, 
+              child: AnimatedGarden(stage: _gardenStage),
+            ),
+          ),
+
             const SizedBox(height: 16),
             Text(
               'Question ${_currentIndex + 1} of ${_questions.length}',
@@ -1167,7 +1229,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
     final showButterflies  = s >= 3; // third eco pick+
 
     return Container(
-      height: 240,
+      height: 340,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
@@ -1260,22 +1322,24 @@ class _OverlaySprout extends StatelessWidget {
       tween: Tween(begin: 0, end: visible ? 1 : 0),
       duration: Duration(milliseconds: durationMs),
       curve: curve,
-      builder: (context, t, child) {
-        return ClipRect(
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            heightFactor: t, // REVEALS UPWARD
-            child: Opacity(
-              opacity: t,
-              child: Transform.scale(
-                scale: 0.95 + 0.05 * t,
-                alignment: Alignment.bottomCenter,
-                child: child,
-              ),
-            ),
-          ),
-        );
-      },
+builder: (context, t, child) {
+  final clampedT = t.clamp(0.0, 1.0); // prevents opacity crash
+
+  return ClipRect(
+    child: Align(
+      alignment: Alignment.bottomCenter,
+      heightFactor: clampedT,
+      child: Opacity(
+        opacity: clampedT,
+        child: Transform.scale(
+          scale: 0.95 + 0.05 * t, 
+          alignment: Alignment.bottomCenter,
+          child: child,
+        ),
+      ),
+    ),
+  );
+},
       child: Image.asset(asset, fit: BoxFit.cover),
     );
   }
