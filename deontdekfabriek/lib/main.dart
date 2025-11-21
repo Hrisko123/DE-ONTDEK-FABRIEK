@@ -1263,26 +1263,98 @@ class _AnimatedGardenState extends State<AnimatedGarden>
               ),
             ),
 
-            // STAGE 2: small flowers sprout upward
-            Positioned.fill(
-              child: _OverlaySprout(
+            // STAGE 2: flower patch
+            if (showFlowersSmall) ...[
+              // LEFT SIDE 
+              _FlowerPatch(
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
-                durationMs: 1000,
-                curve: Curves.easeOutBack,
+                left: -52,
+                bottom: 115,  // upper-left bush flower
+                scale: 0.28,
+                durationMs: 850,
               ),
-            ),
+              _FlowerPatch(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                left: 22,
+                bottom: 62,   // mid-left bush flower
+                scale: 0.22,
+                durationMs: 950,
+              ),
+              _FlowerPatch(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                left: 48,
+                bottom: 8,    // bottom-left big flower
+                scale: 0.30,
+                durationMs: 1050,
+              ),
+              _FlowerPatch(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                left: 110,
+                bottom: 18,   // tiny left-bottom scatter
+                scale: 0.16,
+                durationMs: 1150,
+              ),
 
-            // STAGE 3+: butterflies float
+              // RIGHT SIDE 
+              _FlowerPatch(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                right: 18,
+                bottom: 112,  // upper-right bush flower
+                scale: 0.26,
+                durationMs: 900,
+              ),
+              _FlowerPatch(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                right: 28,
+                bottom: 66,   // mid-right bush flower
+                scale: 0.22,
+                durationMs: 1000,
+              ),
+              _FlowerPatch(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                right: 44,
+                bottom: 14,   // bottom-right big flower
+                scale: 0.28,
+                durationMs: 1100,
+              ),
+
+              // BOTTOM / CENTER SCATTER
+              _FlowerPatch(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                left: 200,
+                bottom: 6,    // small center-bottom flower
+                scale: 0.18,
+                durationMs: 1200,
+              ),
+              _FlowerPatch(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                right: 120,
+                bottom: 4,    // tiny right-bottom scatter near corner
+                scale: 0.14,
+                durationMs: 1300,
+              ),
+            ],
+
+
+            // STAGE 3: butterflies float
             if (showButterflies) ...[
               _FlyingButterfly(
                 controller: _butterflyCtrl,
                 asset: "assets/garden/butterfly_1.png",
                 baseX: 0.2,
-                baseY: 0.35,
+                baseY: 0.2,
                 ampX: 0.10,
                 ampY: 0.05,
-                size: 42,
+                size: 45,
               ),
               _FlyingButterfly(
                 controller: _butterflyCtrl,
@@ -1291,7 +1363,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 baseY: 0.42,
                 ampX: 0.08,
                 ampY: 0.07,
-                size: 38,
+                size: 36,
                 phase: pi / 2,
               ),
             ],
@@ -1341,6 +1413,52 @@ builder: (context, t, child) {
   );
 },
       child: Image.asset(asset, fit: BoxFit.cover),
+    );
+  }
+}
+// Small flower cluster that sprouts + fades in near bottom
+class _FlowerPatch extends StatelessWidget {
+  final bool visible;
+  final String asset;
+  final double? left;
+  final double? right;
+  final double bottom;
+  final double scale;
+  final int durationMs;
+
+  const _FlowerPatch({
+    required this.visible,
+    required this.asset,
+    this.left,
+    this.right,
+    required this.bottom,
+    required this.scale,
+    required this.durationMs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: left,
+      right: right,
+      bottom: bottom,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: visible ? 1 : 0),
+        duration: Duration(milliseconds: durationMs),
+        curve: Curves.easeOutCubic,
+        builder: (context, t, child) {
+          final clampedT = t.clamp(0.0, 1.0);
+          return Opacity(
+            opacity: clampedT,
+            child: Transform.scale(
+              scale: (0.7 + 0.3 * clampedT) * scale, // sprout + small
+              alignment: Alignment.bottomCenter,
+              child: child,
+            ),
+          );
+        },
+        child: Image.asset(asset),
+      ),
     );
   }
 }
