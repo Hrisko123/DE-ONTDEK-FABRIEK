@@ -1222,7 +1222,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
               ),
               _FlyingButterfly(
                 controller: _butterflyCtrl,
-                asset: "assets/garden/butterfly_2.png",
+                asset: "assets/garden/butterfly_1.png",
                 baseX: 0.78,
                 baseY: 0.42,
                 ampX: 0.08,

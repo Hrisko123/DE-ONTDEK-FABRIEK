@@ -60,6 +60,10 @@ flutter:
 
   assets:
     - assets/Images/
+    - assets/garden/Hangout_minigame.jpg
+    - assets/garden/grass_lines.png
+    - assets/garden/flowers_small.png
+    - assets/garden/butterfly_1.png
 
 
   # To add assets to your application, add an assets section, like this:
