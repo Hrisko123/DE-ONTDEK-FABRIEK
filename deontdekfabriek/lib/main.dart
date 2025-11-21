@@ -349,7 +349,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.black, width: 2),
                       borderRadius: BorderRadius.circular(8),
-                      color: const Color.fromARGB(255, 200, 230, 200),
+                      image: DecorationImage(
+                      image: AssetImage("assets/garden/Hangout_minigame.jpg"),
+                      fit: BoxFit.cover,
+                    ),
                     ),
                     child: Stack(
                       children: [
@@ -769,7 +772,6 @@ class _StagePageState extends State<StagePage> {
                       onTap: () => _onOptionSelected(index, option),
                       child: Row(
                         children: [
-                          // Barra de color según lo eco que es (basado en scoreChange)
                           Container(
                             width: 12,
                             height: 63,
@@ -1034,12 +1036,12 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
             return AlertDialog(
               title: const Text('Hangout garden'),
               content: const Text(
-                'Thanks! Your decisions helped the hangout garden grow 🌿',
+                'Thanks! Your eco decisions helped the hangout garden grow 🌿',
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
+                  child: const Text('Back to main page'),
                 ),
               ],
             );
@@ -1238,7 +1240,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
   }
 }
 
-// Reveal overlay from bottom → top so it feels like “sprouting”
+// Reveal overlay from bottom 
 class _OverlaySprout extends StatelessWidget {
   final bool visible;
   final String asset;
