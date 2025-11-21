@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'FoodGame.dart';
 import 'FestivalCleanerApp.dart';
+import 'dart:math'; //for the hangout garden animation
+
 
 void main() {
   runApp(const MyApp());
@@ -939,7 +941,7 @@ class HangoutQuizPage extends StatefulWidget {
 class _HangoutQuizPageState extends State<HangoutQuizPage> {
   final List<EcoQuestion> _questions = const [
     EcoQuestion(
-      text: 'What is the most eco-friendly way to get to a festival?',
+      text: 'How are you getting to the festival?',
       options: [
         'By car with friends',
         'By public transport',
@@ -950,9 +952,9 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
     EcoQuestion(
       text: 'What do you do with your empty drink cup?',
       options: [
-        'Leave it on the grass for staff.',
-        'Return it to the bar / cup return point to be washed.',
-        'Throw it in a random bin without checking.',
+        'Leave it on the grass for staff to pick up',
+        'Return it to the bar for recycling',
+        'Throw it in a random bin.',
       ],
       ecoOptionIndex: 1,
     ),
@@ -960,7 +962,7 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       text: 'How do you charge your phone?',
       options: [
         'Plug into a random staff-only socket.',
-        'Ask for a petrol generator just for you.',
+        'I dont charge it at all',
         'Use the shared solar charging station.',
       ],
       ecoOptionIndex: 2,
@@ -969,7 +971,7 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       text: 'How do you keep the hangout area chill?',
       options: [
         'Sing and shout over the music all the time.',
-        'Use headphones or move to a quieter corner.',
+        'Talk to your friends and enjoy the music',
         'Blast your own speaker loudly next to people relaxing.',
       ],
       ecoOptionIndex: 1,
@@ -996,8 +998,8 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       text: 'How do you light the hangout area at night?',
       options: [
         'Leave all lights on even when nobody is there.',
-        'Use cosy LED string lights on green / solar power.',
-        'Use big old floodlights that waste a lot of energy.',
+        'Use cosy LED string lights powered by solar power.',
+        'Use big old floodlights',
       ],
       ecoOptionIndex: 1,
     ),
@@ -1013,13 +1015,12 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
   ];
 
   int _currentIndex = 0;
-  int _gardenStage = 0; // 0–8. Grows when eco option is selected.
+  int _gardenStage = 0; // grows only when eco option is selected
 
   void _onOptionSelected(int optionIndex) {
     final question = _questions[_currentIndex];
 
     setState(() {
-      // grow garden only for eco-friendly option
       if (optionIndex == question.ecoOptionIndex) {
         _gardenStage++;
       }
@@ -1027,7 +1028,6 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       if (_currentIndex < _questions.length - 1) {
         _currentIndex++;
       } else {
-        // finished all questions → simple dialog
         showDialog(
           context: context,
           builder: (context) {
@@ -1049,166 +1049,6 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
     });
   }
 
-  // instant positive feedback - garden
-  Widget _buildGarden() {
-    final bool isLastQuestion = _currentIndex == _questions.length - 1;
-
-    // Turn _gardenStage (0–8) into 4 visual levels
-    int stage;
-    if (_gardenStage <= 1) {
-      stage = 0; // little sprout
-    } else if (_gardenStage <= 3) {
-      stage = 1; // small plant
-    } else if (_gardenStage <= 6) {
-      stage = 2; // small tree + some plants
-    } else {
-      stage = 3; // full garden
-    }
-
-    return Container(
-      height: 220,
-      decoration: BoxDecoration(
-        color: const Color(0xFFA8E6A3), // soft pastel green
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.green.shade700, width: 2),
-      ),
-      child: Stack(
-        children: [
-          // soft hills line at bottom
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              height: 70,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green.shade500, Colors.green.shade700],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(20),
-                ),
-              ),
-            ),
-          ),
-
-          // little sprout / tree trunk
-          if (stage >= 0)
-            Align(
-              alignment: const Alignment(0, 0.2),
-              child: Container(
-                width: 6,
-                height: 35,
-                decoration: BoxDecoration(
-                  color: Colors.brown[700],
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-            ),
-
-          // first leaves
-          if (stage >= 1)
-            Align(
-              alignment: const Alignment(0, 0.0),
-              child: Container(
-                width: 40,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.green.shade600,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-            ),
-
-          // extra small plants on the hill
-          if (stage >= 2) ...[
-            Positioned(
-              bottom: 62,
-              left: 60,
-              child: Icon(Icons.grass, color: Colors.green.shade900, size: 22),
-            ),
-            Positioned(
-              bottom: 60,
-              right: 60,
-              child: Icon(Icons.grass, color: Colors.green.shade900, size: 22),
-            ),
-            Positioned(
-              bottom: 58,
-              left: 120,
-              child: Icon(
-                Icons.local_florist,
-                color: Colors.pink.shade300,
-                size: 22,
-              ),
-            ),
-          ],
-          //final animation (last question)
-          if (stage >= 3 || (isLastQuestion && _gardenStage > 0)) ...[
-            // sunshine
-            Positioned(
-              top: 18,
-              left: 40,
-              child: Icon(
-                Icons.wb_sunny,
-                color: Colors.orange.shade300,
-                size: 30,
-              ),
-            ),
-            // sparkles
-            Positioned(
-              top: 24,
-              right: 50,
-              child: Icon(
-                Icons.auto_awesome,
-                color: Colors.yellow.shade200,
-                size: 26,
-              ),
-            ),
-            Positioned(
-              top: 50,
-              right: 90,
-              child: Icon(Icons.auto_awesome, color: Colors.white70, size: 20),
-            ),
-            // ladybugs
-            Positioned(
-              bottom: 72,
-              left: 80,
-              child: Icon(
-                Icons.bug_report,
-                color: Colors.red.shade400,
-                size: 20,
-              ),
-            ),
-            Positioned(
-              bottom: 70,
-              right: 80,
-              child: Icon(Icons.bug_report, color: Colors.black87, size: 20),
-            ),
-            // butterflies
-            Positioned(
-              top: 70,
-              left: 110,
-              child: Icon(
-                Icons.flutter_dash,
-                color: Colors.lightBlue.shade200,
-                size: 26,
-              ),
-            ),
-            Positioned(
-              top: 80,
-              right: 110,
-              child: Icon(
-                Icons.flutter_dash,
-                color: Colors.purple.shade200,
-                size: 26,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   Color _colorForOption(int optionIndex, int ecoIndex) {
     return optionIndex == ecoIndex
         ? Colors.green.shade400
@@ -1220,7 +1060,7 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
     final question = _questions[_currentIndex];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF8BD28E),
+      backgroundColor: const Color.fromARGB(255, 172, 215, 175),
       appBar: AppBar(
         title: const Text('Hangout Park Eco Quiz'),
         backgroundColor: const Color(0xFF787878),
@@ -1229,7 +1069,7 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildGarden(),
+            AnimatedGarden(stage: _gardenStage),
             const SizedBox(height: 16),
             Text(
               'Question ${_currentIndex + 1} of ${_questions.length}',
@@ -1243,7 +1083,6 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
             ),
             const SizedBox(height: 16),
 
-            // answer options
             Expanded(
               child: ListView.builder(
                 itemCount: question.options.length,
@@ -1285,6 +1124,198 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ANIMATED GARDEN WIDGET
+class AnimatedGarden extends StatefulWidget {
+  final int stage; // number of eco-friendly picks
+  const AnimatedGarden({super.key, required this.stage});
+
+  @override
+  State<AnimatedGarden> createState() => _AnimatedGardenState();
+}
+
+class _AnimatedGardenState extends State<AnimatedGarden>
+    with TickerProviderStateMixin {
+  late final AnimationController _butterflyCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _butterflyCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 7),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _butterflyCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.stage.clamp(0, 99);
+
+    final showGrassLines   = s >= 1; // first eco pick
+    final showFlowersSmall = s >= 2; // second eco pick
+    final showButterflies  = s >= 3; // third eco pick+
+
+    return Container(
+      height: 240,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 18,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.20),
+          )
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(
+          children: [
+            // BASE BACKGROUND
+            Positioned.fill(
+              child: Image.asset(
+                "assets/garden/Hangout_minigame.jpg",
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            // STAGE 1: grass lines sprout upward
+            Positioned.fill(
+              child: _OverlaySprout(
+                visible: showGrassLines,
+                asset: "assets/garden/grass_lines.png",
+                durationMs: 900,
+                curve: Curves.easeOutCubic,
+              ),
+            ),
+
+            // STAGE 2: small flowers sprout upward
+            Positioned.fill(
+              child: _OverlaySprout(
+                visible: showFlowersSmall,
+                asset: "assets/garden/flowers_small.png",
+                durationMs: 1000,
+                curve: Curves.easeOutBack,
+              ),
+            ),
+
+            // STAGE 3+: butterflies float
+            if (showButterflies) ...[
+              _FlyingButterfly(
+                controller: _butterflyCtrl,
+                asset: "assets/garden/butterfly_1.png",
+                baseX: 0.2,
+                baseY: 0.35,
+                ampX: 0.10,
+                ampY: 0.05,
+                size: 42,
+              ),
+              _FlyingButterfly(
+                controller: _butterflyCtrl,
+                asset: "assets/garden/butterfly_2.png",
+                baseX: 0.78,
+                baseY: 0.42,
+                ampX: 0.08,
+                ampY: 0.07,
+                size: 38,
+                phase: pi / 2,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Reveal overlay from bottom → top so it feels like “sprouting”
+class _OverlaySprout extends StatelessWidget {
+  final bool visible;
+  final String asset;
+  final int durationMs;
+  final Curve curve;
+
+  const _OverlaySprout({
+    required this.visible,
+    required this.asset,
+    required this.durationMs,
+    required this.curve,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: visible ? 1 : 0),
+      duration: Duration(milliseconds: durationMs),
+      curve: curve,
+      builder: (context, t, child) {
+        return ClipRect(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            heightFactor: t, // REVEALS UPWARD
+            child: Opacity(
+              opacity: t,
+              child: Transform.scale(
+                scale: 0.95 + 0.05 * t,
+                alignment: Alignment.bottomCenter,
+                child: child,
+              ),
+            ),
+          ),
+        );
+      },
+      child: Image.asset(asset, fit: BoxFit.cover),
+    );
+  }
+}
+
+// Butterfly float + gentle flap
+class _FlyingButterfly extends StatelessWidget {
+  final AnimationController controller;
+  final String asset;
+  final double baseX, baseY, ampX, ampY;
+  final double size;
+  final double phase;
+
+  const _FlyingButterfly({
+    required this.controller,
+    required this.asset,
+    required this.baseX,
+    required this.baseY,
+    required this.ampX,
+    required this.ampY,
+    required this.size,
+    this.phase = 0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final v = controller.value * 2 * pi + phase;
+        final dx = sin(v) * ampX;
+        final dy = cos(v) * ampY;
+        final flap = 0.92 + (sin(v * 2) * 0.07);
+
+        return Positioned.fill(
+          child: Align(
+            alignment: Alignment(baseX + dx, baseY + dy),
+            child: Transform.scale(scale: flap, child: child),
+          ),
+        );
+      },
+      child: Image.asset(asset, width: size),
     );
   }
 }
