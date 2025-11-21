@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'ToiletGame.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +14,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'De Ontdek Fabriek',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 0, 0, 0)),
+        colorScheme:
+            ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 0, 0, 0)),
       ),
       home: const MyHomePage(),
     );
@@ -41,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
-    
+
     if (result == true || _minigameCompleted) {
       setState(() {
         _minigameCompleted = true;
@@ -60,12 +63,11 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final squareSize = MediaQuery.of(context).size.width * 0.25;
-    
+
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 139, 210, 142),
       body: Stack(
         children: [
-          
           Positioned(
             top: 16,
             left: 16,
@@ -73,126 +75,179 @@ class _MyHomePageState extends State<MyHomePage> {
               colorFilter: _minigameCompleted
                   ? const ColorFilter.mode(Colors.transparent, BlendMode.color)
                   : const ColorFilter.matrix([
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0.2126, 0.7152, 0.0722, 0, 0,
-                      0,      0,      0,      1, 0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1,
+                      0,
                     ]),
               child: GestureDetector(
                 onTap: _navigateToStage,
                 child: Container(
-                width: squareSize,
-                height: squareSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  width: squareSize,
+                  height: squareSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // your drawing as background
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/Images/Festival_Colour.png', // <- your colored stage image
+                          fit: BoxFit.cover, // or BoxFit.contain if you prefer
+                        ),
+                      ),
+
+                      // keep the stage label overlay
+                      Positioned(
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'stage',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: squareSize * 0.08,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Stack(
-  children: [
-    // your drawing as background
-    ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Image.asset(
-        'assets/Images/Festival_Colour.png', // <- your colored stage image
-        fit: BoxFit.cover,        // or BoxFit.contain if you prefer
-      ),
-    ),
-
-    // keep the stage label overlay
-    Positioned(
-      bottom: 8,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 4,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            'stage',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: squareSize * 0.08,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    ),
-  ],
-),
-
               ),
             ),
-            ),
           ),
-          
-          // Toilet square 
+
+          // Toilet square
           Positioned(
             top: 16,
             right: 16,
             child: ColorFiltered(
               colorFilter: const ColorFilter.matrix([
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0,      0,      0,      1, 0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
               ]),
-              child: Container(
-                width: squareSize,
-                height: squareSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color.fromARGB(255, 240, 240, 240),
-                ),
-                child: Stack(
-                  children: [
-                    // Label
-                    Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'toilet',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: squareSize * 0.08,
-                              fontWeight: FontWeight.bold,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ToiletGamePage(),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: squareSize,
+                  height: squareSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color.fromARGB(255, 240, 240, 240),
+                  ),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/ToiletImage/Restroom.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stack) {
+                            return Container(
+                              color: const Color.fromARGB(255, 240, 240, 240),
+                              child: const Center(child: Icon(Icons.bathroom)),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Label
+                      Positioned(
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'toilet',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: squareSize * 0.08,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-          
-          // Waste square 
+          // Waste square
           Positioned(
             top: 16,
             left: 0,
@@ -200,10 +255,26 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Center(
               child: ColorFiltered(
                 colorFilter: const ColorFilter.matrix([
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0,      0,      0,      1, 0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
                 ]),
                 child: Container(
                   width: squareSize,
@@ -247,8 +318,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          
-          // Hang out square 
+
+          // Hang out square
           Positioned(
             bottom: 16,
             left: 0,
@@ -256,10 +327,26 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Center(
               child: ColorFiltered(
                 colorFilter: const ColorFilter.matrix([
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0.2126, 0.7152, 0.0722, 0, 0,
-                  0,      0,      0,      1, 0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0.2126,
+                  0.7152,
+                  0.0722,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
                 ]),
                 child: Container(
                   width: squareSize,
@@ -303,17 +390,33 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          
-          // Food truck square 
+
+          // Food truck square
           Positioned(
             bottom: 16,
             right: 16,
             child: ColorFiltered(
               colorFilter: const ColorFilter.matrix([
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0.2126, 0.7152, 0.0722, 0, 0,
-                0,      0,      0,      1, 0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
               ]),
               child: GestureDetector(
                 onTap: _navigateToFoodTruck,
@@ -545,7 +648,7 @@ class StageQuestion {
 
 class StagePage extends StatefulWidget {
   final VoidCallback onMinigameCompleted;
-  
+
   const StagePage({super.key, required this.onMinigameCompleted});
 
   @override
@@ -641,15 +744,15 @@ class _StagePageState extends State<StagePage> {
   // Current visual configuration of the stage
   Color _colorForScore(int scoreChange) {
     if (scoreChange >= 3) {
-      return Colors.green;        // very eco
+      return Colors.green; // very eco
     } else if (scoreChange >= 1) {
-      return Colors.lightGreen;   // good 
+      return Colors.lightGreen; // good
     } else if (scoreChange == 0) {
-      return Colors.amber;        // neutral
+      return Colors.amber; // neutral
     } else if (scoreChange >= -2) {
-      return Colors.orange;       // bad
+      return Colors.orange; // bad
     } else {
-      return Colors.red;          // very bad
+      return Colors.red; // very bad
     }
   }
 
@@ -658,7 +761,7 @@ class _StagePageState extends State<StagePage> {
       // 1) update score
       _ecoScore += option.scoreChange;
 
-      // 2) next question 
+      // 2) next question
       final bool isLastQuestion =
           _currentQuestionIndex == _questions.length - 1;
 
@@ -703,7 +806,7 @@ class _StagePageState extends State<StagePage> {
   Widget _buildStage() {
     return Center(
       child: Container(
-        width: 260,  
+        width: 260,
         height: 170,
         decoration: BoxDecoration(
           color: Colors.black87,
@@ -896,13 +999,14 @@ class _StagePageState extends State<StagePage> {
       ),
     );
   }
-} 
+}
 
 class ResultPage extends StatelessWidget {
   final int score;
   final VoidCallback onMinigameCompleted;
 
-  const ResultPage({super.key, required this.score, required this.onMinigameCompleted});
+  const ResultPage(
+      {super.key, required this.score, required this.onMinigameCompleted});
 
   String get _title {
     if (score >= 7) {
@@ -988,5 +1092,3 @@ class TriangleClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
-
-
