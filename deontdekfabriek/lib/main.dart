@@ -866,45 +866,44 @@ class _StagePageState extends State<StagePage> {
                 itemBuilder: (context, index) {
                   final option = current.options[index];
                   return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: InkWell(
-                      onTap: () => _onOptionSelected(index, option),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 12,
-                            height: 63,
-                            color: _colorForScore(option.scoreChange),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12.0,
-                                vertical: 10.0,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    option.name,
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: InkWell(
+                        onTap: () => _onOptionSelected(index, option),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 63,
+                              color: _colorForScore(option.scoreChange),
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0,
+                                  vertical: 10.0,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      option.name,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    option.description,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      option.description,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                          ],
+                        ),
+                      ));
                 },
               ),
             ),
@@ -1232,7 +1231,6 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
                 child: AnimatedGarden(stage: _gardenStage),
               ),
             ),
-
             const SizedBox(height: 16),
             Text(
               'Question ${_currentIndex + 1} of ${_questions.length}',
@@ -1245,7 +1243,6 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-
             Expanded(
               child: ListView.builder(
                 itemCount: question.options.length,
