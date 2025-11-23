@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'FoodGame.dart';
 import 'FestivalCleanerApp.dart';
 import 'dart:math'; //for the hangout garden animation
-
+import 'ToiletGame.dart';
 
 void main() {
   runApp(const MyApp());
@@ -169,7 +169,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
 
-          // Toilet square
           Positioned(
             top: 16,
             right: 16,
@@ -196,48 +195,70 @@ class _MyHomePageState extends State<MyHomePage> {
                 1,
                 0,
               ]),
-              child: Container(
-                width: squareSize,
-                height: squareSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color.fromARGB(255, 240, 240, 240),
-                ),
-                child: Stack(
-                  children: [
-                    // Label
-                    Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'toilet',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: squareSize * 0.08,
-                              fontWeight: FontWeight.bold,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ToiletGamePage(),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: squareSize,
+                  height: squareSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color.fromARGB(255, 240, 240, 240),
+                  ),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/ToiletImage/Restroom.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stack) {
+                            return Container(
+                              color: const Color.fromARGB(255, 240, 240, 240),
+                              child: const Center(child: Icon(Icons.bathroom)),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Label
+                      Positioned(
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'toilet',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: squareSize * 0.08,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-
           // Waste square
           Positioned(
             top: 16,
@@ -350,9 +371,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       border: Border.all(color: Colors.black, width: 2),
                       borderRadius: BorderRadius.circular(8),
                       image: DecorationImage(
-                      image: AssetImage("assets/garden/Hangout_minigame.jpg"),
-                      fit: BoxFit.cover,
-                    ),
+                        image: AssetImage("assets/garden/Hangout_minigame.jpg"),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     child: Stack(
                       children: [
@@ -1020,7 +1041,6 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
   int _gardenStage = 0; // grows only when eco option is selected
   bool _showIntro = true;
 
-
   void _onOptionSelected(int optionIndex) {
     final question = _questions[_currentIndex];
 
@@ -1052,49 +1072,50 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       }
     });
   }
-// INTRO SCREEN WIDGET
-Widget _buildIntro() {
-  return Center(
-    child: Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "Welcome to the Hangout Area!",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
+
+  // INTRO SCREEN WIDGET
+  Widget _buildIntro() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Welcome to the Hangout Area!",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "For each eco-friendly choice, watch the garden bloom",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18),
-          ),
-          const SizedBox(height: 40),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _showIntro = false;   // SWITCH TO QUESTIONS
-              });
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color.fromARGB(255, 64, 100, 81),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            const SizedBox(height: 20),
+            const Text(
+              "For each eco-friendly choice, watch the garden bloom",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18),
             ),
-            child: const Text(
-              "Start",
-              style: TextStyle(fontSize: 20, color: Colors.white),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _showIntro = false; // SWITCH TO QUESTIONS
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(255, 64, 100, 81),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+              ),
+              child: const Text(
+                "Start",
+                style: TextStyle(fontSize: 20, color: Colors.white),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Color _colorForOption(int optionIndex, int ecoIndex) {
     return optionIndex == ecoIndex
@@ -1105,15 +1126,15 @@ Widget _buildIntro() {
   @override
   Widget build(BuildContext context) {
     if (_showIntro) {
-  return Scaffold(
-    backgroundColor: const Color.fromARGB(255, 143, 172, 122),
-    appBar: AppBar(
-      title: const Text('Hangout Intro'),
-      backgroundColor: const Color.fromARGB(255, 64, 100, 81),
-    ),
-    body: _buildIntro(),
-  );
-}
+      return Scaffold(
+        backgroundColor: const Color.fromARGB(255, 143, 172, 122),
+        appBar: AppBar(
+          title: const Text('Hangout Intro'),
+          backgroundColor: const Color.fromARGB(255, 64, 100, 81),
+        ),
+        body: _buildIntro(),
+      );
+    }
 
     final question = _questions[_currentIndex];
 
@@ -1128,11 +1149,11 @@ Widget _buildIntro() {
         child: Column(
           children: [
             Center(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.5, 
-              child: AnimatedGarden(stage: _gardenStage),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.5,
+                child: AnimatedGarden(stage: _gardenStage),
+              ),
             ),
-          ),
 
             const SizedBox(height: 16),
             Text(
@@ -1224,9 +1245,9 @@ class _AnimatedGardenState extends State<AnimatedGarden>
   Widget build(BuildContext context) {
     final s = widget.stage.clamp(0, 99);
 
-    final showGrassLines   = s >= 1; // first eco pick
+    final showGrassLines = s >= 1; // first eco pick
     final showFlowersSmall = s >= 2; // second eco pick
-    final showButterflies  = s >= 3; // third eco pick+
+    final showButterflies = s >= 3; // third eco pick+
 
     return Container(
       height: 340,
@@ -1238,7 +1259,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
             spreadRadius: 2,
             offset: const Offset(0, 8),
             color: Colors.black.withOpacity(0.20),
-          )
+          ),
         ],
       ),
       child: ClipRRect(
@@ -1265,12 +1286,12 @@ class _AnimatedGardenState extends State<AnimatedGarden>
 
             // STAGE 2: flower patch
             if (showFlowersSmall) ...[
-              // LEFT SIDE 
+              // LEFT SIDE
               _FlowerPatch(
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 left: -52,
-                bottom: 115,  // upper-left bush flower
+                bottom: 115, // upper-left bush flower
                 scale: 0.28,
                 durationMs: 850,
               ),
@@ -1278,7 +1299,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 left: 22,
-                bottom: 62,   // mid-left bush flower
+                bottom: 62, // mid-left bush flower
                 scale: 0.22,
                 durationMs: 950,
               ),
@@ -1286,7 +1307,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 left: 48,
-                bottom: 8,    // bottom-left big flower
+                bottom: 8, // bottom-left big flower
                 scale: 0.30,
                 durationMs: 1050,
               ),
@@ -1294,17 +1315,17 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 left: 110,
-                bottom: 18,   // tiny left-bottom scatter
+                bottom: 18, // tiny left-bottom scatter
                 scale: 0.16,
                 durationMs: 1150,
               ),
 
-              // RIGHT SIDE 
+              // RIGHT SIDE
               _FlowerPatch(
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 right: 18,
-                bottom: 112,  // upper-right bush flower
+                bottom: 112, // upper-right bush flower
                 scale: 0.26,
                 durationMs: 900,
               ),
@@ -1312,7 +1333,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 right: 28,
-                bottom: 66,   // mid-right bush flower
+                bottom: 66, // mid-right bush flower
                 scale: 0.22,
                 durationMs: 1000,
               ),
@@ -1320,7 +1341,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 right: 44,
-                bottom: 14,   // bottom-right big flower
+                bottom: 14, // bottom-right big flower
                 scale: 0.28,
                 durationMs: 1100,
               ),
@@ -1330,7 +1351,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 left: 200,
-                bottom: 6,    // small center-bottom flower
+                bottom: 6, // small center-bottom flower
                 scale: 0.18,
                 durationMs: 1200,
               ),
@@ -1338,12 +1359,11 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 visible: showFlowersSmall,
                 asset: "assets/garden/flowers_small.png",
                 right: 120,
-                bottom: 4,    // tiny right-bottom scatter near corner
+                bottom: 4, // tiny right-bottom scatter near corner
                 scale: 0.14,
                 durationMs: 1300,
               ),
             ],
-
 
             // STAGE 3: butterflies float
             if (showButterflies) ...[
@@ -1374,7 +1394,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
   }
 }
 
-// Reveal overlay from bottom 
+// Reveal overlay from bottom
 class _OverlaySprout extends StatelessWidget {
   final bool visible;
   final String asset;
@@ -1394,28 +1414,29 @@ class _OverlaySprout extends StatelessWidget {
       tween: Tween(begin: 0, end: visible ? 1 : 0),
       duration: Duration(milliseconds: durationMs),
       curve: curve,
-builder: (context, t, child) {
-  final clampedT = t.clamp(0.0, 1.0); // prevents opacity crash
+      builder: (context, t, child) {
+        final clampedT = t.clamp(0.0, 1.0); // prevents opacity crash
 
-  return ClipRect(
-    child: Align(
-      alignment: Alignment.bottomCenter,
-      heightFactor: clampedT,
-      child: Opacity(
-        opacity: clampedT,
-        child: Transform.scale(
-          scale: 0.95 + 0.05 * t, 
-          alignment: Alignment.bottomCenter,
-          child: child,
-        ),
-      ),
-    ),
-  );
-},
+        return ClipRect(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            heightFactor: clampedT,
+            child: Opacity(
+              opacity: clampedT,
+              child: Transform.scale(
+                scale: 0.95 + 0.05 * t,
+                alignment: Alignment.bottomCenter,
+                child: child,
+              ),
+            ),
+          ),
+        );
+      },
       child: Image.asset(asset, fit: BoxFit.cover),
     );
   }
 }
+
 // Small flower cluster that sprouts + fades in near bottom
 class _FlowerPatch extends StatelessWidget {
   final bool visible;

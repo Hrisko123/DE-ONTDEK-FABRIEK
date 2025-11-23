@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  sensors_plus: ^3.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -59,11 +60,21 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/Images/
-    - assets/garden/Hangout_minigame.jpg
-    - assets/garden/grass_lines.png
-    - assets/garden/flowers_small.png
-    - assets/garden/butterfly_1.png
+  - assets/Images/
+  - assets/garden/Hangout_minigame.jpg
+  - assets/garden/grass_lines.png
+  - assets/garden/flowers_small.png
+  - assets/garden/butterfly_1.png
+
+  # Toilet images
+  - assets/ToiletImage/Sigaret.png
+  - assets/ToiletImage/Bananapeel.png
+  - assets/ToiletImage/Compost.png
+  - assets/ToiletImage/Leaf.png
+  - assets/ToiletImage/Sawdust.png
+  - assets/ToiletImage/Chewingum.png
+  - assets/ToiletImage/Bucket.png
+
 
 
   # To add assets to your application, add an assets section, like this:
