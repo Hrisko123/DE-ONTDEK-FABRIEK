@@ -60,6 +60,8 @@ flutter:
 
   assets:
     - assets/Images/
+    - assets/Images/Food_minigame.png
+    - assets/Images/Toilets_minigame.png
     - assets/garden/Hangout_minigame.jpg
     - assets/garden/grass_lines.png
     - assets/garden/flowers_small.png
