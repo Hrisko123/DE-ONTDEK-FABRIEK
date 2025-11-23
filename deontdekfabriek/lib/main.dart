@@ -202,7 +202,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.black, width: 2),
                   borderRadius: BorderRadius.circular(8),
-                  color: const Color.fromARGB(255, 240, 240, 240),
+                  image: DecorationImage(
+                  image: AssetImage("assets/Images/Toilets_minigame.png"),
+                  fit: BoxFit.cover,
+                  ),
                 ),
                 child: Stack(
                   children: [
@@ -425,7 +428,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.black, width: 2),
                     borderRadius: BorderRadius.circular(8),
-                    color: const Color.fromARGB(255, 250, 250, 250),
+                      image: DecorationImage(
+                      image: AssetImage("assets/Images/Food_minigame.png"),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                   child: Stack(
                     children: [
