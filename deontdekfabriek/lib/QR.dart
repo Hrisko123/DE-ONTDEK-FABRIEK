@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:deontdekfabriek/ToiletGame.dart';
 
 class QR extends StatefulWidget {
   const QR({super.key});
@@ -11,6 +13,7 @@ class QR extends StatefulWidget {
 class _QRState extends State<QR> {
   MobileScannerController cameraController = MobileScannerController();
   String? qrText;
+  String? _lastLaunched; // voorkom herhaald openen
 
   @override
   void dispose() {
@@ -38,12 +41,50 @@ class _QRState extends State<QR> {
         children: [
           MobileScanner(
             controller: cameraController,
-            onDetect: (capture) {
+            onDetect: (capture) async {
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
+                final value = barcode.rawValue;
+                if (value == null) continue;
                 setState(() {
-                  qrText = barcode.rawValue;
+                  qrText = value;
                 });
+
+                // Als de QR verwijst naar de interne ToiletGame-pagina, navigeer intern
+                if (value.contains('toilet.game')) {
+                  if (_lastLaunched == value) return; // al geopend
+                  _lastLaunched = value;
+                  if (!mounted) return;
+                  try {
+                    // Navigeer naar het minigame scherm (ToiletGamePage)
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ToiletGamePage()),
+                    );
+                  } catch (_) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Kon pagina niet openen')),
+                      );
+                    }
+                  }
+                } else if (value.startsWith('http://') ||
+                    value.startsWith('https://')) {
+                  if (_lastLaunched == value) return;
+                  _lastLaunched = value;
+                  final uri = Uri.tryParse(value);
+                  if (uri != null) {
+                    try {
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    } catch (_) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Kon URL niet openen')),
+                        );
+                      }
+                    }
+                  }
+                }
               }
             },
           ),

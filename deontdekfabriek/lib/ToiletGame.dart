@@ -50,14 +50,11 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
 
     // Check assets in console
     for (final s in _specs) {
-      rootBundle
-          .load(s.asset)
-          .then((_) {
-            debugPrint('FOUND: ${s.asset}');
-          })
-          .catchError((e) {
-            debugPrint('MISSING: ${s.asset} -> $e');
-          });
+      rootBundle.load(s.asset).then((_) {
+        debugPrint('FOUND: ${s.asset}');
+      }).catchError((e) {
+        debugPrint('MISSING: ${s.asset} -> $e');
+      });
     }
     rootBundle.load('assets/ToiletImage/Bucket.png');
 
