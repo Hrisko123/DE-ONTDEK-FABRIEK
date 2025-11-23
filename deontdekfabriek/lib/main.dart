@@ -3,6 +3,7 @@ import 'FoodGame.dart';
 import 'FestivalCleanerApp.dart';
 import 'dart:math'; //for the hangout garden animation
 import 'ToiletGame.dart';
+import 'QR.dart';
 
 void main() {
   runApp(const MyApp());
@@ -73,7 +74,12 @@ class _MyHomePageState extends State<MyHomePage> {
     ).push(MaterialPageRoute(builder: (context) => const FestivalCleanerApp()));
   }
 
-  @override
+  void _navigateToQR() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const QR()));
+  }
+
   Widget build(BuildContext context) {
     final squareSize = MediaQuery.of(context).size.width * 0.25;
 
@@ -467,6 +473,78 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                             child: Text(
                               'food truck',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: squareSize * 0.08,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // QR square
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0.2126,
+                0.7152,
+                0.0722,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+              ]),
+              child: GestureDetector(
+                onTap: _navigateToQR,
+                child: Container(
+                  width: squareSize,
+                  height: squareSize,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    color: const Color.fromARGB(255, 250, 250, 250),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Label
+                      Positioned(
+                        top: 8,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'QR',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: squareSize * 0.08,
