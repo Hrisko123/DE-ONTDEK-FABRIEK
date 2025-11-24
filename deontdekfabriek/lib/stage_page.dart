@@ -1,35 +1,238 @@
+//// PART 1 START
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
-class StageOption {
-  final String name;
-  final String description;
-  final int scoreChange;
+// -------------------------------------------------------------
+// GLOBAL AUDIO CONTROLLER
+// -------------------------------------------------------------
+class StageAudioController {
+  StageAudioController._internal();
+  static final StageAudioController instance = StageAudioController._internal();
 
-  const StageOption({
-    required this.name,
-    required this.description,
-    required this.scoreChange,
-  });
+  final AudioPlayer _player = AudioPlayer()..setReleaseMode(ReleaseMode.loop);
+  String? _currentTrack;
+
+  Future<void> playLoop(String key, String asset) async {
+    if (_currentTrack == key) return;
+    _currentTrack = key;
+    await _player.stop();
+    await _player.play(AssetSource(asset));
+  }
+
+  Future<void> stop() async {
+    _currentTrack = null;
+    await _player.stop();
+  }
 }
 
-class StageQuestion {
-  final String category;
-  final String questionText;
-  final List<StageOption> options;
+// -------------------------------------------------------------
+// ENUMS
+// -------------------------------------------------------------
+enum BandStyle { rock, pop, dj }
+enum StageLights { eco, mixed, flood }
+enum StagePower { solar, grid, diesel }
 
-  const StageQuestion({
-    required this.category,
-    required this.questionText,
-    required this.options,
+/// Floor starts as NONE → brown color until user chooses a material.
+enum StageFloor { none, woodenPallets, osb, steel }
+
+/// Speakers – visual choice
+enum SpeakerSetup { defaultSpeaker, normalSpeaker, bambooSpeaker, loudSpeaker }
+
+// -------------------------------------------------------------
+// MUSIC LOOPS
+// -------------------------------------------------------------
+final kBandLoops = {
+  BandStyle.rock: 'assets/audio/rock_loop.mp3',
+  BandStyle.pop: 'assets/audio/pop_loop.mp3',
+  BandStyle.dj: 'assets/audio/techno_loop.mp3',
+};
+
+// -------------------------------------------------------------
+// TAP PULSE
+// -------------------------------------------------------------
+class TapPulse extends StatelessWidget {
+  final AnimationController controller;
+  final double size;
+
+  const TapPulse({
+    super.key,
+    required this.controller,
+    this.size = 60,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (_, __) {
+        final t = controller.value;
+        final scale = 1 + t * 1.4;
+        final opacity = (1 - t).clamp(0.0, 1.0);
+
+        return Opacity(
+          opacity: opacity,
+          child: Transform.scale(
+            scale: scale,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.8 * opacity),
+                  width: 3,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
-enum BandStyle { rock, techno, pop, dj }
+// -------------------------------------------------------------
+// ROTATING LIGHT BEAM
+// -------------------------------------------------------------
+class _RotatingBeam extends StatefulWidget {
+  final Color color;
+  final bool reverse;
+  const _RotatingBeam({required this.color, required this.reverse});
 
-// ─────────────────────────────────────────────────────────────
-//  STAGE PAGE
-// ─────────────────────────────────────────────────────────────
+  @override
+  State<_RotatingBeam> createState() => _RotatingBeamState();
+}
 
+class _RotatingBeamState extends State<_RotatingBeam>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController spin =
+      AnimationController(vsync: this, duration: const Duration(seconds: 5))
+        ..repeat();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: spin,
+      builder: (_, child) {
+        final angle = (widget.reverse ? -1 : 1) *
+            (0.4 + 0.3 * sin(spin.value * pi * 2));
+        return Transform.rotate(angle: angle, child: child);
+      },
+      child: Container(
+        width: 70,
+        height: 150,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              widget.color,
+              widget.color.withOpacity(0),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -------------------------------------------------------------
+// CROWD ANIMATION
+// -------------------------------------------------------------
+class _AnimatedCrowd extends StatelessWidget {
+  final AnimationController controller;
+  final AnimationController spotlightController;
+  final String emojiRow;
+
+  const _AnimatedCrowd({
+    required this.controller,
+    required this.spotlightController,
+    required this.emojiRow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([controller, spotlightController]),
+      builder: (_, __) {
+        final bounce = (controller.value - 0.5) * 10;
+        final spotX = sin(spotlightController.value * pi * 2) * 120;
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              left: MediaQuery.of(context).size.width / 2 + spotX - 90,
+              child: Container(
+                width: 180,
+                height: 120,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(.25),
+                      Colors.white.withOpacity(.02),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ),
+            Transform.translate(
+              offset: Offset(0, bounce),
+              child: Text(
+                emojiRow,
+                style: const TextStyle(fontSize: 48),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// -------------------------------------------------------------
+// BAND MEMBERS (smaller)
+// -------------------------------------------------------------
+class _BandRow extends StatelessWidget {
+  final BandStyle band;
+  const _BandRow({required this.band});
+
+  @override
+  Widget build(BuildContext context) {
+    final count =
+        band == BandStyle.rock ? 4 : band == BandStyle.pop ? 3 : 1;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: List.generate(count, (_) {
+        return Column(
+          children: [
+            const CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.white,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: 32,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.blueAccent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+}
+//// PART 2 START
+// -------------------------------------------------------------
+// MAIN STAGE PAGE
+// -------------------------------------------------------------
 class StagePage extends StatefulWidget {
   final VoidCallback onMinigameCompleted;
   final String festivalName;
@@ -45,539 +248,615 @@ class StagePage extends StatefulWidget {
 }
 
 class _StagePageState extends State<StagePage>
-    with SingleTickerProviderStateMixin {
-  // QUESTIONS
-  final List<StageQuestion> _questions = const [
-    StageQuestion(
-      category: 'Lights',
-      questionText: 'What kind of lights do you use on the main stage?',
-      options: [
-        StageOption(
-          name: 'Only LED lights',
-          description: 'Very efficient and long-lasting.',
-          scoreChange: 4,
-        ),
-        StageOption(
-          name: 'Mostly LED + some halogen',
-          description: 'Better than nothing, but still wastes energy.',
-          scoreChange: 1,
-        ),
-        StageOption(
-          name: 'All halogen spotlights',
-          description: 'Use a lot of electricity.',
-          scoreChange: -2,
-        ),
-        StageOption(
-          name: 'Huge floodlights all night',
-          description: 'Looks cool but terrible for energy use.',
-          scoreChange: -4,
-        ),
-      ],
+    with TickerProviderStateMixin {
+  BandStyle band = BandStyle.rock;
+  StageLights lights = StageLights.eco;
+  StagePower power = StagePower.solar;
+  StageFloor floor = StageFloor.none; // start brown
+
+  SpeakerSetup speakers = SpeakerSetup.defaultSpeaker;
+
+  late AnimationController crowdCtrl;
+  late AnimationController spotlightCtrl;
+  late AnimationController pulseCtrl;
+
+  // Back wall theme index (for background color changes)
+  int backdropIndex = 0;
+
+  // Some nice preset gradients
+  final List<LinearGradient> _backdropGradients = const [
+    LinearGradient(
+      colors: [Colors.black87, Colors.black54],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
     ),
-    StageQuestion(
-      category: 'Power',
-      questionText: 'How do you power the stage?',
-      options: [
-        StageOption(
-          name: 'Solar panels + batteries',
-          description: 'Clean, quiet and renewable.',
-          scoreChange: 4,
-        ),
-        StageOption(
-          name: 'Green electricity from the grid',
-          description: 'Contracted from renewable sources.',
-          scoreChange: 2,
-        ),
-        StageOption(
-          name: 'Normal grid electricity',
-          description: 'Depends on how the country produces energy.',
-          scoreChange: 0,
-        ),
-        StageOption(
-          name: 'Diesel generator',
-          description: 'Polluting and noisy.',
-          scoreChange: -4,
-        ),
-      ],
+    LinearGradient(
+      colors: [Color(0xFF0D47A1), Color(0xFF1976D2)], // deep blue
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
     ),
-    StageQuestion(
-      category: 'Materials',
-      questionText: 'Which material do you use for the stage floor?',
-      options: [
-        StageOption(
-          name: 'Reused wooden pallets',
-          description: 'Reusing materials from previous events.',
-          scoreChange: 4,
-        ),
-        StageOption(
-          name: 'New FSC-certified wood',
-          description: 'New material but from sustainable forests.',
-          scoreChange: 2,
-        ),
-        StageOption(
-          name: 'Metal structure + recycled panels',
-          description: 'Durable structure with recycled surface.',
-          scoreChange: 1,
-        ),
-        StageOption(
-          name: 'New plastic panels',
-          description: 'Easy to clean but not eco-friendly.',
-          scoreChange: -3,
-        ),
-      ],
+    LinearGradient(
+      colors: [Color(0xFF4A148C), Color(0xFF7B1FA2)], // purple
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ),
+    LinearGradient(
+      colors: [Color(0xFF004D40), Color(0xFF00796B)], // teal
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ),
+    LinearGradient(
+      colors: [Color(0xFF880E4F), Color(0xFFC2185B)], // pink/red
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
     ),
   ];
 
-  int _currentQuestionIndex = 0;
-  int _ecoScore = 0;
-  BandStyle _selectedBand = BandStyle.rock;
+  // Track what the user already changed (to hide pulse after interaction)
+  bool tappedLights = false;
+  bool tappedBandArea = false; 
+  bool tappedPower = false;
+  bool tappedEffectsArea = false; 
+  bool tappedFloor = false;
+  bool tappedSpeakers = false;
 
-  bool _bounceSpeakers = false;
-
-  late final AnimationController _crowdController;
+  bool get showLightsHint => !tappedLights;
+  bool get showBandHint => !tappedBandArea;
+  bool get showPowerHint => !tappedPower;
+  bool get showEffectsHint => !tappedEffectsArea;
+  bool get showFloorHint => !tappedFloor;
+  bool get showSpeakersHint => !tappedSpeakers;
 
   @override
   void initState() {
     super.initState();
-    _crowdController = AnimationController(
+
+    crowdCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
+
+    spotlightCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
+
+    pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+
+    StageAudioController.instance.playLoop(band.name, kBandLoops[band]!);
   }
 
   @override
   void dispose() {
-    _crowdController.dispose();
+    crowdCtrl.dispose();
+    spotlightCtrl.dispose();
+    pulseCtrl.dispose();
     super.dispose();
   }
 
-  // ECO LEVEL
-  int get ecoLevel {
-    if (_ecoScore >= 6) return 2;
-    if (_ecoScore >= 2) return 1;
-    return 0;
-  }
-
-  Color get _stageMainColor {
-    switch (_selectedBand) {
-      case BandStyle.rock:
-        return Colors.deepPurple.shade700;
-      case BandStyle.techno:
-        return Colors.blueGrey.shade900;
-      case BandStyle.pop:
-        return Colors.pinkAccent.shade200;
-      case BandStyle.dj:
-        return Colors.blueAccent.shade400;
-    }
-  }
-
-  Color get _lightColor {
-    if (ecoLevel == 2) return Colors.greenAccent;
-    if (ecoLevel == 1) return Colors.amberAccent;
-    return Colors.redAccent;
-  }
-
-  String get _bandName {
-    switch (_selectedBand) {
-      case BandStyle.rock:
-        return 'Rock band';
-      case BandStyle.techno:
-        return 'Techno DJ';
-      case BandStyle.pop:
-        return 'Pop group';
-      case BandStyle.dj:
-        return 'Festival DJ';
-    }
-  }
-
-  String get _bandEmoji {
-    switch (_selectedBand) {
-      case BandStyle.rock:
-        return '🎸';
-      case BandStyle.techno:
-        return '🎧';
-      case BandStyle.pop:
-        return '🎤';
-      case BandStyle.dj:
-        return '🎛️';
-    }
-  }
-
-  void _onOptionSelected(StageOption option) {
+  // -------------------------------------------------------------
+  // TAP LOGIC
+  // -------------------------------------------------------------
+  void cycleLights() {
     setState(() {
-      _ecoScore += option.scoreChange;
-      _bounceSpeakers = !_bounceSpeakers;
-
-      final bool isLast = _currentQuestionIndex == _questions.length - 1;
-
-      if (!isLast) {
-        _currentQuestionIndex++;
-      } else {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ResultPage(
-              score: _ecoScore,
-              bandName: _bandName,
-              festivalName: widget.festivalName,
-              onMinigameCompleted: widget.onMinigameCompleted,
-            ),
-          ),
-        );
-      }
+      tappedLights = true;
+      lights = StageLights.values[(lights.index + 1) % StageLights.values.length];
     });
   }
 
-  // BAND SELECTOR
-  Widget _buildBandSelector() {
-    return Wrap(
-      spacing: 8,
-      children: [
-        _buildBandChip(BandStyle.rock, 'Rock', '🎸'),
-        _buildBandChip(BandStyle.techno, 'Techno', '🎧'),
-        _buildBandChip(BandStyle.pop, 'Pop', '🎤'),
-        _buildBandChip(BandStyle.dj, 'DJ', '🎛️'),
-      ],
-    );
+  void cyclePower() {
+    setState(() {
+      tappedPower = true;
+      power = StagePower.values[(power.index + 1) % StagePower.values.length];
+    });
   }
 
-  Widget _buildBandChip(BandStyle style, String label, String emoji) {
-    final bool selected = _selectedBand == style;
-    return ChoiceChip(
-      selected: selected,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji),
-          const SizedBox(width: 4),
-          Text(label),
-        ],
+  /// Middle tap → ONLY changes the band (4 / 3 / 1 performers).
+  void _onBandAreaTap() {
+    setState(() {
+      tappedBandArea = true;
+      band = BandStyle.values[(band.index + 1) % BandStyle.values.length];
+    });
+    StageAudioController.instance.playLoop(band.name, kBandLoops[band]!);
+  }
+
+  /// Effects area tap → ONLY changes background color now.
+  void _onBackdropColorTap() {
+    setState(() {
+      tappedEffectsArea = true;
+      backdropIndex = (backdropIndex + 1) % _backdropGradients.length;
+    });
+  }
+
+  // -------------------------------------------------------------
+  // FLOOR OPTION MENU
+  // -------------------------------------------------------------
+  Future<void> _showFloorOptions() async {
+    final selected = await showModalBottomSheet<StageFloor>(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      onSelected: (_) => setState(() => _selectedBand = style),
-    );
-  }
-
-  // SPEAKER ANIMATION
-  Widget _buildSpeaker({double? left, double? right, required double bottom}) {
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-      left: left,
-      right: right,
-      bottom: _bounceSpeakers ? bottom + 4 : bottom,
-      child: Container(
-        width: 34,
-        height: 60,
-        decoration: BoxDecoration(
-          color: Colors.black87,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade700),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.circle,
-                size: 14, color: Colors.grey.shade300.withOpacity(0.9)),
-            const SizedBox(height: 6),
-            Icon(Icons.circle,
-                size: 20, color: Colors.grey.shade300.withOpacity(0.9)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // FULL ANIMATED STAGE
-  Widget _buildAnimatedStage() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = width * 0.65;
-
-        return SizedBox(
-          width: width,
-          height: height,
-          child: Stack(
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // BACK WALL
-              Positioned.fill(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOutCubic,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _stageMainColor.withOpacity(0.9),
-                        _stageMainColor.withOpacity(0.6),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.black87, width: 2),
-                  ),
+              const Text(
+                "Choose stage floor",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
+              const SizedBox(height: 12),
 
-              // LIGHT BEAMS
-              Positioned(
-                top: 0,
-                left: width * 0.12,
-                child: _LightBeam(
-                  color: _lightColor.withOpacity(0.7),
-                  reverse: false,
-                ),
+              _floorChoiceTile(
+                StageFloor.woodenPallets,
+                "Wooden pallets",
+                "Wood from reused transport pallets.",
               ),
-              Positioned(
-                top: 0,
-                right: width * 0.12,
-                child: _LightBeam(
-                  color: _lightColor.withOpacity(0.5),
-                  reverse: true,
-                ),
+              _floorChoiceTile(
+                StageFloor.osb,
+                "OSB panels",
+                "Engineered wood strands pressed into sheets.",
               ),
-
-              // FESTIVAL NAME BANNER
-              Positioned(
-                top: 8,
-                left: width * 0.15,
-                right: width * 0.15,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      widget.festivalName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // SPEAKERS
-              _buildSpeaker(left: 10, bottom: 40),
-              _buildSpeaker(right: 10, bottom: 40),
-
-              // STAGE FLOOR
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  height: height * 0.25,
-                  decoration: BoxDecoration(
-                    color: Colors.brown.shade700,
-                    borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(24),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, -4),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // BAND
-              Positioned(
-                bottom: height * 0.25 + 10,
-                left: 0,
-                right: 0,
-                child: _BandRow(
-                  bandStyle: _selectedBand,
-                  ecoLevel: ecoLevel,
-                ),
-              ),
-
-              // MUSIC NOTES
-              const Positioned(
-                top: 30,
-                left: 24,
-                child: Icon(Icons.music_note, color: Colors.white70, size: 22),
-              ),
-              const Positioned(
-                top: 40,
-                right: 32,
-                child:
-                    Icon(Icons.music_note, color: Colors.white54, size: 18),
-              ),
-
-              // CROWD ANIMATION
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: AnimatedBuilder(
-                    animation: _crowdController,
-                    builder: (context, child) {
-                      final t = _crowdController.value;
-                      final dy = (t - 0.5) * 6;
-                      return Transform.translate(
-                        offset: Offset(0, dy),
-                        child: child,
-                      );
-                    },
-                    child: Opacity(
-                      opacity: 0.9,
-                      child: Text(
-                        ecoLevel == 2
-                            ? '🙋‍♀️🙋‍♂️🙋‍♀️🎉🙋‍♂️🙋‍♀️🙋‍♂️'
-                            : ecoLevel == 1
-                                ? '🙋‍♀️🙋‍♂️🎵🙋‍♀️🙋‍♂️'
-                                : '🙋‍♀️🙋‍♂️😐',
-                        style: TextStyle(
-                          fontSize: width * 0.16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // BAND NAME LABEL
-              Positioned(
-                left: 12,
-                bottom: 6,
-                child: Row(
-                  children: [
-                    Text(
-                      _bandEmoji,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _bandName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+              _floorChoiceTile(
+                StageFloor.steel,
+                "Steel deck",
+                "A strong metal surface used in heavy staging.",
               ),
             ],
           ),
         );
       },
     );
+
+    if (selected != null && mounted) {
+      setState(() {
+        tappedFloor = true;
+        floor = selected;
+      });
+    }
   }
 
+  Widget _floorChoiceTile(
+    StageFloor value,
+    String title,
+    String subtitle,
+  ) {
+    final bool isSelected = floor == value;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.asset(
+          _floorAsset(value)!,
+          width: 90,
+          height: 60,
+          fit: BoxFit.cover,
+        ),
+      ),
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(color: Colors.white70, fontSize: 12),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check, color: Colors.greenAccent)
+          : null,
+      onTap: () => Navigator.pop(context, value),
+    );
+  }
+
+  // -------------------------------------------------------------
+  // SPEAKER OPTION MENU
+  // -------------------------------------------------------------
+  Future<void> _showSpeakerOptions() async {
+    final selected = await showModalBottomSheet<SpeakerSetup>(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Choose speakers",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              _speakerChoiceTile(
+                SpeakerSetup.normalSpeaker,
+                "Normal speaker",
+                "A clean black speaker made from composite panels.",
+              ),
+              _speakerChoiceTile(
+                SpeakerSetup.bambooSpeaker,
+                "Bamboo speaker",
+                "A speaker with a pressed bamboo outer shell.",
+              ),
+              _speakerChoiceTile(
+                SpeakerSetup.loudSpeaker,
+                "Loud speaker",
+                "A reinforced metal tower made for high volume.",
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected != null && mounted) {
+      setState(() {
+        tappedSpeakers = true;
+        speakers = selected;
+      });
+    }
+  }
+
+  Widget _speakerChoiceTile(
+    SpeakerSetup value,
+    String title,
+    String subtitle,
+  ) {
+    final bool isSelected = speakers == value;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(color: Colors.white70, fontSize: 12),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check, color: Colors.greenAccent)
+          : null,
+      onTap: () => Navigator.pop(context, value),
+    );
+  }
+  // -------------------------------------------------------------
+  // ASSET HELPERS
+  // -------------------------------------------------------------
+
+  // FLOOR VISUAL — brown when none, image otherwise
+  String? _floorAsset(StageFloor f) {
+    switch (f) {
+      case StageFloor.none:
+        return null;
+      case StageFloor.woodenPallets:
+        return 'assets/stage/PalletWood.png';
+      case StageFloor.osb:
+        return 'assets/stage/OSB.png';
+      case StageFloor.steel:
+        return 'assets/stage/Steel.png';
+    }
+  }
+
+  Color _floorColor(StageFloor f) {
+    return f == StageFloor.none ? Colors.brown.shade600 : Colors.transparent;
+  }
+
+  // SPEAKERS — UPDATED WITH YOUR FINAL FILENAMES
+  String _speakerAsset(SpeakerSetup s) {
+    switch (s) {
+      case SpeakerSetup.defaultSpeaker:
+        return 'assets/stage/defaultSpeaker.png';
+      case SpeakerSetup.normalSpeaker:
+        return 'assets/stage/normalSpeaker.png';
+      case SpeakerSetup.bambooSpeaker:
+        return 'assets/stage/bambooSpeaker.png';
+      case SpeakerSetup.loudSpeaker:
+        return 'assets/stage/loudSpeaker.png';
+    }
+  }
+
+  // -------------------------------------------------------------
+  // ECO SCORE
+  // -------------------------------------------------------------
+  int get ecoScore {
+    int score = 0;
+
+    score += lights == StageLights.eco ? 4 :
+             lights == StageLights.mixed ? 1 : -4;
+
+    score += power == StagePower.solar ? 4 :
+             power == StagePower.grid ? 2 : -4;
+
+    score += floor == StageFloor.woodenPallets ? 4 :
+             floor == StageFloor.osb ? 2 :
+             floor == StageFloor.steel ? -3 : 0;
+
+    switch (speakers) {
+      case SpeakerSetup.bambooSpeaker:
+        score += 2;
+        break;
+      case SpeakerSetup.loudSpeaker:
+        score -= 1;
+        break;
+      case SpeakerSetup.defaultSpeaker:
+      case SpeakerSetup.normalSpeaker:
+        break;
+    }
+
+    score += band == BandStyle.dj ? 2 :
+             band == BandStyle.rock ? 1 : 0;
+
+    return score;
+  }
+
+  int get ecoLevel {
+    if (ecoScore >= 8) return 2;
+    if (ecoScore >= 3) return 1;
+    return 0;
+  }
+
+//// PART 3 START
   @override
   Widget build(BuildContext context) {
-    final current = _questions[_currentQuestionIndex];
-
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 139, 210, 142),
       appBar: AppBar(
-        title: const Text('Build your eco stage'),
-        backgroundColor: const Color.fromARGB(255, 120, 118, 118),
+        title: const Text("Build your eco stage"),
+        backgroundColor: Colors.grey.shade700,
+        actions: [
+          IconButton(
+            tooltip: 'Mute music',
+            onPressed: StageAudioController.instance.stop,
+            icon: const Icon(Icons.volume_off),
+          )
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildAnimatedStage(),
-            const SizedBox(height: 12),
-            _buildBandSelector(),
-            const SizedBox(height: 12),
-
-            // QUESTION
-            Text(
-              current.questionText,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 3,
+            child: LayoutBuilder(
+              builder: (_, c) => buildStage(context, c.maxWidth, c.maxHeight),
             ),
-            const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 12),
+          _AnimatedCrowd(
+            controller: crowdCtrl,
+            spotlightController: spotlightCtrl,
+            emojiRow: ecoLevel == 2
+                ? "🙋‍♀️🙋‍♂️🎉🙋‍♀️🙋‍♂️🎉🙋‍♀️"
+                : ecoLevel == 1
+                    ? "🙋‍♂️🙋‍♀️🎵🙋‍♂️"
+                    : "🙋‍♀️🙋‍♂️😐",
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
 
-            // OPTIONS
-            Expanded(
-              child: ListView.builder(
-                itemCount: current.options.length,
-                itemBuilder: (context, index) {
-                  final option = current.options[index];
-                  final color = option.scoreChange >= 3
-                      ? Colors.green
-                      : option.scoreChange >= 1
-                          ? Colors.lightGreen
-                          : option.scoreChange == 0
-                              ? Colors.amber
-                              : option.scoreChange >= -2
-                                  ? Colors.orange
-                                  : Colors.red;
+  // -------------------------------------------------------------
+  // BUILD STAGE VISUAL
+  // -------------------------------------------------------------
+  Widget buildStage(BuildContext context, double width, double height) {
+    final beamColor = lights == StageLights.eco
+        ? Colors.greenAccent
+        : lights == StageLights.mixed
+            ? Colors.amberAccent
+            : Colors.redAccent;
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    child: InkWell(
-                      onTap: () => _onOptionSelected(option),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 70,
-                            color: color,
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    option.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    option.description,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+    return Stack(
+      children: [
+        // BACK WALL
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: _backdropGradients[backdropIndex],
+              borderRadius: BorderRadius.circular(24),
             ),
-
-            Text(
-              'Decision ${_currentQuestionIndex + 1} of ${_questions.length}  |  Eco score: $_ecoScore',
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
-            ),
-          ],
+          ),
         ),
-      ),
+
+        // TAP ZONES
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: height * 0.30,
+          child: GestureDetector(onTap: cycleLights),
+        ),
+        Positioned(
+          bottom: height * 0.25,
+          left: 0,
+          right: 0,
+          height: height * 0.25,
+          child: GestureDetector(onTap: _onBandAreaTap),
+        ),
+        Positioned(
+          top: height * 0.32,
+          left: width * 0.3,
+          right: width * 0.3,
+          height: 60,
+          child: GestureDetector(onTap: _onBackdropColorTap),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          width: width * 0.25,
+          height: height * 0.30,
+          child: GestureDetector(onTap: cyclePower),
+        ),
+        Positioned(
+          top: 0,
+          right: 0,
+          width: width * 0.25,
+          height: height * 0.30,
+          child: GestureDetector(onTap: cyclePower),
+        ),
+
+        // LIGHT BEAMS
+        Positioned(
+          top: 0,
+          left: width * 0.18,
+          child: _RotatingBeam(
+            color: beamColor.withOpacity(0.8),
+            reverse: false,
+          ),
+        ),
+        Positioned(
+          top: 0,
+          right: width * 0.18,
+          child: _RotatingBeam(
+            color: beamColor.withOpacity(0.6),
+            reverse: true,
+          ),
+        ),
+
+        // BAND MEMBERS
+        Positioned(
+          bottom: height * 0.25 + 12,
+          left: 0,
+          right: 0,
+          child: _BandRow(band: band),
+        ),
+
+        // FLOOR VISUAL
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: height * 0.25,
+          child: Container(
+            decoration: BoxDecoration(
+              color: _floorColor(floor),
+              image: _floorAsset(floor) != null
+                  ? DecorationImage(
+                      image: AssetImage(_floorAsset(floor)!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
+            ),
+          ),
+        ),
+
+        // FLOOR TAP ZONE
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: height * 0.25,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: _showFloorOptions,
+          ),
+        ),
+
+        // SPEAKERS — corrected placement & scaling
+        Positioned(
+          bottom: height * 0.25 - 55,
+          left: width * 0.02,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: _showSpeakerOptions,
+            child: Image.asset(
+              _speakerAsset(speakers),
+              width: width * 0.10,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: height * 0.25 - 55,
+          right: width * 0.02,
+          child: Image.asset(
+            _speakerAsset(speakers),
+            width: width * 0.10,
+            fit: BoxFit.contain,
+          ),
+        ),
+// -------------------------------------------------------------
+// PERFECTLY CENTERED PULSE CIRCLES
+// -------------------------------------------------------------
+
+// Lights pulse (center of top 30%)
+if (showLightsHint)
+  Positioned(
+    top: height * 0.15 - 25,
+    left: width / 2 - 25,
+    child: TapPulse(controller: pulseCtrl, size: 50),
+  ),
+
+// Band area pulse (center of 25% middle band area)
+if (showBandHint)
+  Positioned(
+    bottom: height * 0.25 + (height * 0.125) - 25,
+    left: width / 2 - 25,
+    child: TapPulse(controller: pulseCtrl, size: 50),
+  ),
+
+// Backdrop color pulse (center of the 60px zone)
+if (showEffectsHint)
+  Positioned(
+    top: height * 0.32 + 30 - 25,
+    left: width / 2 - 25,
+    child: TapPulse(controller: pulseCtrl, size: 50),
+  ),
+
+// Power pulses
+if (showPowerHint) ...[
+  Positioned(
+    top: height * 0.15 - 25,
+    left: width * 0.125 - 25,
+    child: TapPulse(controller: pulseCtrl, size: 45),
+  ),
+  Positioned(
+    top: height * 0.15 - 25,
+    right: width * 0.125 - 25,
+    child: TapPulse(controller: pulseCtrl, size: 45),
+  ),
+],
+
+// Floor pulse
+if (showFloorHint)
+  Positioned(
+    bottom: height * 0.125 - 25,
+    left: width / 2 - 25,
+    child: TapPulse(controller: pulseCtrl, size: 55),
+  ),
+
+// Speaker pulse (left speaker center)
+if (showSpeakersHint)
+  Positioned(
+    bottom: height * 0.25 - 55 + (width * 0.10 / 2) - 25,
+    left: width * 0.02 + (width * 0.10 / 2) - 25,
+    child: TapPulse(controller: pulseCtrl, size: 45),
+  ),
+      ],
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
+//// PART 4 START
+// -------------------------------------------------------------
 // RESULT PAGE
-// ─────────────────────────────────────────────────────────────
-
+// -------------------------------------------------------------
 class ResultPage extends StatelessWidget {
   final int score;
   final String bandName;
@@ -592,19 +871,19 @@ class ResultPage extends StatelessWidget {
     required this.onMinigameCompleted,
   });
 
-  String get _title {
-    if (score >= 7) return 'Eco Hero Stage 🌱';
-    if (score >= 2) return 'Nice Try Stage 🙂';
-    return 'Eco Disaster Stage 😬';
+  String get title {
+    if (score >= 8) return "Eco Hero Stage 🌱";
+    if (score >= 3) return "Nice Try Stage 🙂";
+    return "Eco Disaster Stage 😬";
   }
 
-  String get _message {
-    if (score >= 7) {
-      return 'Great job! Your stage is very eco-friendly. The environment says thank you!';
-    } else if (score >= 2) {
-      return 'You made some good choices, but there is still room to improve your stage.';
+  String get message {
+    if (score >= 8) {
+      return "Your stage is super eco! The planet and the crowd both love you.";
+    } else if (score >= 3) {
+      return "You made some good choices! There's still some room to improve.";
     } else {
-      return 'Your stage is not very eco-friendly. What could you change next time?';
+      return "Your stage is not very eco-friendly. Try adjusting lights, power or effects next time.";
     }
   }
 
@@ -613,144 +892,58 @@ class ResultPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 139, 210, 142),
       appBar: AppBar(
-        title: const Text('Stage result'),
-        backgroundColor: const Color.fromARGB(255, 120, 118, 118),
+        title: const Text("Stage result"),
+        backgroundColor: Colors.grey.shade700,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               festivalName,
               style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
-              _title,
+              title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
-              'Band: $bandName',
+              "Band: $bandName",
               style: const TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
-              'Final eco score: $score',
+              "Eco Score: $score",
               style: const TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
-              _message,
+              message,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
                 onMinigameCompleted();
-                Navigator.of(context).pop(true); // back to stage
-                Navigator.of(context).pop(true); // back to map
+                Navigator.of(context).pop(true);
+                Navigator.of(context).pop(true);
               },
-              child: const Text('Back to festival map'),
+              child: const Text("Back to festival map"),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  LIGHT BEAM WIDGET
-// ─────────────────────────────────────────────────────────────
-
-class _LightBeam extends StatelessWidget {
-  final Color color;
-  final bool reverse;
-
-  const _LightBeam({
-    required this.color,
-    required this.reverse,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: reverse ? -0.45 : 0.45,
-      child: Container(
-        width: 60,
-        height: 120,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color,
-              color.withOpacity(0.0),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  BAND ROW WIDGET
-// ─────────────────────────────────────────────────────────────
-
-class _BandRow extends StatelessWidget {
-  final BandStyle bandStyle;
-  final int ecoLevel;
-
-  const _BandRow({
-    required this.bandStyle,
-    required this.ecoLevel,
-  });
-
-  Color get _memberColor {
-    if (ecoLevel == 2) return Colors.greenAccent;
-    if (ecoLevel == 1) return Colors.amberAccent;
-    return Colors.redAccent.shade100;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final members = switch (bandStyle) {
-      BandStyle.rock => 3,
-      BandStyle.techno => 1,
-      BandStyle.pop => 3,
-      BandStyle.dj => 1,
-    };
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(members, (index) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircleAvatar(
-              radius: 10,
-              backgroundColor: Colors.white,
-            ),
-            const SizedBox(height: 4),
-            Container(
-              width: 16,
-              height: 26,
-              decoration: BoxDecoration(
-                color: _memberColor,
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-          ],
-        );
-      }),
     );
   }
 }
