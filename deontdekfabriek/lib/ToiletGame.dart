@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'ui_styles.dart'; // <-- voeg toe
 
 class ToiletGamePage extends StatefulWidget {
   const ToiletGamePage({super.key});
@@ -233,25 +234,12 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     super.dispose();
   }
 
-  void _togglePauseOrReset() {
-    setState(() {
-      if (_isRunning) {
-        _isRunning = false;
-      } else {
-        _items.clear();
-        _caught = 0;
-        _hearts = 3;
-        _isRunning = true;
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // Show intro/instructions until player starts the game
     if (_showIntro) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Toilet Catch - Intro')),
+        appBar: AppBar(title: const Text('Toilet game intro')),
         backgroundColor: const Color.fromARGB(255, 139, 210, 142), // groen
         body: Center(
           child: Padding(
@@ -268,12 +256,9 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
+                  style: kStartButtonStyle,
                   onPressed: _startGame,
-                  child: const Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-                    child: Text('Start', style: TextStyle(fontSize: 18)),
-                  ),
+                  child: const Text('Start'),
                 ),
               ],
             ),
@@ -286,7 +271,7 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Toilet Catch')),
-      backgroundColor: const Color.fromARGB(255, 139, 210, 142), // groen
+      backgroundColor: const Color.fromARGB(255, 139, 210, 142),
       body: GestureDetector(
         onPanUpdate: (details) {
           setState(() {
@@ -375,14 +360,6 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
                   border: Border.all(color: Colors.black26),
                 ),
                 child: Text('Gevangen: $_caught / $targetToFill'),
-              ),
-            ),
-            Positioned(
-              right: 16,
-              bottom: 20,
-              child: FloatingActionButton(
-                onPressed: _togglePauseOrReset,
-                child: Icon(_isRunning ? Icons.pause : Icons.replay),
               ),
             ),
           ],

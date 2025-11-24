@@ -4,6 +4,7 @@ import 'FestivalCleanerApp.dart';
 import 'dart:math'; //for the hangout garden animation
 import 'ToiletGame.dart';
 import 'QR.dart';
+import 'ui_styles.dart'; // voeg gedeelde stijl toe
 
 void main() {
   runApp(const MyApp());
@@ -144,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                       // keep the stage label overlay
                       Positioned(
-                        bottom: 8,
+                        top: 8,
                         left: 0,
                         right: 0,
                         child: Center(
@@ -235,7 +236,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                       // Label
                       Positioned(
-                        bottom: 8,
+                        top: 8,
                         left: 0,
                         right: 0,
                         child: Center(
@@ -1171,22 +1172,13 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
             ),
             const SizedBox(height: 40),
             ElevatedButton(
+              style: kStartButtonStyle,
               onPressed: () {
                 setState(() {
                   _showIntro = false; // SWITCH TO QUESTIONS
                 });
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 64, 100, 81),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-              child: const Text(
-                "Start",
-                style: TextStyle(fontSize: 20, color: Colors.white),
-              ),
+              child: const Text("Start"),
             ),
           ],
         ),

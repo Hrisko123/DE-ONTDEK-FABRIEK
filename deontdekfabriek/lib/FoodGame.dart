@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'ui_styles.dart';
 
 // FOOD TRUCK MINI-GAME
 class FoodTruckPage extends StatefulWidget {
@@ -235,7 +236,10 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   }
 
   void _handleCarTap(int carIndex) {
-    if (_gameFinished || carIndex >= _visibleTrucks || _carsRemoved[carIndex] || _filledCirclesCount >= 3) {
+    if (_gameFinished ||
+        carIndex >= _visibleTrucks ||
+        _carsRemoved[carIndex] ||
+        _filledCirclesCount >= 3) {
       return; // Already removed or game completed
     }
 
@@ -245,7 +249,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       final selectedTruck = _trucks[carIndex];
       _selectedTrucks.add(selectedTruck);
       _ecoScore += selectedTruck.ecoScore;
-      
+
       // Fill the next empty circle
       for (int i = 0; i < _circlesFilled.length; i++) {
         if (!_circlesFilled[i]) {
@@ -369,7 +373,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       body: LayoutBuilder(
         builder: (context, constraints) {
           const horizontalPadding = 16.0;
-          final roadWidth = max(constraints.maxWidth - (horizontalPadding * 2), 320.0);
+          final roadWidth =
+              max(constraints.maxWidth - (horizontalPadding * 2), 320.0);
           final roadHeight = max(constraints.maxHeight - 140, 280.0);
           final truckHeight = roadHeight * 0.14;
           final truckWidth = roadWidth * 0.2;
@@ -387,7 +392,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.timer, color: Colors.black87, size: 32),
+                        const Icon(Icons.timer,
+                            color: Colors.black87, size: 32),
                         const SizedBox(height: 4),
                         Text(
                           '00:${_timeLeft.toString().padLeft(2, '0')}',
@@ -405,8 +411,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                           mainAxisSize: MainAxisSize.min,
                           children: List.generate(3, (index) {
                             return Container(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 8),
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
                               width: 50,
                               height: 50,
                               decoration: BoxDecoration(
@@ -430,12 +435,14 @@ class _FoodTruckPageState extends State<FoodTruckPage>
               // Road area
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: Center(
                     child: AnimatedBuilder(
                       animation: _truckListenable,
                       builder: (context, child) {
-                        final carPositions = List.generate(_visibleTrucks, (index) {
+                        final carPositions =
+                            List.generate(_visibleTrucks, (index) {
                           final animationValue =
                               _truckAnimations[index].value.clamp(0.0, 1.0);
                           return animationValue * travelDistance;
@@ -453,8 +460,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF4E4E4E),
                                     borderRadius: BorderRadius.circular(24),
-                                    border:
-                                        Border.all(color: Colors.black, width: 3),
+                                    border: Border.all(
+                                        color: Colors.black, width: 3),
                                   ),
                                   child: Column(
                                     mainAxisAlignment:
@@ -464,7 +471,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                                       (_) => Container(
                                         width: roadWidth * 0.6,
                                         height: 4,
-                                        color: Colors.white.withValues(alpha: 0.8),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.8),
                                       ),
                                     ),
                                   ),
@@ -476,8 +484,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                                   Positioned(
                                     top: roadHeight *
                                         (0.04 +
-                                            i *
-                                                (0.9 / max(_visibleTrucks, 1))),
+                                            i * (0.9 / max(_visibleTrucks, 1))),
                                     left: carPositions[i],
                                     child: GestureDetector(
                                       onTap: () => _handleCarTap(i),
@@ -554,36 +561,36 @@ class _TruckCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  Text(
-                    truck.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: height * 0.2,
-                      color: Colors.black87,
-                    ),
-                  ),
+                      Text(
+                        truck.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: height * 0.2,
+                          color: Colors.black87,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Expanded(
                         child: Align(
                           alignment: Alignment.topLeft,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: truck.features.map((feature) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: Text(
-                                '• $feature',
-                                style: TextStyle(
-                                  fontSize: height * 0.18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: truck.features.map((feature) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Text(
+                                    '• $feature',
+                                    style: TextStyle(
+                                      fontSize: height * 0.18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -639,4 +646,3 @@ class _TruckWheel extends StatelessWidget {
     );
   }
 }
-
