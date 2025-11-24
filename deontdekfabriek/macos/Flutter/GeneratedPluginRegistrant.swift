@@ -5,10 +5,8 @@
 import FlutterMacOS
 import Foundation
 
-import mobile_scanner
-import url_launcher_macos
+import audioplayers_darwin
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
-  MobileScannerPlugin.register(with: registry.registrar(forPlugin: "MobileScannerPlugin"))
-  UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))
+  AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
 }
