@@ -37,6 +37,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  audioplayers: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +63,7 @@ flutter:
   uses-material-design: true
 
   assets:
+<<<<<<< Updated upstream
   - assets/Images/
   - assets/garden/Hangout_minigame.jpg
   - assets/garden/grass_lines.png
@@ -78,6 +80,14 @@ flutter:
   - assets/ToiletImage/Bucket.png
 
 
+=======
+    - assets/Images/
+    - assets/garden/Hangout_minigame.jpg
+    - assets/garden/grass_lines.png
+    - assets/garden/flowers_small.png
+    - assets/garden/butterfly_1.png
+    - assets/audio/ 
+>>>>>>> Stashed changes
 
   # To add assets to your application, add an assets section, like this:
   # assets:
