@@ -44,7 +44,6 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     _ItemSpec('sawdust', 'assets/ToiletImage/Sawdust.png', true),
     _ItemSpec('sigaret', 'assets/ToiletImage/Sigaret.png', false),
     _ItemSpec('chewingum', 'assets/ToiletImage/Chewingum.png', false),
-    _ItemSpec('Bucket', 'assets/ToiletImage/Bucket.png', false),
   ];
 
   @override
@@ -253,7 +252,7 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     if (_showIntro) {
       return Scaffold(
         appBar: AppBar(title: const Text('Toilet Catch - Intro')),
-        backgroundColor: Colors.blueGrey.shade50,
+        backgroundColor: const Color.fromARGB(255, 139, 210, 142), // groen
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -287,7 +286,7 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Toilet Catch')),
-      backgroundColor: Colors.blueGrey.shade50,
+      backgroundColor: const Color.fromARGB(255, 139, 210, 142), // groen
       body: GestureDetector(
         onPanUpdate: (details) {
           setState(() {
