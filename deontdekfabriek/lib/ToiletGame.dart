@@ -32,6 +32,9 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
   int _hearts = 3;
   bool _isRunning = true;
 
+  // Intro flag: show instructions before starting the minigame
+  bool _showIntro = true;
+
   static const int targetToFill = 15;
 
   static final List<_ItemSpec> _specs = <_ItemSpec>[
@@ -58,7 +61,21 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     }
     rootBundle.load('assets/ToiletImage/Bucket.png');
 
+    // timers and gyro are started when the player taps "Start" (_startGame)
+  }
+
+  void _startGame() {
+    if (!mounted) return;
+    setState(() {
+      _showIntro = false;
+      _isRunning = true;
+      _caught = 0;
+      _hearts = 3;
+      _items.clear();
+    });
+
     // Item spawner
+    _spawnTimer?.cancel();
     _spawnTimer = Timer.periodic(const Duration(milliseconds: 700), (_) {
       if (!_isRunning || !mounted) return;
       setState(() {
@@ -67,36 +84,32 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     });
 
     // Main loop
+    _gameTimer?.cancel();
     _gameTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
       if (!_isRunning || !mounted) return;
       _updateGame(16 / 1000);
     });
 
+    // Gyroscope subscription
     try {
       _lastGyroMillis = DateTime.now().millisecondsSinceEpoch;
+      _gyroSub?.cancel();
       _gyroSub = gyroscopeEvents.listen((dynamic e) {
         try {
           final now = DateTime.now().millisecondsSinceEpoch;
-          final dt = ((now - (_lastGyroMillis ?? now)) / 1000.0).clamp(
-            0.0,
-            0.2,
-          );
+          final dt =
+              ((now - (_lastGyroMillis ?? now)) / 1000.0).clamp(0.0, 0.2);
           _lastGyroMillis = now;
 
           final double rawTilt = (e is GyroscopeEvent) ? e.z : (e?.z ?? 0.0);
-
           final double targetVel = -rawTilt * _gyroSensitivity;
-
           _gyroVelocity += (targetVel - _gyroVelocity) * _gyroSmooth;
-
           final dx = _gyroVelocity * dt;
           if (!mounted) return;
 
           setState(() {
-            _bucketX = (_bucketX + dx).clamp(
-              0.0,
-              _screenWidth - _bucketWidth - 120,
-            );
+            _bucketX =
+                (_bucketX + dx).clamp(0.0, _screenWidth - _bucketWidth - 120);
           });
         } catch (_) {}
       });
@@ -236,6 +249,40 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Show intro/instructions until player starts the game
+    if (_showIntro) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Toilet Catch - Intro')),
+        backgroundColor: Colors.blueGrey.shade50,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Draai de tablet van links naar rechts om de emmer te bewegen\n\n'
+                  'Vang de juiste spullen om een compost toilet te maken!\n\n'
+                  'Als je 3x fouten dingen vangt ben je af',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _startGame,
+                  child: const Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                    child: Text('Start', style: TextStyle(fontSize: 18)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     _bucketX = _bucketX.clamp(0.0, _screenWidth - _bucketWidth - 120);
 
     return Scaffold(
