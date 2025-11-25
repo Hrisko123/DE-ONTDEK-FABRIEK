@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'ui_styles.dart'; // for kStartButtonStyle
+
+// HANGOUT AREA MINI-GAME
 
 class EcoQuestion {
   final String text;
@@ -153,22 +156,13 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
             ),
             const SizedBox(height: 40),
             ElevatedButton(
+              style: kStartButtonStyle,
               onPressed: () {
                 setState(() {
                   _showIntro = false; // SWITCH TO QUESTIONS
                 });
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 64, 100, 81),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-              child: const Text(
-                "Start",
-                style: TextStyle(fontSize: 20, color: Colors.white),
-              ),
+              child: const Text("Start"),
             ),
           ],
         ),

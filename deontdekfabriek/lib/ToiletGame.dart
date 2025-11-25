@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-
+import 'ui_styles.dart'; // <-- voeg toe
 
 class ToiletGamePage extends StatefulWidget {
   const ToiletGamePage({super.key});
@@ -33,6 +33,9 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
   int _hearts = 3;
   bool _isRunning = true;
 
+  // Intro flag: show instructions before starting the minigame
+  bool _showIntro = true;
+
   static const int targetToFill = 15;
 
   static final List<_ItemSpec> _specs = <_ItemSpec>[
@@ -42,7 +45,6 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     _ItemSpec('sawdust', 'assets/ToiletImage/Sawdust.png', true),
     _ItemSpec('sigaret', 'assets/ToiletImage/Sigaret.png', false),
     _ItemSpec('chewingum', 'assets/ToiletImage/Chewingum.png', false),
-    _ItemSpec('Bucket', 'assets/ToiletImage/Bucket.png', false),
   ];
 
   @override
@@ -59,7 +61,21 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     }
     rootBundle.load('assets/ToiletImage/Bucket.png');
 
+    // timers and gyro are started when the player taps "Start" (_startGame)
+  }
+
+  void _startGame() {
+    if (!mounted) return;
+    setState(() {
+      _showIntro = false;
+      _isRunning = true;
+      _caught = 0;
+      _hearts = 3;
+      _items.clear();
+    });
+
     // Item spawner
+    _spawnTimer?.cancel();
     _spawnTimer = Timer.periodic(const Duration(milliseconds: 700), (_) {
       if (!_isRunning || !mounted) return;
       setState(() {
@@ -68,36 +84,32 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     });
 
     // Main loop
+    _gameTimer?.cancel();
     _gameTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
       if (!_isRunning || !mounted) return;
       _updateGame(16 / 1000);
     });
 
+    // Gyroscope subscription
     try {
       _lastGyroMillis = DateTime.now().millisecondsSinceEpoch;
+      _gyroSub?.cancel();
       _gyroSub = gyroscopeEvents.listen((dynamic e) {
         try {
           final now = DateTime.now().millisecondsSinceEpoch;
-          final dt = ((now - (_lastGyroMillis ?? now)) / 1000.0).clamp(
-            0.0,
-            0.2,
-          );
+          final dt =
+              ((now - (_lastGyroMillis ?? now)) / 1000.0).clamp(0.0, 0.2);
           _lastGyroMillis = now;
 
           final double rawTilt = (e is GyroscopeEvent) ? e.z : (e?.z ?? 0.0);
-
           final double targetVel = -rawTilt * _gyroSensitivity;
-
           _gyroVelocity += (targetVel - _gyroVelocity) * _gyroSmooth;
-
           final dx = _gyroVelocity * dt;
           if (!mounted) return;
 
           setState(() {
-            _bucketX = (_bucketX + dx).clamp(
-              0.0,
-              _screenWidth - _bucketWidth - 120,
-            );
+            _bucketX =
+                (_bucketX + dx).clamp(0.0, _screenWidth - _bucketWidth - 120);
           });
         } catch (_) {}
       });
@@ -222,26 +234,44 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     super.dispose();
   }
 
-  void _togglePauseOrReset() {
-    setState(() {
-      if (_isRunning) {
-        _isRunning = false;
-      } else {
-        _items.clear();
-        _caught = 0;
-        _hearts = 3;
-        _isRunning = true;
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Show intro/instructions until player starts the game
+    if (_showIntro) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Toilet game intro')),
+        backgroundColor: const Color.fromARGB(255, 139, 210, 142), // groen
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Draai de tablet van links naar rechts om de emmer te bewegen\n\n'
+                  'Vang de juiste spullen om een compost toilet te maken!\n\n'
+                  'Als je 3x fouten dingen vangt ben je af',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: kStartButtonStyle,
+                  onPressed: _startGame,
+                  child: const Text('Start'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     _bucketX = _bucketX.clamp(0.0, _screenWidth - _bucketWidth - 120);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Toilet Catch')),
-      backgroundColor: Colors.blueGrey.shade50,
+      backgroundColor: const Color.fromARGB(255, 139, 210, 142),
       body: GestureDetector(
         onPanUpdate: (details) {
           setState(() {
@@ -330,14 +360,6 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
                   border: Border.all(color: Colors.black26),
                 ),
                 child: Text('Gevangen: $_caught / $targetToFill'),
-              ),
-            ),
-            Positioned(
-              right: 16,
-              bottom: 20,
-              child: FloatingActionButton(
-                onPressed: _togglePauseOrReset,
-                child: Icon(_isRunning ? Icons.pause : Icons.replay),
               ),
             ),
           ],

@@ -23,6 +23,8 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _toiletCompleted = false;
   bool _hangoutCompleted = false;
   bool _foodCompleted = false;
+  bool _wasteCompleted = false;
+
   // waste stays blank
 
   // ---------- NAVIGATION ----------
@@ -130,34 +132,36 @@ Positioned(
       child: _buildSquare(
         squareSize,
         label: "toilet",
-        image: "assets/Images/Toilets_minigame.png",
+        image: "assets/Images/toilet.jpeg",
       ),
     ),
   ),
 ),
 
 
-          // ------------------ WASTE (Blank) ------------------
-          Positioned(
-            top: 16,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: _navigateToCleaner,
-                child: Container(
-                  width: squareSize,
-                  height: squareSize,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 230, 230, 230),
-                    border: Border.all(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: _labelOverlay("waste", squareSize),
-                ),
-              ),
-            ),
-          ),
+         // ------------------ WASTE ------------------
+Positioned(
+  top: 16,
+  left: 0,
+  right: 0,
+  child: Center(
+    child: ColorFiltered(
+      colorFilter: _gray(_wasteCompleted),
+      child: GestureDetector(
+        onTap: () {
+          _navigateToCleaner();
+          setState(() => _wasteCompleted = true);
+        },
+        child: _buildSquare(
+          squareSize,
+          label: "waste",
+          image: "assets/Images/waste.jpeg",
+        ),
+      ),
+    ),
+  ),
+),
+
 
         // ------------------ HANGOUT ------------------
 Positioned(
@@ -190,7 +194,7 @@ Positioned(
                 child: _buildSquare(
                   squareSize,
                   label: "food truck",
-                  image: "assets/Images/Food_minigame.png",
+                  image: "assets/Images/food.jpeg",
                 ),
               ),
             ),

@@ -13,7 +13,7 @@ class QR extends StatefulWidget {
 class _QRState extends State<QR> {
   MobileScannerController cameraController = MobileScannerController();
   String? qrText;
-  String? _lastLaunched; // voorkom herhaald openen
+  String? _lastLaunched;
 
   @override
   void dispose() {
@@ -50,13 +50,11 @@ class _QRState extends State<QR> {
                   qrText = value;
                 });
 
-                // Als de QR verwijst naar de interne ToiletGame-pagina, navigeer intern
                 if (value.contains('toilet.game')) {
                   if (_lastLaunched == value) return; // al geopend
                   _lastLaunched = value;
                   if (!mounted) return;
                   try {
-                    // Navigeer naar het minigame scherm (ToiletGamePage)
                     await Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const ToiletGamePage()),
                     );
