@@ -3,8 +3,8 @@ import 'stage_page.dart';
 import 'FoodGame.dart';
 import 'FestivalCleanerApp.dart';
 import 'HangOutGame.dart';
-import 'ToiletGame.dart'; // 👈 add this
-
+import 'ToiletGame.dart';
+import 'QR.dart';
 
 class MyHomePage extends StatefulWidget {
   final String festivalName;
@@ -25,9 +25,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _foodCompleted = false;
   bool _wasteCompleted = false;
 
-  // waste stays blank
-
-  // ---------- NAVIGATION ----------
+  // ----------- NAVIGATION -----------
   Future<void> _navigateToStage() async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
@@ -47,53 +45,48 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _navigateToFoodTruck() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const FoodTruckPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const FoodTruckPage()),
     );
     setState(() => _foodCompleted = true);
   }
 
   void _navigateToHangout() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const HangoutQuizPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const HangoutQuizPage()),
     );
     setState(() => _hangoutCompleted = true);
   }
 
   void _navigateToCleaner() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const FestivalCleanerApp(),
-      ),
+      MaterialPageRoute(builder: (_) => const FestivalCleanerApp()),
+    );
+    setState(() => _wasteCompleted = true);
+  }
+
+  void _navigateToToiletGame() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ToiletGamePage()),
     );
     setState(() => _toiletCompleted = true);
   }
-void _navigateToToiletGame() {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => const ToiletGamePage(),
-    ),
-  );
-  setState(() => _toiletCompleted = true);
-}
 
-  // ---------- GRAYSCALE FILTER ----------
+  void _navigateToQR() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => QR()),   // <-- FIXED (no const)
+    );
+  }
+
+  // ----------- GRAYSCALE -----------
   ColorFilter _gray(bool completed) {
-    if (completed) {
-      return const ColorFilter.mode(
-        Colors.transparent,
-        BlendMode.color,
-      );
-    }
-    return const ColorFilter.matrix([
-      0.2126, 0.7152, 0.0722, 0, 0,
-      0.2126, 0.7152, 0.0722, 0, 0,
-      0.2126, 0.7152, 0.0722, 0, 0,
-      0,      0,      0,      1, 0,
-    ]);
+    return completed
+        ? const ColorFilter.mode(Colors.transparent, BlendMode.color)
+        : const ColorFilter.matrix([
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0,      0,      0,      1, 0,
+          ]);
   }
 
   @override
@@ -121,67 +114,65 @@ void _navigateToToiletGame() {
             ),
           ),
 
-         // ------------------ TOILET (Toilet Game) ------------------
-Positioned(
-  top: 16,
-  right: 16,
-  child: ColorFiltered(
-    colorFilter: _gray(_toiletCompleted),
-    child: GestureDetector(
-      onTap: _navigateToToiletGame, // 👈 changed
-      child: _buildSquare(
-        squareSize,
-        label: "toilet",
-        image: "assets/Images/toilet.jpeg",
-      ),
-    ),
-  ),
-),
+          // ------------------ TOILET ------------------
+          Positioned(
+            top: 16,
+            right: 16,
+            child: ColorFiltered(
+              colorFilter: _gray(_toiletCompleted),
+              child: GestureDetector(
+                onTap: _navigateToToiletGame,
+                child: _buildSquare(
+                  squareSize,
+                  label: "toilet",
+                  image: "assets/Images/toilet.jpeg",
+                ),
+              ),
+            ),
+          ),
 
+          // ------------------ WASTE ------------------
+          Positioned(
+            top: 16,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ColorFiltered(
+                colorFilter: _gray(_wasteCompleted),
+                child: GestureDetector(
+                  onTap: () {
+                    _navigateToCleaner();
+                    setState(() => _wasteCompleted = true);
+                  },
+                  child: _buildSquare(
+                    squareSize,
+                    label: "waste",
+                    image: "assets/Images/waste.jpeg",
+                  ),
+                ),
+              ),
+            ),
+          ),
 
-         // ------------------ WASTE ------------------
-Positioned(
-  top: 16,
-  left: 0,
-  right: 0,
-  child: Center(
-    child: ColorFiltered(
-      colorFilter: _gray(_wasteCompleted),
-      child: GestureDetector(
-        onTap: () {
-          _navigateToCleaner();
-          setState(() => _wasteCompleted = true);
-        },
-        child: _buildSquare(
-          squareSize,
-          label: "waste",
-          image: "assets/Images/waste.jpeg",
-        ),
-      ),
-    ),
-  ),
-),
-
-
-        // ------------------ HANGOUT ------------------
-Positioned(
-  bottom: 16,
-  left: 0,
-  right: 0,
-  child: Center(
-    child: ColorFiltered(
-      colorFilter: _gray(_hangoutCompleted),
-      child: GestureDetector(
-        onTap: _navigateToHangout,
-        child: _buildSquare(
-          squareSize,
-          label: "hang out",
-          image: "assets/garden/Hangout_minigame.jpg",
-        ),
-      ),
-    ),
-  ),
-),
+          // ------------------ HANGOUT ------------------
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ColorFiltered(
+                colorFilter: _gray(_hangoutCompleted),
+                child: GestureDetector(
+                  onTap: _navigateToHangout,
+                  child: _buildSquare(
+                    squareSize,
+                    label: "hang out",
+                    image: "assets/garden/Hangout_minigame.jpg",
+                  ),
+                ),
+              ),
+            ),
+          ),
 
           // ------------------ FOOD TRUCK ------------------
           Positioned(
@@ -199,13 +190,28 @@ Positioned(
               ),
             ),
           ),
+
+          // ------------------ QR BUTTON ------------------
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: GestureDetector(
+              onTap: _navigateToQR,
+              child: _buildSquare(
+                squareSize,
+                label: "QR",
+                image: "assets/Images/qr_placeholder.png", // you can replace this
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ---------- REUSABLE SQUARE BUILDER ----------
-  Widget _buildSquare(double size, {required String label, required String image}) {
+  // ----------- SQUARE UI BUILDER -----------
+  Widget _buildSquare(double size,
+      {required String label, required String image}) {
     return Container(
       width: size,
       height: size,
@@ -222,31 +228,27 @@ Positioned(
   }
 
   Widget _labelOverlay(String text, double size) {
-    return Stack(
-      children: [
-        Positioned(
-          bottom: 8,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                text,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: size * 0.08,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+    return Positioned(
+      bottom: 8,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: size * 0.08,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
