@@ -74,14 +74,8 @@ flutter:
     - assets/ToiletImage/
 
     # Stage images
-    - assets/stage/OSB.png
-    - assets/stage/PalletWood.png
-    - assets/stage/Steel.png
-    - assets/stage/defaultSpeaker.png
-    - assets/stage/normalSpeaker.png
-    - assets/stage/bambooSpeaker.png
-    - assets/stage/loudSpeaker.png
-
+    - assets/stage/
+    
     # Audio files
     - assets/audio/
 

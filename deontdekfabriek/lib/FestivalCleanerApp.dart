@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'ui_styles.dart';
 
 class TrashItem {
   /// Types:
@@ -283,7 +284,8 @@ class _CleanerGameState extends State<CleanerGame> {
         ),
         const Spacer(),
         Center(
-          child: FilledButton(
+          child: ElevatedButton(
+            style: kStartButtonStyle,
             onPressed: _startGame,
             child: const Text("Start festival 🎵"),
           ),
