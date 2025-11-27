@@ -72,6 +72,7 @@ flutter:
     - assets/garden/grass_lines.png
     - assets/garden/flowers_small.png
     - assets/garden/butterfly_1.png
+    - assets/garden/bee.png    
 
     # Toilet game images
     - assets/ToiletImage/
