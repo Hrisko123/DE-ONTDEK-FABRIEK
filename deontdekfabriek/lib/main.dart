@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'FoodGame.dart';
-import 'FestivalCleanerApp.dart';
-import 'dart:math'; //for the hangout garden animation
 import 'festival_name_page.dart';
 
 void main() {
