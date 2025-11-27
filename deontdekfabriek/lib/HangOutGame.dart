@@ -104,11 +104,10 @@ class _HangoutQuizPageState extends State<HangoutQuizPage>
   int _currentIndex = 0;
   int _gardenStage = 0; // grows only when eco option is selected
   bool _showIntro = true;
+  bool _muted = false; 
 
   late final AnimationController _ecoPulseCtrl;
   final AudioPlayer _audioPlayer = AudioPlayer();
-
-  bool _isMuted = false;
 
   @override
   void initState() {
@@ -128,17 +127,17 @@ class _HangoutQuizPageState extends State<HangoutQuizPage>
   }
 
   // ---------- sound helpers ----------
-  Future<void> _playSfx(String fileName) async {
-    if (_isMuted) return; // don't play if muted
+Future<void> _playSfx(String fileName) async {
+  if (_muted) return; // if muted, do nothing
 
-    try {
-      await _audioPlayer.play(
-        AssetSource('audio/$fileName'),
-      );
-    } catch (e) {
-      // ignore for now
-    }
+  try {
+    await _audioPlayer.play(
+      AssetSource('audio/$fileName'),
+    );
+  } catch (e) {
+    // ignore for now
   }
+}
 
 
   void _playGrassSound()     => _playSfx('bees.mp3');
@@ -240,19 +239,23 @@ class _HangoutQuizPageState extends State<HangoutQuizPage>
       return Scaffold(
         backgroundColor: const Color.fromARGB(255, 143, 172, 122),
         appBar: AppBar(
-          title: const Text('Hangout Intro'),
+          title: const Text('Hangout Park Eco Quiz'),
           backgroundColor: const Color.fromARGB(255, 64, 100, 81),
           actions: [
             IconButton(
-              icon: Icon(_isMuted ? Icons.volume_off : Icons.volume_up),
+              icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
               onPressed: () {
                 setState(() {
-                  _isMuted = !_isMuted;
+                  _muted = !_muted; // toggle true/false
                 });
+                if (_muted) {
+                  _audioPlayer.stop(); // stop any sound already playing
+                }
               },
             ),
           ],
         ),
+
         body: _buildIntro(),
       );
     }
@@ -266,102 +269,134 @@ class _HangoutQuizPageState extends State<HangoutQuizPage>
         backgroundColor: const Color.fromARGB(255, 64, 100, 81),
         actions: [
           IconButton(
-            icon: Icon(_isMuted ? Icons.volume_off : Icons.volume_up),
+            icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
             onPressed: () {
               setState(() {
-                _isMuted = !_isMuted;
+                _muted = !_muted;
               });
+              if (_muted) {
+                _audioPlayer.stop(); // stop any sound playing
+              }
             },
           ),
         ],
       ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Center(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.5,
-                child: AnimatedGarden(stage: _gardenStage),
+      body: Stack(
+        children: [
+          // FLOATING MUTE BUTTON
+          Positioned(
+            top: 12,
+            right: 12,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _muted = !_muted;
+                });
+                if (_muted) {
+                  _audioPlayer.stop();
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _muted ? Icons.volume_off : Icons.volume_up,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Question ${_currentIndex + 1} of ${_questions.length}',
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              question.text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: question.options.length,
-                itemBuilder: (context, index) {
-                  final text = question.options[index];
-                  final ecoIndex = question.ecoOptionIndex;
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Center(
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.5,
+                    child: AnimatedGarden(stage: _gardenStage),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Question ${_currentIndex + 1} of ${_questions.length}',
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  question.text,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: question.options.length,
+                    itemBuilder: (context, index) {
+                      final text = question.options[index];
+                      final ecoIndex = question.ecoOptionIndex;
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    child: InkWell(
-                      onTap: () => _onOptionSelected(index),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        child: Row(
-                          children: [
-                            // 🔥 ONLY ECO ANSWER GETS ANIMATED BAR
-                            if (index == ecoIndex)
-                              AnimatedBuilder(
-                                animation: _ecoPulseCtrl,
-                                builder: (context, child) {
-                                  final t = _ecoPulseCtrl.value;
-                                  final scaleY =
-                                      0.9 + (0.2 * sin(t * 2 * pi)); // breathe
-
-                                  return Transform.scale(
-                                    scaleY: scaleY,
-                                    alignment: Alignment.center,
-                                    child: Container(
-                                      width: 6,
-                                      height: 60,
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.shade400,
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            else
-                              Container(
-                                width: 6,
-                                height: 60,
-                                color: Colors.grey.shade300,
-                              ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                text,
-                                style: const TextStyle(fontSize: 14),
-                              ),
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: InkWell(
+                          onTap: () => _onOptionSelected(index),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                if (index == ecoIndex)
+                                  AnimatedBuilder(
+                                    animation: _ecoPulseCtrl,
+                                    builder: (context, child) {
+                                      final t = _ecoPulseCtrl.value;
+                                      final scaleY =
+                                          0.9 + (0.2 * sin(t * 2 * pi));
+
+                                      return Transform.scale(
+                                        scaleY: scaleY,
+                                        alignment: Alignment.center,
+                                        child: Container(
+                                          width: 6,
+                                          height: 60,
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.shade400,
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                else
+                                  Container(
+                                    width: 6,
+                                    height: 60,
+                                    color: Colors.grey.shade300,
+                                  ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    text,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
