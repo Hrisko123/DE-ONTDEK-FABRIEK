@@ -139,26 +139,41 @@ Future<void> _playSfx(String fileName) async {
   }
 }
 
-
-  void _playGrassSound()     => _playSfx('bees.mp3');
-  void _playFlowerSound()    => _playSfx('blooming.mp3');
-  void _playButterflySound() => _playSfx('glow.mp3');
-  void _playEcoChoiceSound() => _playSfx('music.mp3');
-
-
-
   void _playStageSound() {
-    if (_gardenStage == 1) {
-      _playGrassSound();
-    } else if (_gardenStage == 2) {
-      _playFlowerSound();
-    } else if (_gardenStage == 3) {
-      _playButterflySound();
+    // clamp just in case, but you have 8 questions max
+    final s = _gardenStage.clamp(1, 8);
+
+    switch (s) {
+      case 1: // first eco choice – grass appears
+        _playSfx('grass.mp3');
+        break;
+      case 2: // flowers sprout
+        _playSfx('blooming.mp3');
+        break;
+      case 3: // butterflies
+        _playSfx('bubbles.mp3');
+        break;
+      case 4: // bees low
+        _playSfx('bees.mp3');
+        break;
+      case 5: // bees high / extra life
+        _playSfx('droplet.mp3');
+        break;
+      case 6: // magical glow
+        _playSfx('glow.mp3');
+        break;
+      case 7: // fireflies / sparkles
+        _playSfx('twinkle.mp3');
+        break;
+      case 8: // final full garden
+        _playSfx('music.mp3');
+        break;
+      default:
+        break;
     }
   }
 
   // ---------- logic on tap ----------
-
   void _onOptionSelected(int optionIndex) {
     final question = _questions[_currentIndex];
     final bool isEco = optionIndex == question.ecoOptionIndex;
@@ -193,8 +208,7 @@ Future<void> _playSfx(String fileName) async {
 
     // Sounds happen after the UI updates
     if (isEco) {
-      _playEcoChoiceSound(); // small “correct” ding
-      _playStageSound();     // grass / flowers / butterflies sound
+      _playStageSound(); // play sound based on current stage
     }
   }
 
@@ -432,13 +446,16 @@ class _AnimatedGardenState extends State<AnimatedGarden>
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.stage.clamp(0, 6); // 6 visual stages max
-    final showGrassLines = s >= 1; // first eco pick - grass
-    final showFlowersSmall = s >= 2; // second eco pick - flowers
-    final showButterflies = s >= 3; // third eco pick - butterflies
-    final showbeesLow = s >= 4; // fourth eco pick - bees low
-    final showbeesHigh = s >= 5; // fifth - bees high 
-    final showGlow = s >= 6; //  sixth - glow overlay
+  final s = widget.stage.clamp(0, 8); // 8 visual stages max
+
+  final showGrassLines   = s >= 1; // stage 1 - grass
+  final showFlowersSmall = s >= 2; // stage 2 - flowers
+  final showButterflies  = s >= 3; // stage 3 - butterflies
+  final showBeesLow      = s >= 4; // stage 4 - bees low
+  final showBeesHigh     = s >= 5; // stage 5 - bees high 
+  final showGlow         = s >= 6; // stage 6 - glow overlay
+  final showFireflies    = s >= 7; // stage 7 - fireflies
+  final showCenterAura   = s >= 8; // stage 8 - strong center aura
 
     return Container(
       height: 340,
@@ -579,26 +596,28 @@ class _AnimatedGardenState extends State<AnimatedGarden>
               ),
             ],
             // STAGE 4: bees low
-            if (showbeesLow)
+            if (showBeesLow)
               _BeeLayer(
                 controller: _butterflyCtrl,
                 baseY: 0.45,
                 spreadY: 0.10,
                 count: 6,
-                size: 10,
+                size: 12,
+                asset: "assets/garden/bee.png", 
               ),
 
             // STAGE 5: bees high
-            if (showbeesHigh)
+            if (showBeesHigh)
               _BeeLayer(
                 controller: _butterflyCtrl,
                 baseY: 0.15,
                 spreadY: 0.08,
                 count: 5,
-                size: 8,
+                size: 10,
+                asset: "assets/garden/bee.png", 
               ),
 
-            // STAGE 6: magical glow overlay
+            // STAGE 6: magical global glow
             if (showGlow)
               Positioned.fill(
                 child: IgnorePointer(
@@ -608,6 +627,43 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                       final t = (sin(_butterflyCtrl.value * 2 * pi) + 1) / 2;
                       return Container(
                         color: Colors.yellow.withOpacity(0.05 + 0.07 * t),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              // STAGE 7: fireflies
+            if (showFireflies)
+              _FireflyLayer(
+                controller: _butterflyCtrl,
+                count: 10,
+                size: 9,
+              ),
+
+            // STAGE 8: strong center aura
+            if (showCenterAura)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _butterflyCtrl,
+                    builder: (context, _) {
+                      final t = (sin(_butterflyCtrl.value * 2 * pi) + 1) / 2;
+                      return Center(
+                        child: Container(
+                          width: 220 + 40 * t,
+                          height: 220 + 40 * t,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                Colors.yellowAccent.withOpacity(0.25 + 0.2 * t),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 1.0],
+                            ),
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -758,6 +814,7 @@ class _BeeLayer extends StatelessWidget {
   final double spreadY;
   final int count;
   final double size;
+  final String asset;
 
   const _BeeLayer({
     required this.controller,
@@ -765,6 +822,7 @@ class _BeeLayer extends StatelessWidget {
     required this.spreadY,
     required this.count,
     required this.size,
+    required this.asset,
   });
 
   @override
@@ -787,17 +845,68 @@ class _BeeLayer extends StatelessWidget {
                   alignment: Alignment(x, y),
                   child: Opacity(
                     opacity: opacity,
+                    child: SizedBox(
+                      width: size * 1.5,
+                      height: size * 3.0,
+                      child: Image.asset(
+                        asset,      
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _FireflyLayer extends StatelessWidget {
+  final AnimationController controller;
+  final int count;
+  final double size;
+
+  const _FireflyLayer({
+    required this.controller,
+    required this.count,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            final t = controller.value * 2 * pi;
+
+            return Stack(
+              children: List.generate(count, (i) {
+                final phase = t + i * 0.9;
+                final x = -0.9 + (i / (count - 1)) * 1.8;
+                final y = 0.25 + sin(phase * 1.2) * 0.25;
+                final opacity = 0.3 + 0.7 * (sin(phase * 2.5) + 1) / 2;
+
+                return Align(
+                  alignment: Alignment(x, y),
+                  child: Opacity(
+                    opacity: opacity,
                     child: Container(
                       width: size,
                       height: size,
                       decoration: BoxDecoration(
-                        color: Colors.black87,
+                        color: Colors.greenAccent.withOpacity(0.9),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.yellow.withOpacity(0.7),
-                            blurRadius: 8,
-                            spreadRadius: 1,
+                            color:
+                                Colors.greenAccent.withOpacity(opacity * 0.8),
+                            blurRadius: 10,
+                            spreadRadius: 2,
                           )
                         ],
                       ),
@@ -812,4 +921,3 @@ class _BeeLayer extends StatelessWidget {
     );
   }
 }
-
