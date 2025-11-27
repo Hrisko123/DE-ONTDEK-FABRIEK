@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'ui_styles.dart';
+
 
 // FOOD TRUCK MINI-GAME
 class FoodTruckPage extends StatefulWidget {

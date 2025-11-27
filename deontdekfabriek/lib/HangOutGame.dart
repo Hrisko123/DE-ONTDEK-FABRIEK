@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'ui_styles.dart'; // for kStartButtonStyle
+import 'package:audioplayers/audioplayers.dart';
 
 // HANGOUT AREA MINI-GAME
 
@@ -23,7 +24,8 @@ class HangoutQuizPage extends StatefulWidget {
   State<HangoutQuizPage> createState() => _HangoutQuizPageState();
 }
 
-class _HangoutQuizPageState extends State<HangoutQuizPage> {
+class _HangoutQuizPageState extends State<HangoutQuizPage>
+    with SingleTickerProviderStateMixin {
   final List<EcoQuestion> _questions = const [
     EcoQuestion(
       text: 'How are you getting to the festival?',
@@ -103,12 +105,68 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
   int _gardenStage = 0; // grows only when eco option is selected
   bool _showIntro = true;
 
+  late final AnimationController _ecoPulseCtrl;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  bool _isMuted = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _ecoPulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true); // loop the eco highlight
+  }
+
+  @override
+  void dispose() {
+    _ecoPulseCtrl.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  // ---------- sound helpers ----------
+  Future<void> _playSfx(String fileName) async {
+    if (_isMuted) return; // don't play if muted
+
+    try {
+      await _audioPlayer.play(
+        AssetSource('audio/$fileName'),
+      );
+    } catch (e) {
+      // ignore for now
+    }
+  }
+
+
+  void _playGrassSound()     => _playSfx('bees.mp3');
+  void _playFlowerSound()    => _playSfx('blooming.mp3');
+  void _playButterflySound() => _playSfx('glow.mp3');
+  void _playEcoChoiceSound() => _playSfx('music.mp3');
+
+
+
+  void _playStageSound() {
+    if (_gardenStage == 1) {
+      _playGrassSound();
+    } else if (_gardenStage == 2) {
+      _playFlowerSound();
+    } else if (_gardenStage == 3) {
+      _playButterflySound();
+    }
+  }
+
+  // ---------- logic on tap ----------
+
   void _onOptionSelected(int optionIndex) {
     final question = _questions[_currentIndex];
+    final bool isEco = optionIndex == question.ecoOptionIndex;
 
     setState(() {
-      if (optionIndex == question.ecoOptionIndex) {
-        _gardenStage++;
+      if (isEco) {
+        _gardenStage++; // garden grows only on eco answers
       }
 
       if (_currentIndex < _questions.length - 1) {
@@ -133,9 +191,15 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
         );
       }
     });
+
+    // Sounds happen after the UI updates
+    if (isEco) {
+      _playEcoChoiceSound(); // small “correct” ding
+      _playStageSound();     // grass / flowers / butterflies sound
+    }
   }
 
-  // INTRO SCREEN WIDGET
+  //intro screen
   Widget _buildIntro() {
     return Center(
       child: Padding(
@@ -170,12 +234,6 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
     );
   }
 
-  Color _colorForOption(int optionIndex, int ecoIndex) {
-    return optionIndex == ecoIndex
-        ? Colors.green.shade400
-        : Colors.grey.shade300;
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_showIntro) {
@@ -184,6 +242,16 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
         appBar: AppBar(
           title: const Text('Hangout Intro'),
           backgroundColor: const Color.fromARGB(255, 64, 100, 81),
+          actions: [
+            IconButton(
+              icon: Icon(_isMuted ? Icons.volume_off : Icons.volume_up),
+              onPressed: () {
+                setState(() {
+                  _isMuted = !_isMuted;
+                });
+              },
+            ),
+          ],
         ),
         body: _buildIntro(),
       );
@@ -196,7 +264,18 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
       appBar: AppBar(
         title: const Text('Hangout Park Eco Quiz'),
         backgroundColor: const Color.fromARGB(255, 64, 100, 81),
+        actions: [
+          IconButton(
+            icon: Icon(_isMuted ? Icons.volume_off : Icons.volume_up),
+            onPressed: () {
+              setState(() {
+                _isMuted = !_isMuted;
+              });
+            },
+          ),
+        ],
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -237,11 +316,35 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
                         ),
                         child: Row(
                           children: [
-                            Container(
-                              width: 6,
-                              height: 60,
-                              color: _colorForOption(index, ecoIndex),
-                            ),
+                            // 🔥 ONLY ECO ANSWER GETS ANIMATED BAR
+                            if (index == ecoIndex)
+                              AnimatedBuilder(
+                                animation: _ecoPulseCtrl,
+                                builder: (context, child) {
+                                  final t = _ecoPulseCtrl.value;
+                                  final scaleY =
+                                      0.9 + (0.2 * sin(t * 2 * pi)); // breathe
+
+                                  return Transform.scale(
+                                    scaleY: scaleY,
+                                    alignment: Alignment.center,
+                                    child: Container(
+                                      width: 6,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade400,
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            else
+                              Container(
+                                width: 6,
+                                height: 60,
+                                color: Colors.grey.shade300,
+                              ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -264,7 +367,7 @@ class _HangoutQuizPageState extends State<HangoutQuizPage> {
   }
 }
 
-// ANIMATED GARDEN WIDGET
+// animated garden
 class AnimatedGarden extends StatefulWidget {
   final int stage; // number of eco-friendly picks
   const AnimatedGarden({super.key, required this.stage});
@@ -294,11 +397,13 @@ class _AnimatedGardenState extends State<AnimatedGarden>
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.stage.clamp(0, 99);
-
-    final showGrassLines = s >= 1; // first eco pick
-    final showFlowersSmall = s >= 2; // second eco pick
-    final showButterflies = s >= 3; // third eco pick+
+    final s = widget.stage.clamp(0, 6); // 6 visual stages max
+    final showGrassLines = s >= 1; // first eco pick - grass
+    final showFlowersSmall = s >= 2; // second eco pick - flowers
+    final showButterflies = s >= 3; // third eco pick - butterflies
+    final showbeesLow = s >= 4; // fourth eco pick - bees low
+    final showbeesHigh = s >= 5; // fifth - bees high 
+    final showGlow = s >= 6; //  sixth - glow overlay
 
     return Container(
       height: 340,
@@ -438,6 +543,42 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 phase: pi / 2,
               ),
             ],
+            // STAGE 4: bees low
+            if (showbeesLow)
+              _BeeLayer(
+                controller: _butterflyCtrl,
+                baseY: 0.45,
+                spreadY: 0.10,
+                count: 6,
+                size: 10,
+              ),
+
+            // STAGE 5: bees high
+            if (showbeesHigh)
+              _BeeLayer(
+                controller: _butterflyCtrl,
+                baseY: 0.15,
+                spreadY: 0.08,
+                count: 5,
+                size: 8,
+              ),
+
+            // STAGE 6: magical glow overlay
+            if (showGlow)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _butterflyCtrl,
+                    builder: (context, _) {
+                      final t = (sin(_butterflyCtrl.value * 2 * pi) + 1) / 2;
+                      return Container(
+                        color: Colors.yellow.withOpacity(0.05 + 0.07 * t),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
           ],
         ),
       ),
@@ -575,3 +716,65 @@ class _FlyingButterfly extends StatelessWidget {
     );
   }
 }
+
+class _BeeLayer extends StatelessWidget {
+  final AnimationController controller;
+  final double baseY;
+  final double spreadY;
+  final int count;
+  final double size;
+
+  const _BeeLayer({
+    required this.controller,
+    required this.baseY,
+    required this.spreadY,
+    required this.count,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            final t = controller.value * 2 * pi;
+
+            return Stack(
+              children: List.generate(count, (i) {
+                final phase = t + i * 0.7;
+                final x = -0.9 + (i / (count - 1)) * 1.8; // spread width
+                final y = baseY + sin(phase) * spreadY;
+                final opacity = 0.4 + 0.5 * (sin(phase * 3) + 1) / 2;
+
+                return Align(
+                  alignment: Alignment(x, y),
+                  child: Opacity(
+                    opacity: opacity,
+                    child: Container(
+                      width: size,
+                      height: size,
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.yellow.withOpacity(0.7),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
