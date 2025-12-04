@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:deontdekfabriek/ToiletGame.dart';
+import 'package:deontdekfabriek/HangOutGame.dart';
+
 
 class QR extends StatefulWidget {
   const QR({super.key});
@@ -65,7 +67,28 @@ class _QRState extends State<QR> {
                       );
                     }
                   }
-                } else if (value.startsWith('http://') ||
+                } 
+                // ---- HANGOUT GAME ----
+                else if (value.contains('hangout.game')) {
+                  if (_lastLaunched == value) return;  
+                  _lastLaunched = value;
+
+                  if (!mounted) return;
+
+                  try {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const HangoutQuizPage()),
+                    );
+                  } catch (_) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Could not open Hangout Game')),
+                      );
+                    }
+                  }
+                }
+
+                else if (value.startsWith('http://') ||
                     value.startsWith('https://')) {
                   if (_lastLaunched == value) return;
                   _lastLaunched = value;
