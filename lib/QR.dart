@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:deontdekfabriek/ToiletGame.dart';
 import 'package:deontdekfabriek/HangOutGame.dart';
+import 'package:deontdekfabriek/FoodGame.dart';
 
 
 class QR extends StatefulWidget {
@@ -83,6 +84,23 @@ class _QRState extends State<QR> {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Could not open Hangout Game')),
+                      );
+                    }
+                  }
+                }
+                // ---- FOOD GAME ----
+                else if (value.contains('food.game')) {
+                  if (_lastLaunched == value) return;
+                  _lastLaunched = value;
+                  if (!mounted) return;
+                  try {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const FoodTruckPage()),
+                    );
+                  } catch (_) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Could not open Food Game')),
                       );
                     }
                   }

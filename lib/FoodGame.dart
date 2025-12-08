@@ -267,21 +267,48 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('How to Play'),
-          content: const Text(
-            'In this mini-game you will have to collect 3 food trucks by clicking on them for your festival. '
-            'Some food trucks are more eco friendly than others and you will have 30 seconds to complete the game. '
-            'The trucks will come one at a time choose carefully which ones you want for your festival.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _startTimers();
-              },
-              child: const Text('Start'),
+          contentPadding: const EdgeInsets.all(24),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  'Food Truck Run',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'How to Play',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'In this mini-game you will have to collect 3 food trucks by clicking on them for your festival. '
+                  'Some food trucks are more eco friendly than others and you will have 30 seconds to complete the game. '
+                  'The trucks will come one at a time choose carefully which ones you want for your festival.',
+                  style: TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _startTimers();
+                  },
+                  child: const Text('Start'),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -332,62 +359,40 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Part 1 Complete!'),
+            contentPadding: const EdgeInsets.all(24),
             content: SizedBox(
               width: double.maxFinite,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
-                    'You picked:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  ..._selectedTrucks.map(
-                    (truck) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            truck.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            truck.features.join(' • '),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
+                    'Congrats',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Text(
-                    'Total Eco Score: ${_formatScore(_ecoScore)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
+                    'You successfully collected 3 food trucks!\n\n'
+                    'Total Eco Score: ${_formatScore(_ecoScore)}\n\n'
                     'Now guide your trucks through the roadblocks!',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _startPart2();
+                    },
+                    child: const Text('Start Part 2'),
                   ),
                 ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  _startPart2();
-                },
-                child: const Text('Start Part 2'),
-              ),
-            ],
           );
         },
       );
@@ -565,26 +570,53 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Game Over'),
-            content: Text(
-              'Your trucks hit a roadblock!\n\nTime Survived: ${(_part2Time / 1000).toStringAsFixed(1)}s',
+            contentPadding: const EdgeInsets.all(24),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Game Over',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Your trucks hit a roadblock!\n\n'
+                    'Time Survived: ${(_part2Time / 1000).toStringAsFixed(1)}s\n'
+                    'Total Eco Score: ${_formatScore(_ecoScore)}',
+                    style: const TextStyle(fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _startPart2();
+                        },
+                        child: const Text('Replay Game'),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Go Back to Map'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  _startPart2(); // Replay part 2
-                },
-                child: const Text('Replay Part 2'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Go back to main page
-                },
-                child: const Text('Back to Map'),
-              ),
-            ],
           );
         },
       );
@@ -605,32 +637,52 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Congratulations!'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('You successfully guided all your trucks!'),
-                const SizedBox(height: 12),
-                Text('Total Eco Score: ${_formatScore(_ecoScore)}'),
-              ],
+            contentPadding: const EdgeInsets.all(24),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Congrats',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'You successfully guided all your trucks!\n\n'
+                    'Total Eco Score: ${_formatScore(_ecoScore)}',
+                    style: const TextStyle(fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _startPart2();
+                        },
+                        child: const Text('Replay Game'),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Go Back to Map'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  _startPart2(); // Replay part 2
-                },
-                child: const Text('Replay Part 2'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Go back to main page
-                },
-                child: const Text('Back to Map'),
-              ),
-            ],
           );
         },
       );
@@ -695,19 +747,39 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Time\'s Up'),
-          content: Text(
-            'You collected ${_selectedTrucks.length} out of 3 trucks.\nEco Score: ${_formatScore(_ecoScore)}',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(); // Go back to main page
-              },
-              child: const Text('Back to Map'),
+          contentPadding: const EdgeInsets.all(24),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  'Time\'s Up',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'You collected ${_selectedTrucks.length} out of 3 trucks.\n\n'
+                  'Total Eco Score: ${_formatScore(_ecoScore)}',
+                  style: const TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Go Back to Map'),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -804,31 +876,24 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                         });
                         final laneCount = max(_visibleTrucks, 4);
 
+                        final laneHeight = roadHeight / max(laneCount, 1);
                         return SizedBox(
                           width: roadWidth,
                           height: roadHeight,
                           child: Stack(
                             children: [
-                              // Road background
+                              // Road background with lanes (matching part 2 style)
                               Positioned.fill(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF4E4E4E),
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                        color: Colors.black, width: 3),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: List.generate(
-                                      laneCount,
-                                      (_) => Container(
-                                        width: roadWidth * 0.6,
-                                        height: 4,
-                                        color:
-                                            Colors.white.withValues(alpha: 0.8),
-                                      ),
+                                child: Column(
+                                  children: List.generate(
+                                    laneCount,
+                                    (index) => _buildLane(
+                                      index,
+                                      laneHeight,
+                                      roadWidth,
+                                      index % 2 == 0
+                                          ? Colors.grey.shade800
+                                          : Colors.grey.shade700,
                                     ),
                                   ),
                                 ),
