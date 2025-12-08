@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 
 
 // FOOD TRUCK MINI-GAME
@@ -33,8 +35,30 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   bool _tutorialShown = false;
   bool _trucksRunning = false;
   int _ecoScore = 0;
+  
+  // Part 2 state
+  bool _part2Active = false;
+  List<int> _truckLanes = [0, 0, 0]; // 0=top, 1=mid, 2=bottom for each truck
+  List<_Roadblock> _roadblocks = [];
+  Timer? _roadblockSpawnTimer;
+  Timer? _part2GameTimer;
+  int _part2Time = 0;
+  bool _part2GameOver = false;
+  Timer? _part2WinTimer;
+  List<_PredeterminedRoadblock> _predeterminedPath = [];
+  int _pathIndex = 0;
+  double _part2ScreenWidth = 0;
+  double _part2ScreenHeight = 0;
 
   String _formatScore(int value) => value >= 0 ? '+$value' : value.toString();
+
+  // --- Drag & lane animation helpers ---
+  final Map<int, double> _dragAccum = {}; // accumulated drag distance per truck
+  final Map<int, bool> _isDragging = {}; // cursor feedback per truck
+  final Map<int, AnimationController> _laneControllers = {};
+  final Map<int, Animation<double>> _laneAnimations = {};
+  final Map<int, int> _previousLane = {}; // previous lane for interpolation
+  final Map<int, bool> _laneChangeInProgress = {}; // prevent multiple lane changes
 
   @override
   void initState() {
@@ -86,7 +110,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     final random = Random();
     _truckSpeeds = List<double>.generate(
       _trucks.length,
-      (_) => 0.6 + random.nextDouble() * 0.6, // speeds roughly 0.6-1.2x
+      (_) => 0.4 + random.nextDouble() * 0.4, // speeds roughly 0.4-0.8x (slightly faster)
     );
     _visibleTrucks = min(1, _trucks.length);
     _carsRemoved = List<bool>.filled(_trucks.length, false);
@@ -126,7 +150,11 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     for (final controller in _truckControllers) {
       controller.dispose();
     }
+    for (final controller in _laneControllers.values) {
+      controller.dispose();
+    }
     _stopTimers();
+    _stopPart2Timers();
     super.dispose();
   }
 
@@ -277,7 +305,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Game Complete'),
+            title: const Text('Part 1 Complete!'),
             content: SizedBox(
               width: double.maxFinite,
               child: Column(
@@ -316,10 +344,210 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Now guide your trucks through the roadblocks!',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),
             actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  _startPart2();
+                },
+                child: const Text('Start Part 2'),
+              ),
+            ],
+          );
+        },
+      );
+    });
+  }
+  
+  void _startPart2() {
+    setState(() {
+      _part2Active = true;
+      // Start all trucks in the middle lane
+      _truckLanes = [1, 1, 1];
+      // initialize previous lanes for interpolation
+      for (int i = 0; i < _truckLanes.length; i++) {
+        _previousLane[i] = _truckLanes[i];
+      }
+      _part2Time = 0;
+      _part2GameOver = false;
+      _roadblocks = [];
+      _pathIndex = 0;
+    });
+    
+    _generatePredeterminedPath();
+    _startPart2Timers();
+  }
+  
+  void _generatePredeterminedPath() {
+    // Generate a path for 30 seconds that always has at least one safe lane
+    // Pattern: alternate between lanes, never block all 3 lanes at once
+    final random = Random();
+    _predeterminedPath = [];
+    
+    int currentTime = 3000; // Start spawning after 3 seconds
+    
+    while (currentTime < 30000) { // 30 seconds
+      // Determine how many blocks to spawn (1-2) - mostly single blocks
+      final blockCount = random.nextDouble() < 0.85 ? 1 : 2;
+      final lanesToSpawn = <int>[];
+      
+      if (blockCount == 1) {
+        // Single block - pick any lane, ensure at least one safe lane remains
+        final availableLanes = [0, 1, 2];
+        availableLanes.shuffle(random);
+        lanesToSpawn.add(availableLanes[0]);
+      } else {
+        // Two blocks - pick two different lanes, ensure at least one safe lane remains
+        final availableLanes = [0, 1, 2];
+        availableLanes.shuffle(random);
+        lanesToSpawn.add(availableLanes[0]);
+        lanesToSpawn.add(availableLanes[1]);
+      }
+      
+      // Add blocks to predetermined path
+      for (final lane in lanesToSpawn) {
+        _predeterminedPath.add(_PredeterminedRoadblock(
+          spawnTime: currentTime,
+          lane: lane,
+          speed: 0.012 + random.nextDouble() * 0.006,
+        ));
+      }
+      
+      // Progress time with slower difficulty progression
+      final difficultyLevel = (currentTime / 5000).floor();
+      final interval = max(1800, 2800 - difficultyLevel * 50);
+      currentTime += interval;
+    }
+    
+    // Sort by spawn time
+    _predeterminedPath.sort((a, b) => a.spawnTime.compareTo(b.spawnTime));
+  }
+  
+  void _startPart2Timers() {
+    // Game timer - spawns from predetermined path
+    _part2GameTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (!mounted || _part2GameOver) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _part2Time += 100;
+        
+        // Spawn roadblocks from predetermined path
+        while (_pathIndex < _predeterminedPath.length && 
+               _predeterminedPath[_pathIndex].spawnTime <= _part2Time) {
+          final predBlock = _predeterminedPath[_pathIndex];
+          _roadblocks.add(_Roadblock(
+            lane: predBlock.lane,
+            position: 1.0,
+            speed: predBlock.speed,
+          ));
+          _pathIndex++;
+        }
+        
+        // Update roadblock positions
+        _roadblocks.removeWhere((block) {
+          block.position -= block.speed;
+          if (block.position < -0.2) {
+            // Roadblock passed
+            return true;
+          }
+          
+          // Check collision with trucks using actual visual positions
+          if (_part2ScreenHeight == 0 || _part2ScreenWidth == 0) return false;
+          
+          final screenHeight = _part2ScreenHeight;
+          final laneHeight = screenHeight / 3;
+          final truckSize = 80.0;
+          final roadblockSize = 60.0;
+          
+          for (int i = 0; i < _truckLanes.length; i++) {
+            // Calculate actual visual Y position of truck (with interpolation)
+            final targetLane = _truckLanes[i];
+            final prevLane = _previousLane[i] ?? targetLane;
+            final anim = _laneAnimations[i];
+            final fromY = prevLane * laneHeight;
+            final toY = targetLane * laneHeight;
+            final truckCenterY = (anim != null)
+                ? (lerpDouble(fromY, toY, anim.value) ?? toY) + laneHeight / 2
+                : toY + laneHeight / 2;
+            
+            // Calculate roadblock Y position
+            final blockCenterY = block.lane * laneHeight + laneHeight / 2;
+            
+            // Check if truck and roadblock overlap vertically
+            final truckTop = truckCenterY - truckSize / 2;
+            final truckBottom = truckCenterY + truckSize / 2;
+            final blockTop = blockCenterY - roadblockSize / 2;
+            final blockBottom = blockCenterY + roadblockSize / 2;
+            
+            final verticalOverlap = !(truckBottom < blockTop || truckTop > blockBottom);
+            
+            // Check horizontal overlap (roadblock X position)
+            final blockLeft = block.position * _part2ScreenWidth;
+            final blockRight = blockLeft + roadblockSize;
+            final truckLeft = 50.0 + i * 100.0;
+            final truckRight = truckLeft + truckSize;
+            
+            final horizontalOverlap = !(truckRight < blockLeft || truckLeft > blockRight);
+            
+            if (verticalOverlap && horizontalOverlap) {
+              _handlePart2GameOver();
+              return true;
+            }
+          }
+          return false;
+        });
+      });
+    });
+    
+    // Win condition: survive 30 seconds
+    _part2WinTimer = Timer(const Duration(seconds: 30), () {
+      if (!mounted || _part2GameOver) return;
+      _handlePart2Win();
+    });
+  }
+  
+  void _stopPart2Timers() {
+    _roadblockSpawnTimer?.cancel();
+    _part2GameTimer?.cancel();
+    _part2WinTimer?.cancel();
+  }
+  
+  void _handlePart2GameOver() {
+    if (_part2GameOver) return;
+    setState(() {
+      _part2GameOver = true;
+    });
+    _stopPart2Timers();
+    
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Game Over'),
+            content: Text(
+              'Your trucks hit a roadblock!\n\nTime Survived: ${(_part2Time / 1000).toStringAsFixed(1)}s',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  _startPart2(); // Replay part 2
+                },
+                child: const Text('Replay Part 2'),
+              ),
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop(); // Close dialog
@@ -332,6 +560,100 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         },
       );
     });
+  }
+  
+  void _handlePart2Win() {
+    if (_part2GameOver) return;
+    setState(() {
+      _part2GameOver = true;
+    });
+    _stopPart2Timers();
+    
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Congratulations!'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('You successfully guided all your trucks!'),
+                const SizedBox(height: 12),
+                Text('Total Eco Score: ${_formatScore(_ecoScore)}'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  _startPart2(); // Replay part 2
+                },
+                child: const Text('Replay Part 2'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Go back to main page
+                },
+                child: const Text('Back to Map'),
+              ),
+            ],
+          );
+        },
+      );
+    });
+  }
+  
+  void _moveTruckToLane(int truckIndex, int lane) {
+    if (_part2GameOver || truckIndex >= _truckLanes.length) return;
+    final newLane = lane.clamp(0, 2);
+    final oldLane = _truckLanes[truckIndex];
+    if (oldLane == newLane) return;
+    
+    // Prevent multiple lane changes - only allow one lane change at a time
+    if (_laneChangeInProgress[truckIndex] == true) return;
+    
+    // Mark lane change as in progress
+    _laneChangeInProgress[truckIndex] = true;
+
+    // record previous lane for interpolation
+    _previousLane[truckIndex] = oldLane;
+
+    // create controller if needed
+    _laneControllers[truckIndex] ??= AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+
+    final controller = _laneControllers[truckIndex]!;
+    controller.stop();
+    controller.reset();
+
+    // assign animation
+    _laneAnimations[truckIndex] = CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeOutCubic,
+    )..addListener(() {
+        // animation changes need re-render to move the widget smoothly
+        if (mounted) setState(() {});
+      });
+    
+    // Reset lane change flag when animation completes
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _laneChangeInProgress[truckIndex] = false;
+      }
+    });
+
+    // set the logical lane immediately (target)
+    _truckLanes[truckIndex] = newLane;
+
+    // play
+    controller.forward();
   }
 
   void _handleTimeUp() {
@@ -364,6 +686,10 @@ class _FoodTruckPageState extends State<FoodTruckPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_part2Active) {
+      return _buildPart2();
+    }
+    
     return Scaffold(
       backgroundColor: const Color(0xFFB3E5FC),
       appBar: AppBar(
@@ -506,6 +832,344 @@ class _FoodTruckPageState extends State<FoodTruckPage>
             ],
           );
         },
+      ),
+    );
+  }
+  
+  Widget _buildPart2() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF2E7D32),
+      appBar: AppBar(
+        title: const Text('Food Truck Run - Part 2'),
+        backgroundColor: Colors.green.shade900,
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenWidth = constraints.maxWidth;
+          final screenHeight = constraints.maxHeight - kToolbarHeight;
+          final laneHeight = screenHeight / 3;
+          
+          // Update screen dimensions for collision detection
+          _part2ScreenWidth = screenWidth;
+          _part2ScreenHeight = screenHeight;
+          
+          return Stack(
+            children: [
+              // Road background with lanes
+              Positioned.fill(
+                child: Column(
+                  children: [
+                    _buildLane(0, laneHeight, screenWidth, Colors.grey.shade800),
+                    _buildLane(1, laneHeight, screenWidth, Colors.grey.shade700),
+                    _buildLane(2, laneHeight, screenWidth, Colors.grey.shade800),
+                  ],
+                ),
+              ),
+              
+              // Roadblocks
+              ..._roadblocks.map((block) {
+                final laneY = block.lane * laneHeight;
+                final blockX = block.position * screenWidth;
+                return Positioned(
+                  left: blockX,
+                  top: laneY + laneHeight / 2 - 30,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade700,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.black, width: 3),
+                    ),
+                    child: const Icon(Icons.block, color: Colors.white, size: 40),
+                  ),
+                );
+              }).toList(),
+              
+              // Player trucks - optimized with single drag handler and smooth animation
+              for (int i = 0; i < _selectedTrucks.length && i < 3; i++)
+                Positioned(
+                  left: 50 + i * 100, // Maximum horizontal spacing between trucks
+                  top: (() {
+                    // compute top with interpolation if animating
+                    final targetLane = _truckLanes[i];
+                    final prevLane = _previousLane[i] ?? targetLane;
+                    final anim = _laneAnimations[i];
+                    final fromY = prevLane * laneHeight;
+                    final toY = targetLane * laneHeight;
+                    final lerped = (anim != null)
+                        ? lerpDouble(fromY, toY, anim.value) ?? toY
+                        : toY;
+                    return lerped + laneHeight / 2 - 40;
+                  })(),
+                  child: MouseRegion(
+                    cursor: (_isDragging[i] ?? false)
+                        ? SystemMouseCursors.grabbing
+                        : SystemMouseCursors.grab,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+
+                      onPanStart: (_) {
+                        _dragAccum[i] = 0.0;
+                        setState(() => _isDragging[i] = true);
+                      },
+
+                      onPanUpdate: (details) {
+                        // Don't process if lane change is in progress
+                        if (_laneChangeInProgress[i] == true) return;
+                        
+                        _dragAccum[i] = (_dragAccum[i] ?? 0.0) + details.delta.dy;
+
+                        const double minPx = 22.0; // works well for mouse
+                        final double threshold =
+                            minPx.clamp(0, laneHeight * 0.22); // scales for mobile
+
+                        if (_dragAccum[i]!.abs() >= threshold) {
+                          final currentLane = _truckLanes[i];
+                          // Only allow one lane change at a time
+                          if (_dragAccum[i]! < 0 && currentLane > 0) {
+                            _moveTruckToLane(i, currentLane - 1);
+                            _dragAccum[i] = 0.0; // reset accumulator immediately
+                          } else if (_dragAccum[i]! > 0 && currentLane < 2) {
+                            _moveTruckToLane(i, currentLane + 1);
+                            _dragAccum[i] = 0.0; // reset accumulator immediately
+                          }
+                        }
+                      },
+
+                      onPanEnd: (_) {
+                        _dragAccum[i] = 0.0;
+                        _laneChangeInProgress[i] = false; // Reset on gesture end
+                        setState(() => _isDragging[i] = false);
+                      },
+
+                      onPanCancel: () {
+                        _dragAccum[i] = 0.0;
+                        _laneChangeInProgress[i] = false; // Reset on gesture cancel
+                        setState(() => _isDragging[i] = false);
+                      },
+
+                      child: _ChibiTruck(
+                        truck: _selectedTrucks[i],
+                        size: 80,
+                      ),
+                    ),
+                  ),
+                ),
+              
+              // UI Overlay - Only show timer, no score
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Time: ${(30 - (_part2Time / 1000)).clamp(0.0, 30.0).toStringAsFixed(1)}s',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Instructions overlay
+              if (_part2Time < 3000)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        margin: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Part 2: Avoid the Roadblocks!',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Drag your trucks up or down to switch lanes',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Avoid the red roadblocks!',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Survive for 30 seconds!',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildLane(int laneIndex, double height, double width, Color color) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: color,
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 2),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 2),
+        ),
+      ),
+      child: CustomPaint(
+        painter: _RoadLinesPainter(),
+      ),
+    );
+  }
+}
+
+class _Roadblock {
+  int lane;
+  double position;
+  double speed;
+  
+  _Roadblock({
+    required this.lane,
+    required this.position,
+    required this.speed,
+  });
+}
+
+class _PredeterminedRoadblock {
+  final int spawnTime; // milliseconds when to spawn
+  final int lane; // 0, 1, or 2
+  final double speed;
+  
+  _PredeterminedRoadblock({
+    required this.spawnTime,
+    required this.lane,
+    required this.speed,
+  });
+}
+
+class _RoadLinesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.yellow.withValues(alpha: 0.6)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+    
+    // Draw dashed center line
+    const dashWidth = 20.0;
+    const dashSpace = 15.0;
+    double startX = 0;
+    while (startX < size.width) {
+      canvas.drawLine(
+        Offset(startX, size.height / 2),
+        Offset(startX + dashWidth, size.height / 2),
+        paint,
+      );
+      startX += dashWidth + dashSpace;
+    }
+  }
+  
+  @override
+  bool shouldRepaint(_RoadLinesPainter oldDelegate) => false;
+}
+
+class _ChibiTruck extends StatelessWidget {
+  final _TruckInfo truck;
+  final double size;
+  
+  const _ChibiTruck({
+    required this.truck,
+    required this.size,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        children: [
+          // Main truck body (chibi style - more rounded and cute)
+          Container(
+            width: size,
+            height: size * 0.75,
+            decoration: BoxDecoration(
+              color: truck.color,
+              borderRadius: BorderRadius.circular(size * 0.2),
+              border: Border.all(color: Colors.black, width: 2),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(size * 0.1),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    truck.name.split(' ')[0], // Just first word for chibi
+                    style: TextStyle(
+                      fontSize: size * 0.18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Chibi wheels
+          Positioned(
+            bottom: 0,
+            left: size * 0.15,
+            child: Container(
+              width: size * 0.25,
+              height: size * 0.25,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: size * 0.15,
+            child: Container(
+              width: size * 0.25,
+              height: size * 0.25,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
