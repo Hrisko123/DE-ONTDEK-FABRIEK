@@ -4,6 +4,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 
 // FOOD TRUCK MINI-GAME
@@ -59,6 +60,29 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   final Map<int, Animation<double>> _laneAnimations = {};
   final Map<int, int> _previousLane = {}; // previous lane for interpolation
   final Map<int, bool> _laneChangeInProgress = {}; // prevent multiple lane changes
+
+  Future<void> _playSound(String assetPath) async {
+    try {
+      final player = AudioPlayer();
+      await player.setVolume(0.1);
+      await player.setPlayerMode(PlayerMode.lowLatency);
+      await player.play(AssetSource(assetPath));
+      // Dispose player when sound completes
+      player.onPlayerComplete.listen((_) {
+        try {
+          player.dispose();
+        } catch (_) {}
+      });
+      // Safety timeout to dispose player
+      Future.delayed(const Duration(seconds: 3), () {
+        try {
+          player.dispose();
+        } catch (_) {}
+      });
+    } catch (e) {
+      debugPrint('Failed to play sound: $assetPath - $e');
+    }
+  }
 
   @override
   void initState() {
@@ -271,6 +295,9 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       return; // Already removed or game completed
     }
 
+    // Play truck selection sound
+    _playSound('sounds/truck.mp3');
+
     setState(() {
       // Remove the car
       _carsRemoved[carIndex] = true;
@@ -392,11 +419,11 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     final random = Random();
     _predeterminedPath = [];
     
-    int currentTime = 3000; // Start spawning after 3 seconds
+    int currentTime = 2500; // Start spawning after 2.5 seconds
     
     while (currentTime < 30000) { // 30 seconds
-      // Determine how many blocks to spawn (1-2) - mostly single blocks
-      final blockCount = random.nextDouble() < 0.85 ? 1 : 2;
+      // Determine how many blocks to spawn (1-2) - mix of single and double blocks
+      final blockCount = random.nextDouble() < 0.75 ? 1 : 2;
       final lanesToSpawn = <int>[];
       
       if (blockCount == 1) {
@@ -421,9 +448,9 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         ));
       }
       
-      // Progress time with slower difficulty progression
+      // Progress time with moderate difficulty progressio
       final difficultyLevel = (currentTime / 5000).floor();
-      final interval = max(1800, 2800 - difficultyLevel * 50);
+      final interval = max(1600, 2500 - difficultyLevel * 60);
       currentTime += interval;
     }
     
@@ -500,6 +527,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
             final horizontalOverlap = !(truckRight < blockLeft || truckLeft > blockRight);
             
             if (verticalOverlap && horizontalOverlap) {
+              // Play crash sound
+              _playSound('sounds/crash.mp3');
               _handlePart2GameOver();
               return true;
             }
