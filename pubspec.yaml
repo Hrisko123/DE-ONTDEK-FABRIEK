@@ -84,8 +84,8 @@ flutter:
     - assets/stage/
 
     # festival cleaner images
-    - assets/trashgame/
-    - assets/trashgame/background/
+    - assets/trashGame/
+    - assets/trashGame/background/
 
     # audio files
     - assets/audio/bees.mp3
