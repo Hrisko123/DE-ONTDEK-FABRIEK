@@ -90,3 +90,16 @@ flutter:
     - assets/audio/music.mp3
     - assets/audio/twinkle.mp3
 
+   #trashGame
+    - assets/trashGame/applee.png
+    - assets/trashGame/banana.png
+    - assets/trashGame/sigy.png
+    - assets/trashGame/plastic_bottle.png
+    - assets/trashGame/herbruikbare_beker.png
+    - assets/trashGame/herbruikbeker_bin.png
+    - assets/trashGame/plastic_bak.png
+    - assets/trashGame/restafval_bak.png
+    - assets/trashGame/gft_bak.png
+    - assets/trashGame/festival_bg.png
+    - assets/trashGame/background/
+    
