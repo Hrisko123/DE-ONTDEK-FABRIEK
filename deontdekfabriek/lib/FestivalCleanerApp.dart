@@ -1,51 +1,24 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
-
-class FestivalCleanerApp extends StatelessWidget {
-  const FestivalCleanerApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const CleanerGame();
-  }
-}
+import 'ui_styles.dart';
 
 class TrashItem {
   /// Types:
-  /// - cup       → herbruikbare beker
-  /// - food      → GFT / eten (appel, banaan)
-  /// - plastic   → plastic fles / blik
-  /// - cigarette → sigarettenpeuk (restafval)
-  final int id;
+  /// - cup         → herbruikbare beker
+  /// - food        → GFT / eten
+  /// - plastic     → plastic & blik
+  /// - paper_clean → schoon papier
+  /// - paper_dirty → vies papier
   final String type;
-  final String? assetPath;
-  double x; // 0–1 (relative to screen width)
-  double y; // 0–1 (relative to screen height)
+  final int lane;
   int age;
 
   TrashItem({
-    required this.id,
     required this.type,
-    this.assetPath,
-    required this.x,
-    required this.y,
+    required this.lane,
     this.age = 0,
-  });
-}
-
-/// Spawn zones (normalized 0–1 of the screen)
-class SpawnZone {
-  final double left;
-  final double top;
-  final double width;
-  final double height;
-
-  const SpawnZone({
-    required this.left,
-    required this.top,
-    required this.width,
-    required this.height,
   });
 }
 
@@ -57,17 +30,17 @@ class CleanerGame extends StatefulWidget {
 }
 
 class _CleanerGameState extends State<CleanerGame> {
-  int phase = 0; // 0 = intro, 1 = game, 2 = result
+  int phase = 0;
 
   // Game state
+  int cleanerLane = 1;
   List<TrashItem> trashItems = [];
-  int _nextId = 0;
 
   // Timing
   Timer? gameTimer;
   int tick = 0;
   final int maxTicks = 40; // how long the game lasts
-  final int maxTrashAge = 8; // ticks before trash counts as "missed"
+  final int maxTrashAge = 6; // ticks before trash counts as "missed"
 
   // Vibe
   int vibe = 50; // 0–100
@@ -78,152 +51,39 @@ class _CleanerGameState extends State<CleanerGame> {
   // Random for spawns
   final Random random = Random();
 
-  // Achtergronden 21 t/m 29: van weinig mensen (21) naar veel mensen (29)
-  final List<String> _backgrounds = [
-    'assets/trashGame/background/21.png',
-    'assets/trashGame/background/22.png',
-    'assets/trashGame/background/23.png',
-    'assets/trashGame/background/24.png',
-    'assets/trashGame/background/25.png',
-    'assets/trashGame/background/26.png',
-    'assets/trashGame/background/27.png',
-    'assets/trashGame/background/28.png',
-    'assets/trashGame/background/29.png',
-  ];
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Preload all background images so switching is instant
-    for (final path in _backgrounds) {
-      precacheImage(AssetImage(path), context);
-    }
-  }
-
-  String _backgroundForVibe() {
-    if (_backgrounds.isEmpty) {
-      return 'assets/trashGame/background/21.png'; // fallback
-    }
-
-    final double t = (vibe / 100).clamp(0.0, 1.0);
-    final int idx =
-        (t * (_backgrounds.length - 1)).round().clamp(0, _backgrounds.length - 1);
-
-    return _backgrounds[idx];
-  }
-
-  // TRASH visuals (labels + emoji fallback)
+  // Trash item visuals
   final Map<String, String> trashEmojis = {
     "cup": "🥤",
     "food": "🍌",
     "plastic": "🧴",
-    "cigarette": "🚬",
+    "paper_clean": "📄",
+    "paper_dirty": "🧻",
   };
 
   final Map<String, String> trashLabels = {
     "cup": "Herbruikbare beker",
     "food": "Eten / GFT",
-    "plastic": "Plastic fles / blik",
-    "cigarette": "Sigaret / restafval",
+    "plastic": "Plastic & blik",
+    "paper_clean": "Schoon papier",
+    "paper_dirty": "Vies papier",
   };
 
-  // BIN visuals
-  final Map<String, String> binAssetPaths = {
-    "gft": "assets/trashGame/gft_bak.png",
-    "rest": "assets/trashGame/restafval_bak.png",
-    "plastic": "assets/trashGame/plastic_bak.png",
-    "cups": "assets/trashGame/herbruikbeker_bin.png",
-  };
-
+  // Bin visuals (buttons at bottom)
   final Map<String, String> binEmojis = {
-    "gft": "🍌",
-    "rest": "🗑️",
-    "plastic": "🧴",
     "cups": "🥤",
+    "gft": "🍌",
+    "plastic": "🧴",
+    "paper": "📄",
+    "rest": "🗑️",
   };
 
-  // Spawn zones based on the red boxes in the background (normalized 0–1)
-  final List<SpawnZone> spawnZones = const [
-    // 0 – small vertical area at the far left
-    SpawnZone(
-      left: 0.067,
-      top: 0.396,
-      width: 0.018,
-      height: 0.120,
-    ),
-
-    // 1 – long bar above the left bottom hill
-    SpawnZone(
-      left: 0.097,
-      top: 0.494,
-      width: 0.044,
-      height: 0.084,
-    ),
-
-    // 2 – wide bar above the left chairs
-    SpawnZone(
-      left: 0.097,
-      top: 0.647,
-      width: 0.162,
-      height: 0.092,
-    ),
-
-    // 3 – small bar under the singer / band
-    SpawnZone(
-      left: 0.154,
-      top: 0.515,
-      width: 0.030,
-      height: 0.105,
-    ),
-
-    // 4 – long bar in front of the band (center)
-    SpawnZone(
-      left: 0.205,
-      top: 0.528,
-      width: 0.210,
-      height: 0.092,
-    ),
-
-    // 5 – tall vertical bar next to the dancing couple
-    SpawnZone(
-      left: 0.231,
-      top: 0.761,
-      width: 0.044,
-      height: 0.239,
-    ),
-
-    // 6 – long bar on the big middle-right hill
-    SpawnZone(
-      left: 0.515,
-      top: 0.550,
-      width: 0.164,
-      height: 0.058,
-    ),
-
-    // 7 – small bar above the picnic area
-    SpawnZone(
-      left: 0.632,
-      top: 0.437,
-      width: 0.075,
-      height: 0.078,
-    ),
-
-    // 8 – vertical bar near the right-bottom hill (near watering girl)
-    SpawnZone(
-      left: 0.735,
-      top: 0.777,
-      width: 0.050,
-      height: 0.198,
-    ),
-
-    // 9 – small bar above the watering girl
-    SpawnZone(
-      left: 0.815,
-      top: 0.554,
-      width: 0.071,
-      height: 0.061,
-    ),
-  ];
+  final Map<String, String> binLabels = {
+    "cups": "Bekers inleveren",
+    "gft": "GFT (eten)",
+    "plastic": "Plastic & blik",
+    "paper": "Papier & karton",
+    "rest": "Restafval",
+  };
 
   @override
   void dispose() {
@@ -235,13 +95,13 @@ class _CleanerGameState extends State<CleanerGame> {
     gameTimer?.cancel();
     setState(() {
       phase = 0;
+      cleanerLane = 1;
       trashItems = [];
       tick = 0;
       vibe = 50;
       correctlySorted = 0;
       missedTrash = 0;
       wrongSorting = 0;
-      _nextId = 0;
     });
   }
 
@@ -249,20 +109,20 @@ class _CleanerGameState extends State<CleanerGame> {
     gameTimer?.cancel();
     setState(() {
       phase = 1;
+      cleanerLane = 1;
       trashItems = [];
       tick = 0;
       vibe = 50;
       correctlySorted = 0;
       missedTrash = 0;
       wrongSorting = 0;
-      _nextId = 0;
     });
 
     gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         tick++;
 
-        // Ageing: too long on the ground = missed
+        // Time of how long the trash has been uninteracted with
         final List<TrashItem> stillThere = [];
         for (var t in trashItems) {
           t.age += 1;
@@ -276,8 +136,8 @@ class _CleanerGameState extends State<CleanerGame> {
         }
         trashItems = stillThere;
 
-        // Spawn new items
-        if (tick % 2 == 0 && trashItems.length < 7) {
+        // Spawn new trash every 2 ticks with randomness
+        if (tick % 2 == 0) {
           if (random.nextBool()) {
             _spawnTrash();
           }
@@ -292,58 +152,39 @@ class _CleanerGameState extends State<CleanerGame> {
     });
   }
 
-  /// Spawn trash only in the zones, with a 10% inner margin
   void _spawnTrash() {
     const types = [
       "cup",
       "food",
       "plastic",
-      "cigarette",
+      "paper_clean",
+      "paper_dirty",
     ];
     final type = types[random.nextInt(types.length)];
+    final lane = random.nextInt(3); // 0,1,2
 
-    // Pick one of the spawn zones
-    final zone = spawnZones[random.nextInt(spawnZones.length)];
-
-    // Inner rectangle: keep 10% margin inside the red box
-    final double innerLeft = zone.left + zone.width * 0.10;
-    final double innerRight = zone.left + zone.width * 0.90;
-    final double innerTop = zone.top + zone.height * 0.10;
-    final double innerBottom = zone.top + zone.height * 0.90;
-
-    final double x =
-        innerLeft + random.nextDouble() * (innerRight - innerLeft);
-    final double y =
-        innerTop + random.nextDouble() * (innerBottom - innerTop);
-
-    String? assetPath;
-    if (type == "food") {
-      final foodAssets = [
-        'assets/trashGame/applee.png',
-        'assets/trashGame/banana.png',
-      ];
-      assetPath = foodAssets[random.nextInt(foodAssets.length)];
-    } else if (type == "plastic") {
-      assetPath = 'assets/trashGame/plastic_bottle.png';
-    } else if (type == "cigarette") {
-      assetPath = 'assets/trashGame/sigy.png';
-    } else if (type == "cup") {
-      assetPath = 'assets/trashGame/herbruikbare_beker.png';
-    }
-
-    trashItems.add(
-      TrashItem(
-        id: _nextId++,
-        type: type,
-        assetPath: assetPath,
-        x: x,
-        y: y,
-      ),
-    );
+    trashItems.add(TrashItem(type: type, lane: lane));
   }
 
-  /// chosenBin is one of: gft, rest, plastic, cups
-  void _handleDropOnBin(TrashItem item, String chosenBin) {
+  void _moveCleaner(int direction) {
+    // -1 = left, +1 = right
+    setState(() {
+      cleanerLane = (cleanerLane + direction).clamp(0, 2);
+    });
+  }
+
+  /// chosenBin is one of: cups, gft, plastic, paper, rest
+  void _pickAndSort(String chosenBin) {
+    // Look for trash in the cleaner's lane
+    final index = trashItems.indexWhere((t) => t.lane == cleanerLane);
+    if (index == -1) {
+      // no trash here, nothing happens
+      return;
+    }
+
+    final item = trashItems[index];
+
+    // Determine correct bin based on item.type
     String correctBin;
     switch (item.type) {
       case "cup":
@@ -355,7 +196,10 @@ class _CleanerGameState extends State<CleanerGame> {
       case "plastic":
         correctBin = "plastic";
         break;
-      case "cigarette":
+      case "paper_clean":
+        correctBin = "paper";
+        break;
+      case "paper_dirty":
         correctBin = "rest";
         break;
       default:
@@ -373,43 +217,47 @@ class _CleanerGameState extends State<CleanerGame> {
     }
 
     setState(() {
-      trashItems.removeWhere((t) => t.id == item.id);
+      trashItems.removeAt(index);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Background color based on vibe (0 = grey, 100 = purple/bright)
+    final double t = (vibe / 100).clamp(0.0, 1.0);
+    final Color bgColor = Color.lerp(
+          Colors.grey.shade900,
+          Colors.deepPurpleAccent,
+          t,
+        ) ??
+        Colors.grey.shade900;
+
+    Widget body;
+    if (phase == 0) {
+      body = _buildIntro();
+    } else if (phase == 1) {
+      body = _buildGame();
+    } else {
+      body = _buildResult();
+    }
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: bgColor,
       appBar: AppBar(
         title: const Text('Festival Cleaner'),
-        backgroundColor: Colors.black.withOpacity(0.7),
+        backgroundColor: Colors.black.withOpacity(0.5),
         elevation: 0,
       ),
       body: SafeArea(
-        child: Builder(
-          builder: (context) {
-            if (phase == 0) {
-              return Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildIntro(),
-              );
-            } else if (phase == 1) {
-              return _buildGame();
-            } else {
-              return Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildResult(),
-              );
-            }
-          },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: body,
         ),
       ),
     );
   }
 
-  // ---------------- INTRO ----------------
-
+  // The intro
   Widget _buildIntro() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,10 +267,25 @@ class _CleanerGameState extends State<CleanerGame> {
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        const Text("123abc "),
+        Text(
+          "Je kruipt in de rol van schoonmaker op een druk festival. "
+          "Je loopt voor het podium heen en weer, terwijl achter je een grote crowd van de show geniet. "
+          "Bezoekers laten tijdens het optreden allerlei afval vallen: herbruikbare bekers 🥤, etensresten 🍌, "
+          "plastic flesjes en blik 🧴, schoon papier 📄 en vieze servetten 🧻.\n\n"
+          "Jij beslist in welke bak dat afval hoort: bekers inleveren, GFT, plastic & blik, papier & karton of restafval. "
+          "Sorteer je snel én goed, dan gaat de festival-vibe omhoog en worden de kleuren in het spel steeds feller. "
+          "Laat je afval liggen of kies je de verkeerde bak (zoals vies papier in de papierbak), dan zakt de vibe "
+          "en wordt het beeld grauwer. Zo merk je direct het verschil tussen herbruikbaar, recyclebaar en echt restafval.\n\n"
+          "Herbruikbare bekers 🥤 gaan naar het inleverpunt. Daar worden ze gewassen en opnieuw gebruikt in plaats van weggegooid. "
+          "Etensresten 🍌 komen in de GFT-bak en kunnen worden verwerkt tot compost of biogas. "
+          "Schone plastic verpakkingen en blik 🧴 worden gerecycled tot nieuwe verpakkingen. "
+          "Schoon papier 📄 kan weer nieuw papier en karton worden. "
+          "Wat overblijft, zoals vieze servetten 🧻 of gemengd afval, is restafval en wordt meestal verbrand. ",
+        ),
         const Spacer(),
         Center(
-          child: FilledButton(
+          child: ElevatedButton(
+            style: kStartButtonStyle,
             onPressed: _startGame,
             child: const Text("Start festival 🎵"),
           ),
@@ -431,121 +294,15 @@ class _CleanerGameState extends State<CleanerGame> {
     );
   }
 
-  // ---------------- GAME ----------------
-
+  // Phase 1: the game
   Widget _buildGame() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Stack(
-          children: [
-            // 1) Full festival background
-            Positioned.fill(
-              child: Image.asset(
-                _backgroundForVibe(),
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              ),
-            ),
-
-            // 2) HUD at the very top
-            Positioned(
-              left: 16,
-              right: 16,
-              top: 8,
-              child: _buildCrowdAndHud(),
-            ),
-
-            // 3) Trash items over the grass
-            Positioned.fill(
-              child: LayoutBuilder(
-                builder: (context, playConstraints) {
-                  return Stack(
-                    children: [
-                      ...trashItems.map((item) {
-                        final left =
-                            item.x * playConstraints.maxWidth - 24;
-                        final top =
-                            item.y * playConstraints.maxHeight - 24;
-
-                        return Positioned(
-                          left: left
-                              .clamp(0, playConstraints.maxWidth - 48),
-                          top: top
-                              .clamp(0, playConstraints.maxHeight - 48),
-                          child: Draggable<TrashItem>(
-                            data: item,
-                            feedback: Material(
-                              color: Colors.transparent,
-                              child: item.assetPath != null
-                                  ? Image.asset(
-                                      item.assetPath!,
-                                      width: 48,
-                                      height: 48,
-                                      fit: BoxFit.contain,
-                                    )
-                                  : Text(
-                                      trashEmojis[item.type] ?? "❓",
-                                      style:
-                                          const TextStyle(fontSize: 40),
-                                    ),
-                            ),
-                            childWhenDragging: Opacity(
-                              opacity: 0.3,
-                              child: _buildTrashIcon(item),
-                            ),
-                            child: _buildTrashIcon(item),
-                          ),
-                        );
-                      }),
-                    ],
-                  );
-                },
-              ),
-            ),
-
-            // 4) Bins at the bottom
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: _buildBinsRow(),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildTrashIcon(TrashItem item) {
-    Widget iconWidget;
-
-    if (item.assetPath != null) {
-      iconWidget = Image.asset(
-        item.assetPath!,
-        width: 74,
-        height: 74,
-        fit: BoxFit.contain,
-      );
-    } else {
-      iconWidget = Text(
-        trashEmojis[item.type] ?? "❓",
-        style: const TextStyle(fontSize: 32),
-      );
-    }
-
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        iconWidget,
-        Text(
-          trashLabels[item.type] ?? "",
-          style: const TextStyle(fontSize: 11, color: Colors.white),
-          textAlign: TextAlign.center,
-        ),
+        _buildCrowdAndHud(),
+        const SizedBox(height: 16),
+        _buildLanes(),
+        const SizedBox(height: 16),
+        _buildControls(),
       ],
     );
   }
@@ -556,110 +313,137 @@ class _CleanerGameState extends State<CleanerGame> {
         : (vibe >= 40 ? "De sfeer is oké" : "De crowd klaagt over rommel…");
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "🙋‍♀️🙋‍♂️🎵🙋‍♀️🙋‍♂️🎵🙋‍♀️🙋‍♂️",
-          style: TextStyle(fontSize: 24, color: Colors.white),
+          style: const TextStyle(fontSize: 26),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              "Vibe: $vibe/100",
-              style: const TextStyle(color: Colors.white),
-            ),
-            Text(
-              "Tijd: ${maxTicks - tick}s",
-              style: const TextStyle(color: Colors.white),
-            ),
+            Text("Vibe: $vibe/100"),
+            Text("Tijd: ${maxTicks - tick}s"),
           ],
         ),
-        Text(
-          vibeText,
-          style: const TextStyle(color: Colors.white),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(vibeText),
         ),
       ],
     );
   }
 
-  Widget _buildBinsRow() {
-    final List<String> bins = ["gft", "rest", "plastic", "cups"];
+  Widget _buildLanes() {
+    return Expanded(
+      child: Row(
+        children: List.generate(3, (lane) {
+          final item = trashItems.firstWhere(
+            (t) => t.lane == lane,
+            orElse: () => TrashItem(type: "", lane: lane, age: 0),
+          );
+          final hasTrash = item.type.isNotEmpty;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Width the image *wants* to be
-        const double imgWidth = 160; // size you like
-        const double gap = 0; // real gap between bins
-        // Slot slightly smaller than image → they visually overlap a bit
-        const double slotWidth = 140; // < imgWidth on purpose
-
-        final double imgHeight = imgWidth * 1.4;
-
-        return Center(
-          child: SizedBox(
-            width: bins.length * slotWidth + (bins.length - 1) * gap,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (int i = 0; i < bins.length; i++) ...[
-                  SizedBox(
-                    width: slotWidth,
-                    child: DragTarget<TrashItem>(
-                      onWillAccept: (item) => item != null,
-                      onAccept: (item) => _handleDropOnBin(item, bins[i]),
-                      builder: (context, candidateData, rejectedData) {
-                        final bool isHighlighted =
-                            candidateData.isNotEmpty;
-                        final asset = binAssetPaths[bins[i]];
-
-                        Widget iconWidget;
-                        if (asset != null) {
-                          iconWidget = Image.asset(
-                            asset,
-                            width: isHighlighted
-                                ? imgWidth * 1.05
-                                : imgWidth,
-                            height: isHighlighted
-                                ? imgHeight * 1.05
-                                : imgHeight,
-                            fit: BoxFit.contain,
-                          );
-                        } else {
-                          iconWidget = Text(
-                            binEmojis[bins[i]] ?? "",
-                            style: TextStyle(
-                              fontSize: isHighlighted ? 48 : 44,
-                              color: Colors.white,
-                            ),
-                          );
-                        }
-
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Opacity(
-                              opacity: isHighlighted ? 1.0 : 0.95,
-                              child: iconWidget,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                  if (i < bins.length - 1) SizedBox(width: gap),
+          return Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.black.withOpacity(0.4),
+                border: Border.all(
+                  color: lane == cleanerLane
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.2),
+                  width: lane == cleanerLane ? 2 : 1,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(height: 8),
+                  if (hasTrash)
+                    Column(
+                      children: [
+                        Text(
+                          trashEmojis[item.type] ?? "❓",
+                          style: const TextStyle(fontSize: 32),
+                        ),
+                        Text(
+                          trashLabels[item.type] ?? "",
+                          style: const TextStyle(fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    )
+                  else
+                    const SizedBox(height: 48),
+                  const Spacer(),
+                  if (lane == cleanerLane)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        "🧹",
+                        style: TextStyle(fontSize: 32),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 40),
                 ],
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        }),
+      ),
     );
   }
 
-  // ---------------- RESULT ----------------
+  Widget _buildControls() {
+    final List<String> bins = ["cups", "gft", "plastic", "paper", "rest"];
 
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              onPressed: () => _moveCleaner(-1),
+              icon: const Icon(Icons.arrow_left),
+              iconSize: 32,
+            ),
+            const SizedBox(width: 16),
+            const Text("Beweeg de schoonmaker"),
+            const SizedBox(width: 16),
+            IconButton(
+              onPressed: () => _moveCleaner(1),
+              icon: const Icon(Icons.arrow_right),
+              iconSize: 32,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          "Kies de juiste bak voor het afval in jouw rij:",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          children: bins.map((binKey) {
+            return FilledButton(
+              onPressed: () => _pickAndSort(binKey),
+              child: Text(
+                "${binEmojis[binKey]} ${binLabels[binKey]}",
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  // Phase 2: the result
   Widget _buildResult() {
     String summary;
     if (vibe >= 70) {
@@ -670,7 +454,7 @@ class _CleanerGameState extends State<CleanerGame> {
           "De vibe was wisselend. Soms schoon en netjes gescheiden, soms rommelig. Er is ruimte om beter te sorteren.";
     } else {
       summary =
-          "De vibe zakte flink weg. Veel afval bleef liggen of werd verkeerd gesorteerd (bijvoorbeeld sigaretten bij GFT of bekers bij restafval). 😬";
+          "De vibe zakte flink weg. Veel afval bleef liggen of werd verkeerd gesorteerd (bijvoorbeeld vies papier bij het oud papier). 😬";
     }
 
     return Column(
@@ -708,5 +492,16 @@ class _CleanerGameState extends State<CleanerGame> {
         ),
       ],
     );
+  }
+}
+
+/// Page widget you navigate to from the main map.
+/// Name = FestivalCleanerApp like you wanted 💚
+class FestivalCleanerApp extends StatelessWidget {
+  const FestivalCleanerApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const CleanerGame();
   }
 }
