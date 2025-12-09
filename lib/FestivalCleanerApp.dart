@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class FestivalCleanerApp extends StatelessWidget {
   const FestivalCleanerApp({super.key});
@@ -75,8 +76,13 @@ class _CleanerGameState extends State<CleanerGame> {
   int missedTrash = 0;
   int wrongSorting = 0;
 
-  // Random for spawns
+  // Random for spawns / bg music
   final Random random = Random();
+
+  // AUDIO
+  late final AudioPlayer _bgPlayer;
+  late final AudioPlayer _sfxPlayer; // reuse for short sounds
+  double _bgVolume = 0.5;
 
   // Achtergronden 21 t/m 29: van weinig mensen (21) naar veel mensen (29)
   final List<String> _backgrounds = [
@@ -91,26 +97,11 @@ class _CleanerGameState extends State<CleanerGame> {
     'assets/trashGame/background/29.png',
   ];
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Preload all background images so switching is instant
-    for (final path in _backgrounds) {
-      precacheImage(AssetImage(path), context);
-    }
-  }
-
-  String _backgroundForVibe() {
-    if (_backgrounds.isEmpty) {
-      return 'assets/trashGame/background/21.png'; // fallback
-    }
-
-    final double t = (vibe / 100).clamp(0.0, 1.0);
-    final int idx =
-        (t * (_backgrounds.length - 1)).round().clamp(0, _backgrounds.length - 1);
-
-    return _backgrounds[idx];
-  }
+  // Two possible BG tracks – one will be picked at random when the game starts
+  final List<String> _bgTracks = [
+    'trashGame/audio/Soda pop (Instrumental).mp3', // e.g. Soda Pop (Instrumental)
+    'trashGame/audio/Owl City - Fireflies (Instrumental).mp3', // e.g. Fireflies (Instrumental)
+  ];
 
   // TRASH visuals (labels + emoji fallback)
   final Map<String, String> trashEmojis = {
@@ -142,7 +133,7 @@ class _CleanerGameState extends State<CleanerGame> {
     "cups": "🥤",
   };
 
-  // Spawn zones based on the red boxes in the background (normalized 0–1)
+  // Spawn zones based on your red boxes (normalized 0–1)
   final List<SpawnZone> spawnZones = const [
     // 0 – small vertical area at the far left
     SpawnZone(
@@ -208,7 +199,7 @@ class _CleanerGameState extends State<CleanerGame> {
       height: 0.078,
     ),
 
-    // 8 – vertical bar near the right-bottom hill (near watering girl)
+    // 8 – vertical bar near the right-bottom hill
     SpawnZone(
       left: 0.735,
       top: 0.777,
@@ -226,13 +217,93 @@ class _CleanerGameState extends State<CleanerGame> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _bgPlayer = AudioPlayer();
+    _sfxPlayer = AudioPlayer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Preload all background images so switching is instant
+    for (final path in _backgrounds) {
+      precacheImage(AssetImage(path), context);
+    }
+  }
+
+  String _backgroundForVibe() {
+    if (_backgrounds.isEmpty) {
+      return 'assets/trashGame/background/21.png'; // fallback
+    }
+
+    final double t = (vibe / 100).clamp(0.0, 1.0);
+    final int idx =
+        (t * (_backgrounds.length - 1)).round().clamp(0, _backgrounds.length - 1);
+
+    return _backgrounds[idx];
+  }
+
+  // ---------- AUDIO HELPERS ----------
+
+  Future<void> _startBackgroundMusic() async {
+    if (_bgTracks.isEmpty) return;
+    final track = _bgTracks[random.nextInt(_bgTracks.length)];
+
+    await _bgPlayer.setReleaseMode(ReleaseMode.loop);
+    await _bgPlayer.setVolume(_bgVolume);
+    await _bgPlayer.play(AssetSource(track));
+  }
+
+  Future<void> _stopBackgroundMusic() async {
+    await _bgPlayer.stop();
+  }
+
+  Future<void> _playSpawnSound() async {
+    await _sfxPlayer.play(AssetSource('trashGame/audio/TrashSpawn.mp3'));
+  }
+
+  Future<void> _playPickupSound() async {
+    await _sfxPlayer.play(AssetSource('trashGame/audio/pickupTrash.mp3'));
+  }
+
+  Future<void> _playBinnedSound() async {
+    await _sfxPlayer.play(AssetSource('trashGame/audio/binnedTrash.mp3'));
+  }
+
+  IconData _bgVolumeIcon() {
+    if (_bgVolume == 0) return Icons.volume_off;
+    if (_bgVolume < 0.4) return Icons.volume_mute;
+    if (_bgVolume < 0.8) return Icons.volume_down;
+    return Icons.volume_up;
+  }
+
+  void _cycleBgVolume() {
+    setState(() {
+      if (_bgVolume == 0) {
+        _bgVolume = 0.3;
+      } else if (_bgVolume < 0.4) {
+        _bgVolume = 0.6;
+      } else if (_bgVolume < 0.8) {
+        _bgVolume = 1.0;
+      } else {
+        _bgVolume = 0.0;
+      }
+    });
+    _bgPlayer.setVolume(_bgVolume);
+  }
+
+  @override
   void dispose() {
     gameTimer?.cancel();
+    _bgPlayer.dispose();
+    _sfxPlayer.dispose();
     super.dispose();
   }
 
   void _resetGame() {
     gameTimer?.cancel();
+    _stopBackgroundMusic();
     setState(() {
       phase = 0;
       trashItems = [];
@@ -257,6 +328,8 @@ class _CleanerGameState extends State<CleanerGame> {
       wrongSorting = 0;
       _nextId = 0;
     });
+
+    _startBackgroundMusic(); // 🔊 random bg track when game starts
 
     gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -287,6 +360,7 @@ class _CleanerGameState extends State<CleanerGame> {
         if (tick >= maxTicks) {
           gameTimer?.cancel();
           phase = 2;
+          _stopBackgroundMusic();
         }
       });
     });
@@ -340,10 +414,12 @@ class _CleanerGameState extends State<CleanerGame> {
         y: y,
       ),
     );
+
+    _playSpawnSound(); // 🔊 play when trash appears
   }
 
   /// chosenBin is one of: gft, rest, plastic, cups
-  void _handleDropOnBin(TrashItem item, String chosenBin) {
+  void _handleDropOnBin(TrashItem item, String chosenBin) async {
     String correctBin;
     switch (item.type) {
       case "cup":
@@ -371,6 +447,8 @@ class _CleanerGameState extends State<CleanerGame> {
       vibe -= 5;
       if (vibe < 0) vibe = 0;
     }
+
+    await _playBinnedSound(); // 🔊 play when item is binned (correct or not)
 
     setState(() {
       trashItems.removeWhere((t) => t.id == item.id);
@@ -474,6 +552,9 @@ class _CleanerGameState extends State<CleanerGame> {
                               .clamp(0, playConstraints.maxHeight - 48),
                           child: Draggable<TrashItem>(
                             data: item,
+                            onDragStarted: () {
+                              _playPickupSound(); // 🔊 when player picks up trash
+                            },
                             feedback: Material(
                               color: Colors.transparent,
                               child: item.assetPath != null
@@ -570,9 +651,22 @@ class _CleanerGameState extends State<CleanerGame> {
               "Vibe: $vibe/100",
               style: const TextStyle(color: Colors.white),
             ),
-            Text(
-              "Tijd: ${maxTicks - tick}s",
-              style: const TextStyle(color: Colors.white),
+            Row(
+              children: [
+                Text(
+                  "Tijd: ${maxTicks - tick}s",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _cycleBgVolume,
+                  icon: Icon(
+                    _bgVolumeIcon(),
+                    color: Colors.white,
+                  ),
+                  tooltip: 'Muziek volume',
+                ),
+              ],
             ),
           ],
         ),
@@ -589,11 +683,9 @@ class _CleanerGameState extends State<CleanerGame> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Width the image *wants* to be
-        const double imgWidth = 160; // size you like
-        const double gap = 0; // real gap between bins
-        // Slot slightly smaller than image → they visually overlap a bit
-        const double slotWidth = 140; // < imgWidth on purpose
+        const double imgWidth = 160;
+        const double gap = 0;
+        const double slotWidth = 140; // a bit smaller than image
 
         final double imgHeight = imgWidth * 1.4;
 
@@ -648,7 +740,7 @@ class _CleanerGameState extends State<CleanerGame> {
                       },
                     ),
                   ),
-                  if (i < bins.length - 1) SizedBox(width: gap),
+                  if (i < bins.length - 1) const SizedBox(width: gap),
                 ],
               ],
             ),

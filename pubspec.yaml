@@ -78,7 +78,7 @@ flutter:
 
     # Toilet game images
     - assets/ToiletImage/
-    - assets/sounds/
+    - assets/sounds/ 
 
     # Stage images
     - assets/stage/
@@ -86,6 +86,7 @@ flutter:
     # festival cleaner images
     - assets/trashGame/
     - assets/trashGame/background/
+    - assets/trashGame/audio/
 
     # audio files
     - assets/audio/bees.mp3
