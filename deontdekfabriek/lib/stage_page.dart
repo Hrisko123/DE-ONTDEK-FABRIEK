@@ -2,26 +2,88 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:camera_shake/camera_shake.dart';
+import 'ui_styles.dart'; 
 
-// -------------------------------------------------------------
-// AUDIO CONTROLLER (kept exactly same)
-// -------------------------------------------------------------
+/// ------------------------------------------------------------
+/// AUDIO CONTROLLER 
+/// ------------------------------------------------------------
 class StageAudioController {
-  StageAudioController._internal();
-  static final StageAudioController instance = StageAudioController._internal();
+  StageAudioController._internal() {
+    _player.onPlayerComplete.listen((event) {
+      _playNextInPlaylist();
+    });
+  }
 
-  final AudioPlayer _player = AudioPlayer()..setReleaseMode(ReleaseMode.loop);
-  String? _currentTrack;
+  static final StageAudioController instance =
+      StageAudioController._internal();
 
-  Future<void> playLoop(String key, String asset) async {
-    if (_currentTrack == key) return;
-    _currentTrack = key;
+  final AudioPlayer _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+
+  final Map<String, List<String>> _playlists = {
+    'rock': [
+      'audio/band/band1.mp3',
+      'audio/band/band2.mp3',
+      'audio/band/band3.mp3',
+      'audio/band/band4.mp3',
+    ],
+    'pop': [
+      'audio/pop/pop1.mp3',
+      'audio/pop/pop2.mp3',
+      'audio/pop/pop3.mp3',
+      'audio/pop/pop4.mp3',
+      'audio/pop/pop5.mp3',
+      'audio/pop/pop6.mp3',
+    ],
+    'dj': [
+      'audio/dj/dj1.mp3',
+      'audio/dj/dj2.mp3',
+      'audio/dj/dj3.mp3',
+      'audio/dj/dj4.mp3',
+    ],
+  };
+
+  String? _currentKey;
+  int _currentIndex = 0;
+  bool _muted = false;
+
+  bool get isMuted => _muted;
+
+  Future<void> playForBand(String key) async {
+    final tracks = _playlists[key];
+    if (tracks == null || tracks.isEmpty) return;
+
+    _currentKey = key;
+    _currentIndex = Random().nextInt(tracks.length);
+
+    if (_muted) return;
+
     await _player.stop();
-    await _player.play(AssetSource(asset));
+    await _player.play(AssetSource(tracks[_currentIndex]));
+  }
+
+  void _playNextInPlaylist() {
+    if (_currentKey == null) return;
+    final list = _playlists[_currentKey];
+    if (list == null || list.isEmpty) return;
+
+    _currentIndex = Random().nextInt(list.length);
+    if (!_muted) {
+      _player.play(AssetSource(list[_currentIndex]));
+    }
+  }
+
+  Future<void> toggleMute() async {
+    _muted = !_muted;
+    if (_muted) {
+      await _player.pause();
+    } else {
+      await _player.resume();
+    }
   }
 
   Future<void> stop() async {
-    _currentTrack = null;
+    _currentKey = null;
     await _player.stop();
   }
 }
@@ -1327,7 +1389,8 @@ class _StagePageState extends State<StagePage>
 // -------------------------------------------------------------
 // RESULT PAGE
 // -------------------------------------------------------------
-class ResultPage extends StatelessWidget {
+class ResultPage extends StatefulWidget {
+  
   final int score;
   final String bandName;
   final String festivalName;

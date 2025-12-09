@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:deontdekfabriek/ToiletGame.dart';
+import 'package:deontdekfabriek/StageGamePage.dart';
+
 
 class QR extends StatefulWidget {
   const QR({super.key});
@@ -65,6 +67,7 @@ class _QRState extends State<QR> {
                       );
                     }
                   }
+                  
                 } else if (value.startsWith('http://') ||
                     value.startsWith('https://')) {
                   if (_lastLaunched == value) return;
@@ -83,6 +86,23 @@ class _QRState extends State<QR> {
                     }
                   }
                 }
+                else if (value.contains('stage.game')) {
+                  if (_lastLaunched == value) return;
+                  _lastLaunched = value;
+
+                  try {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const StageGamePage(),
+                      ),
+                    );
+                  } catch (_) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Kon Stage Game niet openen')),
+                      );
+                    }
+                  }
               }
             },
           ),

@@ -79,7 +79,9 @@ flutter:
     - assets/stage/
     
     # Audio files
-    - assets/audio/
+    - assets/audio/band/
+    - assets/audio/pop/
+    - assets/audio/dj/
 
 
   # To add assets to your application, add an assets section, like this:
