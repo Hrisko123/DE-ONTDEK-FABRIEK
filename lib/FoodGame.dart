@@ -94,6 +94,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         color: Colors.orange.shade400,
         isEcoFriendly: true,
         ecoScore: 5,
+        imagePath: 'assets/trucks/taco_truck.png',
       ),
       _TruckInfo(
         name: 'Pizza Truck',
@@ -101,6 +102,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         color: Colors.red.shade400,
         isEcoFriendly: false,
         ecoScore: -5,
+        imagePath: 'assets/trucks/pizza_truck.png',
       ),
       _TruckInfo(
         name: 'Sushi Truck',
@@ -108,6 +110,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         color: Colors.blue.shade300,
         isEcoFriendly: true,
         ecoScore: 3,
+        imagePath: 'assets/trucks/sushi_truck.png',
       ),
       _TruckInfo(
         name: 'Burger Truck',
@@ -115,6 +118,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         color: Colors.grey.shade600,
         isEcoFriendly: false,
         ecoScore: -5,
+        imagePath: 'assets/trucks/burger_truck.png',
       ),
       _TruckInfo(
         name: 'Salad Truck',
@@ -122,6 +126,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         color: Colors.lightGreen.shade400,
         isEcoFriendly: true,
         ecoScore: 5,
+        imagePath: 'assets/trucks/salad_truck.png',
       ),
       _TruckInfo(
         name: 'Coffee Truck',
@@ -129,6 +134,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         color: Colors.brown.shade400,
         isEcoFriendly: false,
         ecoScore: -3,
+        imagePath: 'assets/trucks/coffee_truck.png',
       ),
     ];
     final random = Random();
@@ -803,8 +809,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
           final roadWidth =
               max(constraints.maxWidth - (horizontalPadding * 2), 320.0);
           final roadHeight = max(constraints.maxHeight - 140, 280.0);
-          final truckHeight = roadHeight * 0.14;
-          final truckWidth = roadWidth * 0.2;
+          final truckHeight = roadHeight * 0.22;
+          final truckWidth = roadWidth * 0.3;
           final travelDistance = roadWidth - truckWidth;
 
           return Column(
@@ -1275,6 +1281,7 @@ class _TruckInfo {
   final Color color;
   final bool isEcoFriendly;
   final int ecoScore;
+  final String imagePath;
 
   const _TruckInfo({
     required this.name,
@@ -1282,6 +1289,7 @@ class _TruckInfo {
     required this.color,
     required this.isEcoFriendly,
     required this.ecoScore,
+    required this.imagePath,
   });
 }
 
@@ -1298,109 +1306,38 @@ class _TruckCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wheelDiameter = height * 0.28;
     return SizedBox(
       width: width,
-      height: height + (wheelDiameter * 0.6),
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              Container(
-                width: width,
-                height: height,
-                decoration: BoxDecoration(
-                  color: truck.color,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black, width: 3),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        truck.name,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: height * 0.2,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: truck.features.map((feature) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: Text(
-                                    '• $feature',
-                                    style: TextStyle(
-                                      fontSize: height * 0.18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                top: height * 0.12,
-                right: height * 0.1,
-                child: Container(
-                  width: width * 0.22,
-                  height: height * 0.28,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.black54, width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(
-            height: wheelDiameter * 0.6,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _TruckWheel(diameter: wheelDiameter),
-                _TruckWheel(diameter: wheelDiameter),
-              ],
+      height: height,
+      child: Image.asset(
+        truck.imagePath,
+        width: width,
+        height: height,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to old design if image not found
+          return Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: truck.color,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.black, width: 3),
             ),
-          ),
-        ],
+            child: Center(
+              child: Text(
+                truck.name,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: height * 0.2,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-class _TruckWheel extends StatelessWidget {
-  final double diameter;
-
-  const _TruckWheel({required this.diameter});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: diameter,
-      height: diameter,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.black,
-        border: Border.all(color: Colors.white, width: diameter * 0.12),
-      ),
-    );
-  }
-}

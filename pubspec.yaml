@@ -87,6 +87,9 @@ flutter:
     - assets/trashgame/
     - assets/trashgame/background/
 
+    # Food game truck images
+    - assets/trucks/
+
     # audio files
     - assets/audio/bees.mp3
     - assets/audio/blooming.mp3
