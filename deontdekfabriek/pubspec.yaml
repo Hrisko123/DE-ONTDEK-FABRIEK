@@ -38,6 +38,7 @@ dependencies:
   sensors_plus: ^5.0.1
   mobile_scanner: ^5.0.0
   url_launcher: ^6.2.0
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -66,27 +67,8 @@ flutter:
   assets:
     # General images
     - assets/Images/
-
-    # Hangout garden images
-    - assets/garden/Hangout_minigame.jpg
-    - assets/garden/grass_lines.png
-    - assets/garden/flowers_small.png
-    - assets/garden/butterfly_1.png
-    - assets/garden/bee.png    
-
-    # Toilet game images
+    - assets/garden/
     - assets/ToiletImage/
-
-    # Stage images
     - assets/stage/
-
-    # audio files
-    - assets/audio/bees.mp3
-    - assets/audio/blooming.mp3
-    - assets/audio/bubbles.mp3
-    - assets/audio/droplet.mp3
-    - assets/audio/glow.mp3
-    - assets/audio/grass.mp3
-    - assets/audio/music.mp3
-    - assets/audio/twinkle.mp3
+    - assets/audio/
 

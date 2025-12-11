@@ -9,10 +9,7 @@ import 'QR.dart';
 class MyHomePage extends StatefulWidget {
   final String festivalName;
 
-  const MyHomePage({
-    super.key,
-    required this.festivalName,
-  });
+  const MyHomePage({super.key, required this.festivalName});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -44,36 +41,36 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _navigateToFoodTruck() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const FoodTruckPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const FoodTruckPage()));
     setState(() => _foodCompleted = true);
   }
 
   void _navigateToHangout() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const HangoutQuizPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const HangoutQuizPage()));
     setState(() => _hangoutCompleted = true);
   }
 
   void _navigateToCleaner() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const FestivalCleanerApp()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const FestivalCleanerApp()));
     setState(() => _wasteCompleted = true);
   }
 
   void _navigateToToiletGame() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ToiletGamePage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ToiletGamePage()));
     setState(() => _toiletCompleted = true);
   }
 
   void _navigateToQR() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => QR()),   // <-- FIXED (no const)
+      MaterialPageRoute(builder: (_) => QR()), // <-- FIXED (no const)
     );
   }
 
@@ -82,10 +79,26 @@ class _MyHomePageState extends State<MyHomePage> {
     return completed
         ? const ColorFilter.mode(Colors.transparent, BlendMode.color)
         : const ColorFilter.matrix([
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0,      0,      0,      1, 0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
           ]);
   }
 
@@ -200,7 +213,8 @@ class _MyHomePageState extends State<MyHomePage> {
               child: _buildSquare(
                 squareSize,
                 label: "QR",
-                image: "assets/Images/qr_placeholder.png", // you can replace this
+                image:
+                    "assets/Images/qr_placeholder.png", // you can replace this
               ),
             ),
           ),
@@ -210,42 +224,39 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // ----------- SQUARE UI BUILDER -----------
-  Widget _buildSquare(double size,
-      {required String label, required String image}) {
+  Widget _buildSquare(
+    double size, {
+    required String label,
+    required String image,
+  }) {
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black, width: 2),
         borderRadius: BorderRadius.circular(8),
-        image: DecorationImage(
-          image: AssetImage(image),
-          fit: BoxFit.cover,
-        ),
+        image: DecorationImage(image: AssetImage(image), fit: BoxFit.cover),
       ),
       child: _labelOverlay(label, size),
     );
   }
 
   Widget _labelOverlay(String text, double size) {
-    return Positioned(
-      bottom: 8,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: size * 0.08,
-              fontWeight: FontWeight.bold,
-            ),
+    return Container(
+      alignment: Alignment.bottomCenter,
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: size * 0.08,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
