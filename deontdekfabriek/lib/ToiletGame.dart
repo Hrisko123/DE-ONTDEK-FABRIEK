@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'ui_styles.dart'; // <-- voeg toe
+import 'package:audioplayers/audioplayers.dart';
+import 'ui_styles.dart';
+import 'services/led_service.dart';
 
 class ToiletGamePage extends StatefulWidget {
   const ToiletGamePage({super.key});
@@ -16,6 +18,11 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
   final Random _rnd = Random();
   final List<_FallingItem> _items = [];
   StreamSubscription<dynamic>? _gyroSub;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  String? _feedbackMessage;
+  bool _feedbackIsGood = false;
+  Timer? _feedbackTimer;
 
   // gyro tuning
   double _gyroSensitivity = 2350.0;
@@ -32,11 +39,11 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
   int _caught = 0;
   int _hearts = 3;
   bool _isRunning = true;
+  int _totalPoints = 0;
 
-  // Intro flag: show instructions before starting the minigame
   bool _showIntro = true;
 
-  static const int targetToFill = 15;
+  static const int targetToFill = 10;
 
   static final List<_ItemSpec> _specs = <_ItemSpec>[
     _ItemSpec('bananapeel', 'assets/ToiletImage/Bananapeel.png', true),
@@ -53,13 +60,18 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
 
     // Check assets in console
     for (final s in _specs) {
-      rootBundle.load(s.asset).then((_) {
-        debugPrint('FOUND: ${s.asset}');
-      }).catchError((e) {
-        debugPrint('MISSING: ${s.asset} -> $e');
-      });
+      rootBundle
+          .load(s.asset)
+          .then((_) {
+            debugPrint('FOUND: ${s.asset}');
+          })
+          .catchError((e) {
+            debugPrint('MISSING: ${s.asset} -> $e');
+          });
     }
     rootBundle.load('assets/ToiletImage/Bucket.png');
+    rootBundle.load('assets/ToiletImage/Sun.png');
+    rootBundle.load('assets/ToiletImage/Cloud.png');
 
     // timers and gyro are started when the player taps "Start" (_startGame)
   }
@@ -97,8 +109,10 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
       _gyroSub = gyroscopeEvents.listen((dynamic e) {
         try {
           final now = DateTime.now().millisecondsSinceEpoch;
-          final dt =
-              ((now - (_lastGyroMillis ?? now)) / 1000.0).clamp(0.0, 0.2);
+          final dt = ((now - (_lastGyroMillis ?? now)) / 1000.0).clamp(
+            0.0,
+            0.2,
+          );
           _lastGyroMillis = now;
 
           final double rawTilt = (e is GyroscopeEvent) ? e.z : (e?.z ?? 0.0);
@@ -108,8 +122,10 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
           if (!mounted) return;
 
           setState(() {
-            _bucketX =
-                (_bucketX + dx).clamp(0.0, _screenWidth - _bucketWidth - 120);
+            _bucketX = (_bucketX + dx).clamp(
+              0.0,
+              _screenWidth - _bucketWidth - 120,
+            );
           });
         } catch (_) {}
       });
@@ -152,19 +168,33 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
 
       for (final it in caught) {
         _items.remove(it);
+        _audioPlayer.play(AssetSource('ToiletImage/GoodToilet.mp3'));
+
+        // Show feedback
+        _feedbackTimer?.cancel();
         if (it.spec.good) {
+          _feedbackIsGood = true;
           _caught++;
           if (_caught >= targetToFill) {
             _isRunning = false;
             _showWin();
           }
         } else {
+          _feedbackIsGood = false;
           _hearts--;
           if (_hearts <= 0) {
             _isRunning = false;
             _showGameOver();
           }
         }
+        _feedbackMessage = 'show';
+        _feedbackTimer = Timer(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            setState(() {
+              _feedbackMessage = null;
+            });
+          }
+        });
       }
 
       for (final it in remove) {
@@ -187,12 +217,24 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     return verticalOverlap && horizontalOverlap;
   }
 
+  int _calculatePoints() {
+    final double ratio = _caught / targetToFill;
+    final int points = (ratio * 10).clamp(0, 10).round();
+    return points;
+  }
+
   Future<void> _showWin() async {
     if (!mounted) return;
+    _audioPlayer.play(AssetSource('ToiletImage/WinToilet.mp3'));
+
+    _totalPoints = _calculatePoints();
+    await LedService.updateLeds(_totalPoints);
+
     await showDialog(
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('Je hebt gewonnen!'),
+        content: Text('Je hebt 10 eco punten verdiend!'),
         actions: [
           TextButton(
             onPressed: () {
@@ -231,6 +273,8 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     _gameTimer?.cancel();
     _spawnTimer?.cancel();
     _gyroSub?.cancel();
+    _feedbackTimer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -240,7 +284,7 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     if (_showIntro) {
       return Scaffold(
         appBar: AppBar(title: const Text('Toilet game intro')),
-        backgroundColor: const Color.fromARGB(255, 139, 210, 142), // groen
+        backgroundColor: const Color.fromARGB(255, 139, 210, 142),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -271,7 +315,7 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Toilet Catch')),
-      backgroundColor: const Color.fromARGB(255, 139, 210, 142),
+      backgroundColor: const Color.fromARGB(255, 135, 206, 235),
       body: GestureDetector(
         onPanUpdate: (details) {
           setState(() {
@@ -283,6 +327,57 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
         },
         child: Stack(
           children: [
+            Positioned(
+              top: 30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: Image.asset(
+                    'assets/ToiletImage/Sun.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 20,
+              top: 120,
+              child: SizedBox(
+                width: 100,
+                height: 60,
+                child: Image.asset(
+                  'assets/ToiletImage/Cloud.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 120,
+              top: 140,
+              child: SizedBox(
+                width: 100,
+                height: 60,
+                child: Image.asset(
+                  'assets/ToiletImage/Cloud.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 200,
+              top: 160,
+              child: SizedBox(
+                width: 100,
+                height: 60,
+                child: Image.asset(
+                  'assets/ToiletImage/Cloud.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
             for (final it in _items)
               Positioned(
                 left: it.x,
@@ -362,6 +457,16 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
                 child: Text('Gevangen: $_caught / $targetToFill'),
               ),
             ),
+            if (_feedbackMessage != null)
+              Positioned(
+                left: _bucketX + 40,
+                top: _bucketY - 40,
+                child: Icon(
+                  _feedbackIsGood ? Icons.check_circle : Icons.cancel,
+                  color: _feedbackIsGood ? Colors.green : Colors.red,
+                  size: 32,
+                ),
+              ),
           ],
         ),
       ),
