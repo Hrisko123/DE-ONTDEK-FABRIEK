@@ -1,99 +1,89 @@
-import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:deontdekfabriek/ToiletGame.dart';
-import 'package:deontdekfabriek/StageGamePage.dart';
+  import 'package:flutter/material.dart';
+  import 'package:mobile_scanner/mobile_scanner.dart';
+  import 'package:url_launcher/url_launcher.dart';
+  import 'package:deontdekfabriek/ToiletGame.dart';
+  import 'package:deontdekfabriek/stage_page.dart';
 
 
-class QR extends StatefulWidget {
-  const QR({super.key});
+  class QR extends StatefulWidget {
+    const QR({super.key});
 
-  @override
-  State<QR> createState() => _QRState();
-}
-
-class _QRState extends State<QR> {
-  MobileScannerController cameraController = MobileScannerController();
-  String? qrText;
-  String? _lastLaunched;
-
-  @override
-  void dispose() {
-    cameraController.dispose();
-    super.dispose();
+    @override
+    State<QR> createState() => _QRState();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("QR Scanner"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.flash_on),
-            onPressed: () => cameraController.toggleTorch(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.camera_rear),
-            onPressed: () => cameraController.switchCamera(),
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: cameraController,
-            onDetect: (capture) async {
-              final List<Barcode> barcodes = capture.barcodes;
-              for (final barcode in barcodes) {
-                final value = barcode.rawValue;
-                if (value == null) continue;
-                setState(() {
-                  qrText = value;
-                });
+  class _QRState extends State<QR> {
+    MobileScannerController cameraController = MobileScannerController();
+    String? qrText;
+    String? _lastLaunched;
+    bool _alreadyOpened(String value) {
+    if (_lastLaunched == value) return true;
+    _lastLaunched = value;
+    return false;
+    }
 
-                if (value.contains('toilet.game')) {
-                  if (_lastLaunched == value) return; // al geopend
-                  _lastLaunched = value;
-                  if (!mounted) return;
-                  try {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ToiletGamePage()),
-                    );
-                  } catch (_) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Kon pagina niet openen')),
-                      );
-                    }
-                  }
-                  
-                } else if (value.startsWith('http://') ||
-                    value.startsWith('https://')) {
-                  if (_lastLaunched == value) return;
-                  _lastLaunched = value;
-                  final uri = Uri.tryParse(value);
-                  if (uri != null) {
+    @override
+    void dispose() {
+      cameraController.dispose();
+      super.dispose();
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("QR Scanner"),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.flash_on),
+              onPressed: () => cameraController.toggleTorch(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.camera_rear),
+              onPressed: () => cameraController.switchCamera(),
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            MobileScanner(
+              controller: cameraController,
+              onDetect: (capture) async {
+                final List<Barcode> barcodes = capture.barcodes;
+                for (final barcode in barcodes) {
+                  final value = barcode.rawValue;
+                  if (value == null) continue;
+                  setState(() {
+                    qrText = value;
+                  });
+
+                  if (value.contains('toilet.game')) {
+                    if (_lastLaunched == value) return; // al geopend
+                    _lastLaunched = value;
+                    if (!mounted) return;
                     try {
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication);
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ToiletGamePage()),
+                      );
                     } catch (_) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Kon URL niet openen')),
+                          const SnackBar(content: Text('Kon pagina niet openen')),
                         );
                       }
                     }
-                  }
-                }
-                else if (value.contains('stage.game')) {
-                  if (_lastLaunched == value) return;
-                  _lastLaunched = value;
+                     if (value.contains('stage.game')) {
+                  if (_alreadyOpened(value)) return;
+                  if (!mounted) return;
 
                   try {
-                    await Navigator.of(context).push(
+                    await Navigator.push(
+                      context,
                       MaterialPageRoute(
-                        builder: (_) => const StageGamePage(),
+                        builder: (_) => StagePage(
+                          festivalName: "Eco Festival",
+                          onMinigameCompleted: () {},
+                        ),
                       ),
                     );
                   } catch (_) {
@@ -103,23 +93,44 @@ class _QRState extends State<QR> {
                       );
                     }
                   }
-              }
-            },
-          ),
-          if (qrText != null)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                color: Colors.black54,
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Gescande QR-code: $qrText',
-                  style: const TextStyle(color: Colors.white),
+                  return;
+                }
+
+                  } else if (value.startsWith('http://') ||
+                      value.startsWith('https://')) {
+                    if (_lastLaunched == value) return;
+                    _lastLaunched = value;
+                    final uri = Uri.tryParse(value);
+                    if (uri != null) {
+                      try {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      } catch (_) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Kon URL niet openen')),
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+            ),
+            if (qrText != null)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  color: Colors.black54,
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Gescande QR-code: $qrText',
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
-            ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
   }
-}

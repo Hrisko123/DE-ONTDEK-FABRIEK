@@ -38,12 +38,17 @@ dependencies:
   sensors_plus: ^5.0.1
   mobile_scanner: ^5.0.0
   url_launcher: ^6.2.0
+  confetti: ^0.7.0
+  shared_preferences: ^2.2.2
+  just_audio: ^0.9.37
+  audio_session: ^0.1.18
+  flutter_fft: ^1.0.2+6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
+  # The "flutter_lints" package below contains a set of recommended lintßs to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
@@ -77,11 +82,12 @@ flutter:
 
     # Stage images
     - assets/stage/
-    
+
     # Audio files
     - assets/audio/band/
-    - assets/audio/pop/
     - assets/audio/dj/
+    - assets/audio/pop/
+
 
 
   # To add assets to your application, add an assets section, like this:

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'FoodGame.dart';
-import 'FestivalCleanerApp.dart';
-import 'dart:math'; //for the hangout garden animation
+import 'stage_audio_controller.dart';
 import 'festival_name_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize global music engine BEFORE app builds
+  await StageAudioController.instance.initialize();
+
   runApp(const MyApp());
 }
 
@@ -15,6 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'De Ontdek Fabriek',
+      debugShowCheckedModeBanner: false,
       home: const FestivalNamePage(),
     );
   }
