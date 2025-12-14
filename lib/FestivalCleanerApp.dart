@@ -71,54 +71,71 @@ class _CleanerGameState extends State<CleanerGame> {
   final int maxTrashAge = 8; // ticks before trash counts as "missed"
 
   // Vibe
-  int vibe = 50; // 0–100
+  int vibe = 100; // 0–100  (start with full vibe so background is "normal")
   int correctlySorted = 0;
   int missedTrash = 0;
   int wrongSorting = 0;
 
-  // Random for spawns / bg music
+  // Cleaner animation (2-frame puppet)
+  final String _cleanerIdleAsset =
+      'assets/trashGame/Cleaner/puppet1.png';
+  final String _cleanerSweepAsset =
+      'assets/trashGame/Cleaner/puppet2.png';
+  bool _cleanerUseFirstFrame = true;
+  Timer? _cleanerAnimTimer;
+
+  // Random for spawns 
   final Random random = Random();
 
   // AUDIO
   late final AudioPlayer _bgPlayer;
-  late final AudioPlayer _sfxPlayer; // reuse for short sounds
+  late final AudioPlayer _sfxPlayer; 
   double _bgVolume = 0.5;
 
-  // Achtergronden 21 t/m 29: van weinig mensen (21) naar veel mensen (29)
-  final List<String> _backgrounds = [
-    'assets/trashGame/background/21.png',
-    'assets/trashGame/background/22.png',
-    'assets/trashGame/background/23.png',
-    'assets/trashGame/background/24.png',
-    'assets/trashGame/background/25.png',
-    'assets/trashGame/background/26.png',
-    'assets/trashGame/background/27.png',
-    'assets/trashGame/background/28.png',
-    'assets/trashGame/background/29.png',
-  ];
+  /// Intro & outro track 
+  final String _introOutroTrack =
+      'trashGame/audio/Golden instrumental.mp3';
 
-  // Two possible BG tracks – one will be picked at random when the game starts
+  /// Game background tracks
   final List<String> _bgTracks = [
-    'trashGame/audio/Soda pop (Instrumental).mp3', // e.g. Soda Pop (Instrumental)
-    'trashGame/audio/Owl City - Fireflies (Instrumental).mp3', // e.g. Fireflies (Instrumental)
+    'trashGame/audio/Soda pop (Instrumental).mp3',
   ];
 
-  // TRASH visuals (labels + emoji fallback)
-  final Map<String, String> trashEmojis = {
+  // ---------- BACKGROUNDS ----------
+
+  /// Game backgrounds: people leaving step-by-step
+  final List<String> _backgrounds = [
+    'assets/trashGame/BackgroundFlow/Background_Normal.png',
+    'assets/trashGame/BackgroundFlow/Background_Angry.png',
+    'assets/trashGame/BackgroundFlow/NoDancing.png',
+    'assets/trashGame/BackgroundFlow/NoDancingNoPlant.png',
+    'assets/trashGame/BackgroundFlow/NoDancingNoPlantNoNormal.png',
+    'assets/trashGame/BackgroundFlow/Background_Empty.png',
+  ];
+
+  /// Intro pages (1–4)
+  final List<String> _introBackgrounds = [
+    'assets/trashGame/Intro and Outro/1.png',
+    'assets/trashGame/Intro and Outro/2.png',
+    'assets/trashGame/Intro and Outro/3.png',
+    'assets/trashGame/Intro and Outro/4.png',
+  ];
+
+  /// Outro background
+  final String _outroBackground =
+      'assets/trashGame/Intro and Outro/outro.png';
+
+  // Which intro page (0.._introBackgrounds.length-1)
+  int _introPage = 0;
+
+    final Map<String, String> trashEmojis = {
     "cup": "🥤",
     "food": "🍌",
     "plastic": "🧴",
     "cigarette": "🚬",
   };
 
-  final Map<String, String> trashLabels = {
-    "cup": "Herbruikbare beker",
-    "food": "Eten / GFT",
-    "plastic": "Plastic fles / blik",
-    "cigarette": "Sigaret / restafval",
-  };
-
-  // BIN visuals
+  // Bin visuals
   final Map<String, String> binAssetPaths = {
     "gft": "assets/trashGame/gft_bak.png",
     "rest": "assets/trashGame/restafval_bak.png",
@@ -133,25 +150,22 @@ class _CleanerGameState extends State<CleanerGame> {
     "cups": "🥤",
   };
 
-  // Spawn zones based on your red boxes (normalized 0–1)
-  final List<SpawnZone> spawnZones = const [
-    // 0 – small vertical area at the far left
-    SpawnZone(
+    final List<SpawnZone> spawnZones = const [
+      SpawnZone(
       left: 0.067,
       top: 0.396,
       width: 0.018,
       height: 0.120,
     ),
 
-    // 1 – long bar above the left bottom hill
-    SpawnZone(
+       SpawnZone(
       left: 0.097,
       top: 0.494,
       width: 0.044,
       height: 0.084,
     ),
 
-    // 2 – wide bar above the left chairs
+  
     SpawnZone(
       left: 0.097,
       top: 0.647,
@@ -159,15 +173,14 @@ class _CleanerGameState extends State<CleanerGame> {
       height: 0.092,
     ),
 
-    // 3 – small bar under the singer / band
-    SpawnZone(
+        SpawnZone(
       left: 0.154,
       top: 0.515,
       width: 0.030,
       height: 0.105,
     ),
 
-    // 4 – long bar in front of the band (center)
+
     SpawnZone(
       left: 0.205,
       top: 0.528,
@@ -175,7 +188,7 @@ class _CleanerGameState extends State<CleanerGame> {
       height: 0.092,
     ),
 
-    // 5 – tall vertical bar next to the dancing couple
+  
     SpawnZone(
       left: 0.231,
       top: 0.761,
@@ -183,7 +196,7 @@ class _CleanerGameState extends State<CleanerGame> {
       height: 0.239,
     ),
 
-    // 6 – long bar on the big middle-right hill
+    
     SpawnZone(
       left: 0.515,
       top: 0.550,
@@ -191,7 +204,7 @@ class _CleanerGameState extends State<CleanerGame> {
       height: 0.058,
     ),
 
-    // 7 – small bar above the picnic area
+  
     SpawnZone(
       left: 0.632,
       top: 0.437,
@@ -199,7 +212,7 @@ class _CleanerGameState extends State<CleanerGame> {
       height: 0.078,
     ),
 
-    // 8 – vertical bar near the right-bottom hill
+    
     SpawnZone(
       left: 0.735,
       top: 0.777,
@@ -207,7 +220,7 @@ class _CleanerGameState extends State<CleanerGame> {
       height: 0.198,
     ),
 
-    // 9 – small bar above the watering girl
+ 
     SpawnZone(
       left: 0.815,
       top: 0.554,
@@ -216,47 +229,91 @@ class _CleanerGameState extends State<CleanerGame> {
     ),
   ];
 
+  Future<void>? _assetPrecacheFuture;
+
   @override
   void initState() {
     super.initState();
     _bgPlayer = AudioPlayer();
     _sfxPlayer = AudioPlayer();
+
+    // Start intro music 
+    _playIntroOutroMusic();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Preload all background images so switching is instant
+
+    // Kick off precaching once
+    _assetPrecacheFuture ??= _precacheAssets(context);
+  }
+
+  Future<void> _precacheAssets(BuildContext context) async {
+    // Game backgrounds
     for (final path in _backgrounds) {
-      precacheImage(AssetImage(path), context);
+      await precacheImage(AssetImage(path), context);
+    }
+
+    // Intro pages
+    for (final path in _introBackgrounds) {
+      await precacheImage(AssetImage(path), context);
+    }
+
+    // Outro
+    await precacheImage(AssetImage(_outroBackground), context);
+
+    // Cleaner frames
+    await precacheImage(AssetImage(_cleanerIdleAsset), context);
+    await precacheImage(AssetImage(_cleanerSweepAsset), context);
+
+    // Bin images
+    for (final path in binAssetPaths.values) {
+      await precacheImage(AssetImage(path), context);
+    }
+
+    // Trash item images
+    const trashAssetPaths = [
+      'assets/trashGame/applee.png',
+      'assets/trashGame/banana.png',
+      'assets/trashGame/plastic_bottle.png',
+      'assets/trashGame/sigy.png',
+      'assets/trashGame/herbruikbare_beker.png',
+    ];
+    for (final path in trashAssetPaths) {
+      await precacheImage(AssetImage(path), context);
     }
   }
 
-  String _backgroundForVibe() {
+   String _currentGameBackground() {
     if (_backgrounds.isEmpty) {
-      return 'assets/trashGame/background/21.png'; // fallback
+      return 'assets/trashGame/BackgroundFlow/Background_Normal.png';
     }
 
-    final double t = (vibe / 100).clamp(0.0, 1.0);
+    final double t = (100 - vibe).clamp(0, 100) / 100.0;
     final int idx =
         (t * (_backgrounds.length - 1)).round().clamp(0, _backgrounds.length - 1);
 
     return _backgrounds[idx];
   }
 
-  // ---------- AUDIO HELPERS ----------
+  // AUDIO
 
-  Future<void> _startBackgroundMusic() async {
+  Future<void> _playIntroOutroMusic() async {
+    await _bgPlayer.stop();
+    await _bgPlayer.setReleaseMode(ReleaseMode.loop);
+    await _bgPlayer.setVolume(_bgVolume);
+    await _bgPlayer.play(AssetSource(_introOutroTrack));
+  }
+
+  Future<void> _playGameMusic() async {
     if (_bgTracks.isEmpty) return;
     final track = _bgTracks[random.nextInt(_bgTracks.length)];
 
+    await _bgPlayer.stop();
     await _bgPlayer.setReleaseMode(ReleaseMode.loop);
     await _bgPlayer.setVolume(_bgVolume);
     await _bgPlayer.play(AssetSource(track));
-  }
-
-  Future<void> _stopBackgroundMusic() async {
-    await _bgPlayer.stop();
   }
 
   Future<void> _playSpawnSound() async {
@@ -293,9 +350,34 @@ class _CleanerGameState extends State<CleanerGame> {
     _bgPlayer.setVolume(_bgVolume);
   }
 
+  // CLEANER ANIMATION 
+
+  void _startCleaningAnim() {
+       _cleanerAnimTimer?.cancel();
+    int ticks = 0;
+
+    _cleanerAnimTimer =
+        Timer.periodic(const Duration(milliseconds: 120), (timer) {
+      setState(() {
+        _cleanerUseFirstFrame = !_cleanerUseFirstFrame;
+      });
+
+      ticks++;
+      if (ticks >= 4) {
+        timer.cancel();
+        if (mounted) {
+          setState(() {
+            _cleanerUseFirstFrame = true; // end in idle pose
+          });
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
     gameTimer?.cancel();
+    _cleanerAnimTimer?.cancel();
     _bgPlayer.dispose();
     _sfxPlayer.dispose();
     super.dispose();
@@ -303,33 +385,48 @@ class _CleanerGameState extends State<CleanerGame> {
 
   void _resetGame() {
     gameTimer?.cancel();
-    _stopBackgroundMusic();
+    _cleanerAnimTimer?.cancel();
     setState(() {
       phase = 0;
       trashItems = [];
       tick = 0;
-      vibe = 50;
+      vibe = 100; // reset to full vibe
       correctlySorted = 0;
       missedTrash = 0;
       wrongSorting = 0;
       _nextId = 0;
+      _introPage = 0;
+      _cleanerUseFirstFrame = true;
     });
+
+    // Back to Golden for intro
+    _playIntroOutroMusic();
   }
 
-  void _startGame() {
+  Future<void> _startGame() async {
     gameTimer?.cancel();
+    _cleanerAnimTimer?.cancel();
+
+    
+    if (_assetPrecacheFuture != null) {
+      await _assetPrecacheFuture;
+      if (!mounted) return;
+    }
+
     setState(() {
       phase = 1;
       trashItems = [];
       tick = 0;
-      vibe = 50;
+      vibe = 100; // start with max vibe
       correctlySorted = 0;
       missedTrash = 0;
       wrongSorting = 0;
       _nextId = 0;
+      _cleanerUseFirstFrame = true;
     });
 
-    _startBackgroundMusic(); // 🔊 random bg track when game starts
+    // Switch to game music
+    _playGameMusic();
 
     gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -360,7 +457,8 @@ class _CleanerGameState extends State<CleanerGame> {
         if (tick >= maxTicks) {
           gameTimer?.cancel();
           phase = 2;
-          _stopBackgroundMusic();
+          // Back to Golden for outro
+          _playIntroOutroMusic();
         }
       });
     });
@@ -379,7 +477,7 @@ class _CleanerGameState extends State<CleanerGame> {
     // Pick one of the spawn zones
     final zone = spawnZones[random.nextInt(spawnZones.length)];
 
-    // Inner rectangle: keep 10% margin inside the red box
+   
     final double innerLeft = zone.left + zone.width * 0.10;
     final double innerRight = zone.left + zone.width * 0.90;
     final double innerTop = zone.top + zone.height * 0.10;
@@ -415,7 +513,7 @@ class _CleanerGameState extends State<CleanerGame> {
       ),
     );
 
-    _playSpawnSound(); // 🔊 play when trash appears
+    _playSpawnSound(); // play when trash appears
   }
 
   /// chosenBin is one of: gft, rest, plastic, cups
@@ -448,7 +546,8 @@ class _CleanerGameState extends State<CleanerGame> {
       if (vibe < 0) vibe = 0;
     }
 
-    await _playBinnedSound(); // 🔊 play when item is binned (correct or not)
+    await _playBinnedSound(); // play when item is binned
+    _startCleaningAnim();     // trigger cleaner animation
 
     setState(() {
       trashItems.removeWhere((t) => t.id == item.id);
@@ -460,25 +559,26 @@ class _CleanerGameState extends State<CleanerGame> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Festival Cleaner'),
         backgroundColor: Colors.black.withOpacity(0.7),
         elevation: 0,
+        title: const Text(
+          'Festival Cleaner',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SafeArea(
         child: Builder(
           builder: (context) {
             if (phase == 0) {
-              return Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildIntro(),
-              );
+              return _buildIntro();
             } else if (phase == 1) {
               return _buildGame();
             } else {
-              return Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildResult(),
-              );
+              return _buildResult();
             }
           },
         ),
@@ -486,54 +586,98 @@ class _CleanerGameState extends State<CleanerGame> {
     );
   }
 
-  // ---------------- INTRO ----------------
+  // INTRO 
 
   Widget _buildIntro() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final bool isLast = _introPage >= _introBackgrounds.length - 1;
+
+    final String bg = _introBackgrounds.isEmpty
+        ? 'assets/trashGame/BackgroundFlow/Background_Normal.png'
+        : _introBackgrounds[_introPage.clamp(0, _introBackgrounds.length - 1)];
+
+    return Stack(
       children: [
-        const Text(
-          "Concept – Jij bent de schoonmaker tijdens het muziekoptreden",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        const Text("123abc "),
-        const Spacer(),
-        Center(
-          child: FilledButton(
-            onPressed: _startGame,
-            child: const Text("Start festival 🎵"),
+        Positioned.fill(
+          child: Image.asset(
+            bg,
+            fit: BoxFit.cover,
           ),
         ),
+        Positioned(
+          bottom: 50,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor:
+                    const Color.fromARGB(255, 48, 159, 193),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 42,
+                  vertical: 20,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () async {
+                if (isLast) {
+                  await _startGame();
+                } else {
+                  setState(() {
+                    _introPage++;
+                  });
+                }
+              },
+              child: Text(isLast ? 'Start spel' : 'Volgende ▶'),
+            ),
+          ),
+        ),
+        if (_introPage > 0)
+          Positioned(
+            left: 16,
+            bottom: 30,
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _introPage = max(0, _introPage - 1);
+                });
+              },
+              child: const Text(
+                'Terug',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 25,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
 
-  // ---------------- GAME ----------------
+  // GAME 
 
   Widget _buildGame() {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Stack(
           children: [
-            // 1) Full festival background
             Positioned.fill(
               child: Image.asset(
-                _backgroundForVibe(),
+                _currentGameBackground(),
                 fit: BoxFit.cover,
                 gaplessPlayback: true,
               ),
             ),
-
-            // 2) HUD at the very top
             Positioned(
               left: 16,
               right: 16,
               top: 8,
               child: _buildCrowdAndHud(),
             ),
-
-            // 3) Trash items over the grass
             Positioned.fill(
               child: LayoutBuilder(
                 builder: (context, playConstraints) {
@@ -553,7 +697,7 @@ class _CleanerGameState extends State<CleanerGame> {
                           child: Draggable<TrashItem>(
                             data: item,
                             onDragStarted: () {
-                              _playPickupSound(); // 🔊 when player picks up trash
+                              _playPickupSound();
                             },
                             feedback: Material(
                               color: Colors.transparent,
@@ -583,8 +727,6 @@ class _CleanerGameState extends State<CleanerGame> {
                 },
               ),
             ),
-
-            // 4) Bins at the bottom
             Positioned(
               left: 0,
               right: 0,
@@ -602,33 +744,19 @@ class _CleanerGameState extends State<CleanerGame> {
   }
 
   Widget _buildTrashIcon(TrashItem item) {
-    Widget iconWidget;
-
     if (item.assetPath != null) {
-      iconWidget = Image.asset(
+      return Image.asset(
         item.assetPath!,
         width: 74,
         height: 74,
         fit: BoxFit.contain,
       );
     } else {
-      iconWidget = Text(
+      return Text(
         trashEmojis[item.type] ?? "❓",
         style: const TextStyle(fontSize: 32),
       );
     }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        iconWidget,
-        Text(
-          trashLabels[item.type] ?? "",
-          style: const TextStyle(fontSize: 11, color: Colors.white),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
   }
 
   Widget _buildCrowdAndHud() {
@@ -640,7 +768,7 @@ class _CleanerGameState extends State<CleanerGame> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "🙋‍♀️🙋‍♂️🎵🙋‍♀️🙋‍♂️🎵🙋‍♀️🙋‍♂️",
+          "",
           style: TextStyle(fontSize: 24, color: Colors.white),
         ),
         const SizedBox(height: 4),
@@ -678,6 +806,21 @@ class _CleanerGameState extends State<CleanerGame> {
     );
   }
 
+  // cleaner sprite
+  Widget _buildCleaner() {
+    final String asset =
+        _cleanerUseFirstFrame ? _cleanerIdleAsset : _cleanerSweepAsset;
+
+    return SizedBox(
+      height: 430,
+      child: Image.asset(
+        asset,
+        fit: BoxFit.contain,
+        gaplessPlayback: true,
+      ),
+    );
+  }
+
   Widget _buildBinsRow() {
     final List<String> bins = ["gft", "rest", "plastic", "cups"];
 
@@ -685,63 +828,82 @@ class _CleanerGameState extends State<CleanerGame> {
       builder: (context, constraints) {
         const double imgWidth = 160;
         const double gap = 0;
-        const double slotWidth = 140; // a bit smaller than image
-
+        const double slotWidth = 140; 
         final double imgHeight = imgWidth * 1.4;
+
+        final double totalWidth =
+            bins.length * slotWidth + (bins.length - 1) * gap;
 
         return Center(
           child: SizedBox(
-            width: bins.length * slotWidth + (bins.length - 1) * gap,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            width: totalWidth,
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                for (int i = 0; i < bins.length; i++) ...[
-                  SizedBox(
-                    width: slotWidth,
-                    child: DragTarget<TrashItem>(
-                      onWillAccept: (item) => item != null,
-                      onAccept: (item) => _handleDropOnBin(item, bins[i]),
-                      builder: (context, candidateData, rejectedData) {
-                        final bool isHighlighted =
-                            candidateData.isNotEmpty;
-                        final asset = binAssetPaths[bins[i]];
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (int i = 0; i < bins.length; i++) ...[
+                      SizedBox(
+                        width: slotWidth,
+                        child: DragTarget<TrashItem>(
+                          onWillAccept: (item) => item != null,
+                          onAccept: (item) =>
+                              _handleDropOnBin(item, bins[i]),
+                          builder:
+                              (context, candidateData, rejectedData) {
+                            final bool isHighlighted =
+                                candidateData.isNotEmpty;
+                            final asset = binAssetPaths[bins[i]];
 
-                        Widget iconWidget;
-                        if (asset != null) {
-                          iconWidget = Image.asset(
-                            asset,
-                            width: isHighlighted
-                                ? imgWidth * 1.05
-                                : imgWidth,
-                            height: isHighlighted
-                                ? imgHeight * 1.05
-                                : imgHeight,
-                            fit: BoxFit.contain,
-                          );
-                        } else {
-                          iconWidget = Text(
-                            binEmojis[bins[i]] ?? "",
-                            style: TextStyle(
-                              fontSize: isHighlighted ? 48 : 44,
-                              color: Colors.white,
-                            ),
-                          );
-                        }
+                            Widget iconWidget;
+                            if (asset != null) {
+                              iconWidget = Image.asset(
+                                asset,
+                                width: isHighlighted
+                                    ? imgWidth * 1.05
+                                    : imgWidth,
+                                height: isHighlighted
+                                    ? imgHeight * 1.05
+                                    : imgHeight,
+                                fit: BoxFit.contain,
+                              );
+                            } else {
+                              iconWidget = Text(
+                                binEmojis[bins[i]] ?? "",
+                                style: TextStyle(
+                                  fontSize:
+                                      isHighlighted ? 48 : 44,
+                                  color: Colors.white,
+                                ),
+                              );
+                            }
 
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Opacity(
-                              opacity: isHighlighted ? 1.0 : 0.95,
-                              child: iconWidget,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Opacity(
+                                  opacity:
+                                      isHighlighted ? 1.0 : 0.95,
+                                  child: iconWidget,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      if (i < bins.length - 1) const SizedBox(width: gap),
+                    ],
+                  ],
+                ),
+                Positioned(
+                  right: slotWidth * -1.75,
+                  bottom: -10,
+                  child: IgnorePointer(
+                    ignoring: true, 
+                    child: _buildCleaner(),
                   ),
-                  if (i < bins.length - 1) const SizedBox(width: gap),
-                ],
+                ),
               ],
             ),
           ),
@@ -750,7 +912,7 @@ class _CleanerGameState extends State<CleanerGame> {
     );
   }
 
-  // ---------------- RESULT ----------------
+  // RESULT
 
   Widget _buildResult() {
     String summary;
@@ -765,37 +927,56 @@ class _CleanerGameState extends State<CleanerGame> {
           "De vibe zakte flink weg. Veel afval bleef liggen of werd verkeerd gesorteerd (bijvoorbeeld sigaretten bij GFT of bekers bij restafval). 😬";
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        const Text(
-          "Resultaten: Festival Cleaner",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        Positioned.fill(
+          child: Image.asset(
+            _outroBackground,
+            fit: BoxFit.cover,
+          ),
         ),
-        const SizedBox(height: 16),
-        Text("Eind-vibe: $vibe / 100"),
-        const SizedBox(height: 8),
-        Text("Goed gesorteerd: $correctlySorted"),
-        Text("Gemist afval: $missedTrash"),
-        Text("Verkeerd gesorteerd: $wrongSorting"),
-        const SizedBox(height: 16),
-        Text(summary),
-        const SizedBox(height: 24),
-        const Text(
-          "Reflectie:",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const Text(
-          "• Welke soorten afval vond je het makkelijkst om te plaatsen?\n"
-          "• Wanneer koos je voor restafval? Was dat echt nodig?\n"
-          "• Hoe merk je in het spel dat goed scheiden invloed heeft op de festival-vibe?",
-        ),
-        const Spacer(),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: _resetGame,
-            child: const Text("Opnieuw spelen 🔁"),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: DefaultTextStyle(
+            style: const TextStyle(color: Colors.white),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Resultaten: Festival Cleaner",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text("Eind-vibe: $vibe / 100"),
+                const SizedBox(height: 8),
+                Text("Goed gesorteerd: $correctlySorted"),
+                Text("Gemist afval: $missedTrash"),
+                Text("Verkeerd gesorteerd: $wrongSorting"),
+                const SizedBox(height: 16),
+                Text(summary),
+                const SizedBox(height: 24),
+                const Text(
+                  "Reflectie:",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const Text(
+                  "• Welke soorten afval vond je het makkelijkst om te plaatsen?\n"
+                  "• Wanneer koos je voor restafval? Was dat echt nodig?\n"
+                  "• Hoe merk je in het spel dat goed scheiden invloed heeft op de festival-vibe?",
+                ),
+                const Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _resetGame,
+                    child: const Text("Opnieuw spelen 🔁"),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
