@@ -72,6 +72,7 @@
                         );
                       }
                     }
+                  }
                      if (value.contains('stage.game')) {
                   if (_alreadyOpened(value)) return;
                   if (!mounted) return;
@@ -96,7 +97,7 @@
                   return;
                 }
 
-                  } else if (value.startsWith('http://') ||
+                   else if (value.startsWith('http://') ||
                       value.startsWith('https://')) {
                     if (_lastLaunched == value) return;
                     _lastLaunched = value;

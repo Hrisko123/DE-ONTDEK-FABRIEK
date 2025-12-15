@@ -42,39 +42,37 @@ class StageAudioController {
   };
 
   Future<void> initialize() async {
-    final prefs = await SharedPreferences.getInstance();
+  final prefs = await SharedPreferences.getInstance();
 
-    _muted = prefs.getBool("global_muted") ?? false;
-    _currentBand = prefs.getString("global_band");
+  _muted = prefs.getBool("global_muted") ?? false;
+  _currentBand = prefs.getString("global_band");
 
-    // LISTENER FOR LOOPING PLAYLIST
-    _player.onPlayerComplete.listen((_) => _playNextTrack());
+  // LISTENER FOR LOOPING PLAYLIST
+  _player.onPlayerComplete.listen((_) => _playNextTrack());
 
-    if (_currentBand != null && !_muted) {
-      await _startPlaylist(_currentBand!);
-    }
-  }
+  // Remove auto-play here, don't start the music on app launch
+  // if (_currentBand != null && !_muted) {
+  //   await _startPlaylist(_currentBand!);
+  // }
+}
 
-  /// ------------------------------------------------------------
-  /// START PLAYLIST FOR A BAND
-  /// ------------------------------------------------------------
+
   Future<void> _startPlaylist(String band) async {
-    final tracks = _playlists[band];
-    if (tracks == null || tracks.isEmpty) return;
+  final tracks = _playlists[band];
+  if (tracks == null || tracks.isEmpty) return;
 
-    _currentBand = band;
+  _currentBand = band;
+  _currentIndex = Random().nextInt(tracks.length);
 
-    // Pick randomly for first track
-    _currentIndex = Random().nextInt(tracks.length);
-
-    if (!_muted) {
-      await _player.stop();
-      await _player.play(AssetSource(tracks[_currentIndex]));
-    }
-
-    // Save band
-    (await SharedPreferences.getInstance()).setString("global_band", band);
+  if (!_muted) {
+    await _player.stop();
+    await _player.play(AssetSource(tracks[_currentIndex]));
   }
+
+  // Save band
+  (await SharedPreferences.getInstance()).setString("global_band", band);
+}
+
 
   /// ------------------------------------------------------------
   /// CHOOSE A BAND (called when player selects performer)
