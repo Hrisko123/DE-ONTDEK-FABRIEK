@@ -20,24 +20,24 @@ class StageAudioController {
 
   final Map<String, List<String>> _playlists = {
     'rock': [
-      'assets/audio/band/band1.mp3',
-      'assets/audio/band/band2.mp3',
-      'assets/audio/band/band3.mp3',
-      'assets/audio/band/band4.mp3',
+      'audio/band/band1.mp3',
+      'audio/band/band2.mp3',
+      'audio/band/band3.mp3',
+      'audio/band/band4.mp3',
     ],
     'pop': [
-      'assets/audio/pop/pop1.mp3',
-      'assets/audio/pop/pop2.mp3',
-      'assets/audio/pop/pop3.mp3',
-      'assets/audio/pop/pop4.mp3',
-      'assets/audio/pop/pop5.mp3',
-      'assets/audio/pop/pop6.mp3',
+      'audio/pop/pop1.mp3',
+      'audio/pop/pop2.mp3',
+      'audio/pop/pop3.mp3',
+      'audio/pop/pop4.mp3',
+      'audio/pop/pop5.mp3',
+      'audio/pop/pop6.mp3',
     ],
     'dj': [
-      'assets/audio/dj/dj1.mp3',
-      'assets/audio/dj/dj2.mp3',
-      'assets/audio/dj/dj3.mp3',
-      'assets/audio/dj/dj4.mp3',
+      'audio/dj/dj1.mp3',
+      'audio/dj/dj2.mp3',
+      'audio/dj/dj3.mp3',
+      'audio/dj/dj4.mp3',
     ]
   };
 
