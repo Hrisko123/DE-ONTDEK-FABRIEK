@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
+import 'QR.dart'; // 🔹 import QR.dart
 
 class FestivalNamePage extends StatefulWidget {
   const FestivalNamePage({super.key});
@@ -9,8 +9,9 @@ class FestivalNamePage extends StatefulWidget {
 }
 
 class _FestivalNamePageState extends State<FestivalNamePage> {
-  final TextEditingController _controller =
-      TextEditingController(text: 'EcoFest');
+  final TextEditingController _controller = TextEditingController(
+    text: 'EcoFest',
+  );
 
   bool _showCrowd = false;
 
@@ -29,9 +30,8 @@ class _FestivalNamePageState extends State<FestivalNamePage> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => MyHomePage(
-          festivalName: name,  // 👈 Pass name to home screen
-        ),
+        // 🔹 FIXED: Gebruik de juiste class naam van QR.dart
+        builder: (_) => QRScannerPage(festivalName: name),
       ),
     );
   }
@@ -101,9 +101,11 @@ class _FestivalNamePageState extends State<FestivalNamePage> {
                   backgroundColor: const Color(0xFF2E7D32),
                 ),
                 onPressed: _enterFestival,
-                child: const Text('Enter the festival',
-                    style: TextStyle(color: Colors.white)),
-              )
+                child: const Text(
+                  'Enter the festival',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
             ],
           ),
         ),

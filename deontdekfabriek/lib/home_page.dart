@@ -4,7 +4,7 @@ import 'FoodGame.dart';
 import 'FestivalCleanerApp.dart';
 import 'HangOutGame.dart';
 import 'ToiletGame.dart';
-import 'QR.dart';
+import 'QR.dart'; // 🔹 QRScannerPage is defined here
 
 class MyHomePage extends StatefulWidget {
   final String festivalName;
@@ -70,7 +70,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _navigateToQR() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => QR()), // <-- FIXED (no const)
+      MaterialPageRoute(
+        builder: (_) => QRScannerPage(
+          festivalName: widget.festivalName, // 🔹 FIXED: Pass festival name
+        ),
+      ),
     );
   }
 
@@ -209,12 +213,11 @@ class _MyHomePageState extends State<MyHomePage> {
             bottom: 16,
             left: 16,
             child: GestureDetector(
-              onTap: _navigateToQR,
+              onTap: _navigateToQR, // 🔹 FIXED: navigates to QRScannerPage
               child: _buildSquare(
                 squareSize,
                 label: "QR",
-                image:
-                    "assets/Images/qr_placeholder.png", // you can replace this
+                image: "assets/Images/qr_placeholder.png",
               ),
             ),
           ),
