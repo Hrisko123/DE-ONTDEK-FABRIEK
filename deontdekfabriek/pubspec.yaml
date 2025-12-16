@@ -84,6 +84,14 @@ flutter:
     - assets/stage/
 
     # festival cleaner images
+       # festival cleaner images
+    - assets/trashGame/
+    - assets/trashGame/BackgroundFlow/
+    - assets/trashGame/audio/
+    - assets/trashGame/Intro and Outro/
+    - assets/trashGame/people/
+    - assets/trashGame/Cleaner/
+
     
 
     # Food game truck images
