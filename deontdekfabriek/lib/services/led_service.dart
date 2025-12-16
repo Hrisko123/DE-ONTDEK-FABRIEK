@@ -1,7 +1,7 @@
 import 'package:http/http.dart' as http;
 
 class LedService {
-  static const String _ledIp = 'http://192.168.1.110';
+  static const String _ledIp = 'http://172.20.10.6';
 
   static Future<void> updateLeds(int points) async {
     try {
