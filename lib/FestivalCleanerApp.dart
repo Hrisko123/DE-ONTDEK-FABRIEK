@@ -71,30 +71,29 @@ class _CleanerGameState extends State<CleanerGame> {
   final int maxTrashAge = 8; // ticks before trash counts as "missed"
 
   // Vibe
-  int vibe = 100; // 0–100  (start with full vibe so background is "normal")
+  int vibe = 100; // 0–100
   int correctlySorted = 0;
   int missedTrash = 0;
   int wrongSorting = 0;
 
   // Cleaner animation (2-frame puppet)
-  final String _cleanerIdleAsset =
-      'assets/trashGame/Cleaner/puppet1.png';
-  final String _cleanerSweepAsset =
-      'assets/trashGame/Cleaner/puppet2.png';
+  final String _cleanerIdleAsset = 'assets/trashGame/Cleaner/puppet1.png';
+  final String _cleanerSweepAsset = 'assets/trashGame/Cleaner/puppet2.png';
   bool _cleanerUseFirstFrame = true;
   Timer? _cleanerAnimTimer;
 
-  // Random for spawns 
+  // Random for spawns
   final Random random = Random();
 
   // AUDIO
   late final AudioPlayer _bgPlayer;
-  late final AudioPlayer _sfxPlayer; 
+  late final AudioPlayer _sfxPlayer;
   double _bgVolume = 0.5;
 
-  /// Intro & outro track 
+  /// Intro & outro track (YOUR NEW PATH)
+  /// NOTE: this is the AssetSource path, so it must match what you list in pubspec.yaml
   final String _introOutroTrack =
-      'trashGame/audio/Golden instrumental.mp3';
+      'trashGame/audio/golden instrumental.mp3';
 
   /// Game background tracks
   final List<String> _bgTracks = [
@@ -103,7 +102,6 @@ class _CleanerGameState extends State<CleanerGame> {
 
   // ---------- BACKGROUNDS ----------
 
-  /// Game backgrounds: people leaving step-by-step
   final List<String> _backgrounds = [
     'assets/trashGame/BackgroundFlow/Background_Normal.png',
     'assets/trashGame/BackgroundFlow/Background_Angry.png',
@@ -113,7 +111,6 @@ class _CleanerGameState extends State<CleanerGame> {
     'assets/trashGame/BackgroundFlow/Background_Empty.png',
   ];
 
-  /// Intro pages (1–4)
   final List<String> _introBackgrounds = [
     'assets/trashGame/Intro and Outro/1.png',
     'assets/trashGame/Intro and Outro/2.png',
@@ -121,14 +118,11 @@ class _CleanerGameState extends State<CleanerGame> {
     'assets/trashGame/Intro and Outro/4.png',
   ];
 
-  /// Outro background
-  final String _outroBackground =
-      'assets/trashGame/Intro and Outro/outro.png';
+  final String _outroBackground = 'assets/trashGame/Intro and Outro/outro.png';
 
-  // Which intro page (0.._introBackgrounds.length-1)
   int _introPage = 0;
 
-    final Map<String, String> trashEmojis = {
+  final Map<String, String> trashEmojis = {
     "cup": "🥤",
     "food": "🍌",
     "plastic": "🧴",
@@ -150,83 +144,17 @@ class _CleanerGameState extends State<CleanerGame> {
     "cups": "🥤",
   };
 
-    final List<SpawnZone> spawnZones = const [
-      SpawnZone(
-      left: 0.067,
-      top: 0.396,
-      width: 0.018,
-      height: 0.120,
-    ),
-
-       SpawnZone(
-      left: 0.097,
-      top: 0.494,
-      width: 0.044,
-      height: 0.084,
-    ),
-
-  
-    SpawnZone(
-      left: 0.097,
-      top: 0.647,
-      width: 0.162,
-      height: 0.092,
-    ),
-
-        SpawnZone(
-      left: 0.154,
-      top: 0.515,
-      width: 0.030,
-      height: 0.105,
-    ),
-
-
-    SpawnZone(
-      left: 0.205,
-      top: 0.528,
-      width: 0.210,
-      height: 0.092,
-    ),
-
-  
-    SpawnZone(
-      left: 0.231,
-      top: 0.761,
-      width: 0.044,
-      height: 0.239,
-    ),
-
-    
-    SpawnZone(
-      left: 0.515,
-      top: 0.550,
-      width: 0.164,
-      height: 0.058,
-    ),
-
-  
-    SpawnZone(
-      left: 0.632,
-      top: 0.437,
-      width: 0.075,
-      height: 0.078,
-    ),
-
-    
-    SpawnZone(
-      left: 0.735,
-      top: 0.777,
-      width: 0.050,
-      height: 0.198,
-    ),
-
- 
-    SpawnZone(
-      left: 0.815,
-      top: 0.554,
-      width: 0.071,
-      height: 0.061,
-    ),
+  final List<SpawnZone> spawnZones = const [
+    SpawnZone(left: 0.067, top: 0.396, width: 0.018, height: 0.120),
+    SpawnZone(left: 0.097, top: 0.494, width: 0.044, height: 0.084),
+    SpawnZone(left: 0.097, top: 0.647, width: 0.162, height: 0.092),
+    SpawnZone(left: 0.154, top: 0.515, width: 0.030, height: 0.105),
+    SpawnZone(left: 0.205, top: 0.528, width: 0.210, height: 0.092),
+    SpawnZone(left: 0.231, top: 0.761, width: 0.044, height: 0.239),
+    SpawnZone(left: 0.515, top: 0.550, width: 0.164, height: 0.058),
+    SpawnZone(left: 0.632, top: 0.437, width: 0.075, height: 0.078),
+    SpawnZone(left: 0.735, top: 0.777, width: 0.050, height: 0.198),
+    SpawnZone(left: 0.815, top: 0.554, width: 0.071, height: 0.061),
   ];
 
   Future<void>? _assetPrecacheFuture;
@@ -234,45 +162,67 @@ class _CleanerGameState extends State<CleanerGame> {
   @override
   void initState() {
     super.initState();
+
     _bgPlayer = AudioPlayer();
     _sfxPlayer = AudioPlayer();
 
-    // Start intro music 
-    _playIntroOutroMusic();
+    // Configure audio first, then start intro music
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _configureAudio();
+      await _playIntroOutroMusic();
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    // Kick off precaching once
     _assetPrecacheFuture ??= _precacheAssets(context);
   }
 
+  Future<void> _configureAudio() async {
+    // Background music: normal focus
+    await _bgPlayer.setAudioContext(
+      AudioContextConfig(
+        focus: AudioContextConfigFocus.gain,
+      ).build(),
+    );
+
+    // SFX: do NOT request focus (prevents bg music cutting off when SFX plays)
+    await _sfxPlayer.setAudioContext(
+      AudioContextConfig(
+        focus: AudioContextConfigFocus.mixWithOthers,
+      ).build(),
+    );
+
+    // Low-latency SFX (this works even if your audioplayers doesn't support constructor "mode")
+    try {
+      await _sfxPlayer.setPlayerMode(PlayerMode.lowLatency);
+    } catch (_) {
+      // ignore if not supported by your version
+    }
+
+    await _bgPlayer.setVolume(_bgVolume);
+    await _sfxPlayer.setVolume(1.0);
+  }
+
   Future<void> _precacheAssets(BuildContext context) async {
-    // Game backgrounds
     for (final path in _backgrounds) {
       await precacheImage(AssetImage(path), context);
     }
 
-    // Intro pages
     for (final path in _introBackgrounds) {
       await precacheImage(AssetImage(path), context);
     }
 
-    // Outro
     await precacheImage(AssetImage(_outroBackground), context);
 
-    // Cleaner frames
     await precacheImage(AssetImage(_cleanerIdleAsset), context);
     await precacheImage(AssetImage(_cleanerSweepAsset), context);
 
-    // Bin images
     for (final path in binAssetPaths.values) {
       await precacheImage(AssetImage(path), context);
     }
 
-    // Trash item images
     const trashAssetPaths = [
       'assets/trashGame/applee.png',
       'assets/trashGame/banana.png',
@@ -285,7 +235,7 @@ class _CleanerGameState extends State<CleanerGame> {
     }
   }
 
-   String _currentGameBackground() {
+  String _currentGameBackground() {
     if (_backgrounds.isEmpty) {
       return 'assets/trashGame/BackgroundFlow/Background_Normal.png';
     }
@@ -297,36 +247,46 @@ class _CleanerGameState extends State<CleanerGame> {
     return _backgrounds[idx];
   }
 
-  // AUDIO
+  // ---------------- AUDIO ----------------
 
   Future<void> _playIntroOutroMusic() async {
-    await _bgPlayer.stop();
-    await _bgPlayer.setReleaseMode(ReleaseMode.loop);
-    await _bgPlayer.setVolume(_bgVolume);
-    await _bgPlayer.play(AssetSource(_introOutroTrack));
+    try {
+      await _bgPlayer.stop();
+      await _bgPlayer.setReleaseMode(ReleaseMode.loop);
+      await _bgPlayer.setVolume(_bgVolume);
+      await _bgPlayer.play(AssetSource(_introOutroTrack));
+    } catch (e) {
+      debugPrint("INTRO/OUTRO failed ($_introOutroTrack): $e");
+    }
   }
 
   Future<void> _playGameMusic() async {
     if (_bgTracks.isEmpty) return;
     final track = _bgTracks[random.nextInt(_bgTracks.length)];
 
-    await _bgPlayer.stop();
-    await _bgPlayer.setReleaseMode(ReleaseMode.loop);
-    await _bgPlayer.setVolume(_bgVolume);
-    await _bgPlayer.play(AssetSource(track));
+    try {
+      await _bgPlayer.stop();
+      await _bgPlayer.setReleaseMode(ReleaseMode.loop);
+      await _bgPlayer.setVolume(_bgVolume);
+      await _bgPlayer.play(AssetSource(track));
+    } catch (e) {
+      debugPrint("GAME MUSIC failed ($track): $e");
+    }
   }
 
-  Future<void> _playSpawnSound() async {
-    await _sfxPlayer.play(AssetSource('trashGame/audio/TrashSpawn.mp3'));
+  Future<void> _playSfx(String asset) async {
+    try {
+      await _sfxPlayer.stop();
+      await _sfxPlayer.play(AssetSource(asset));
+    } catch (e) {
+      debugPrint("SFX failed ($asset): $e");
+    }
   }
 
-  Future<void> _playPickupSound() async {
-    await _sfxPlayer.play(AssetSource('trashGame/audio/pickupTrash.mp3'));
-  }
-
-  Future<void> _playBinnedSound() async {
-    await _sfxPlayer.play(AssetSource('trashGame/audio/binnedTrash.mp3'));
-  }
+  Future<void> _playSpawnSound() => _playSfx('trashGame/audio/TrashSpawn.mp3');
+  Future<void> _playPickupSound() =>
+      _playSfx('trashGame/audio/pickupTrash.mp3');
+  Future<void> _playBinnedSound() => _playSfx('trashGame/audio/binnedTrash.mp3');
 
   IconData _bgVolumeIcon() {
     if (_bgVolume == 0) return Icons.volume_off;
@@ -350,14 +310,16 @@ class _CleanerGameState extends State<CleanerGame> {
     _bgPlayer.setVolume(_bgVolume);
   }
 
-  // CLEANER ANIMATION 
+  // ---------------- CLEANER ANIMATION ----------------
 
   void _startCleaningAnim() {
-       _cleanerAnimTimer?.cancel();
+    _cleanerAnimTimer?.cancel();
     int ticks = 0;
 
     _cleanerAnimTimer =
         Timer.periodic(const Duration(milliseconds: 120), (timer) {
+      if (!mounted) return;
+
       setState(() {
         _cleanerUseFirstFrame = !_cleanerUseFirstFrame;
       });
@@ -386,11 +348,12 @@ class _CleanerGameState extends State<CleanerGame> {
   void _resetGame() {
     gameTimer?.cancel();
     _cleanerAnimTimer?.cancel();
+
     setState(() {
       phase = 0;
       trashItems = [];
       tick = 0;
-      vibe = 100; // reset to full vibe
+      vibe = 100;
       correctlySorted = 0;
       missedTrash = 0;
       wrongSorting = 0;
@@ -399,7 +362,6 @@ class _CleanerGameState extends State<CleanerGame> {
       _cleanerUseFirstFrame = true;
     });
 
-    // Back to Golden for intro
     _playIntroOutroMusic();
   }
 
@@ -407,7 +369,6 @@ class _CleanerGameState extends State<CleanerGame> {
     gameTimer?.cancel();
     _cleanerAnimTimer?.cancel();
 
-    
     if (_assetPrecacheFuture != null) {
       await _assetPrecacheFuture;
       if (!mounted) return;
@@ -417,7 +378,7 @@ class _CleanerGameState extends State<CleanerGame> {
       phase = 1;
       trashItems = [];
       tick = 0;
-      vibe = 100; // start with max vibe
+      vibe = 100;
       correctlySorted = 0;
       missedTrash = 0;
       wrongSorting = 0;
@@ -425,14 +386,16 @@ class _CleanerGameState extends State<CleanerGame> {
       _cleanerUseFirstFrame = true;
     });
 
-    // Switch to game music
-    _playGameMusic();
+    await _playGameMusic();
 
     gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+
+      bool ended = false;
+
       setState(() {
         tick++;
 
-        // Ageing: too long on the ground = missed
         final List<TrashItem> stillThere = [];
         for (var t in trashItems) {
           t.age += 1;
@@ -446,47 +409,38 @@ class _CleanerGameState extends State<CleanerGame> {
         }
         trashItems = stillThere;
 
-        // Spawn new items
         if (tick % 2 == 0 && trashItems.length < 7) {
           if (random.nextBool()) {
             _spawnTrash();
           }
         }
 
-        // End of game
         if (tick >= maxTicks) {
-          gameTimer?.cancel();
+          ended = true;
           phase = 2;
-          // Back to Golden for outro
-          _playIntroOutroMusic();
         }
       });
+
+      if (ended) {
+        gameTimer?.cancel();
+        _playIntroOutroMusic();
+      }
     });
   }
 
-  /// Spawn trash only in the zones, with a 10% inner margin
   void _spawnTrash() {
-    const types = [
-      "cup",
-      "food",
-      "plastic",
-      "cigarette",
-    ];
+    const types = ["cup", "food", "plastic", "cigarette"];
     final type = types[random.nextInt(types.length)];
 
-    // Pick one of the spawn zones
     final zone = spawnZones[random.nextInt(spawnZones.length)];
 
-   
     final double innerLeft = zone.left + zone.width * 0.10;
     final double innerRight = zone.left + zone.width * 0.90;
     final double innerTop = zone.top + zone.height * 0.10;
     final double innerBottom = zone.top + zone.height * 0.90;
 
-    final double x =
-        innerLeft + random.nextDouble() * (innerRight - innerLeft);
-    final double y =
-        innerTop + random.nextDouble() * (innerBottom - innerTop);
+    final double x = innerLeft + random.nextDouble() * (innerRight - innerLeft);
+    final double y = innerTop + random.nextDouble() * (innerBottom - innerTop);
 
     String? assetPath;
     if (type == "food") {
@@ -513,10 +467,9 @@ class _CleanerGameState extends State<CleanerGame> {
       ),
     );
 
-    _playSpawnSound(); // play when trash appears
+    _playSpawnSound();
   }
 
-  /// chosenBin is one of: gft, rest, plastic, cups
   void _handleDropOnBin(TrashItem item, String chosenBin) async {
     String correctBin;
     switch (item.type) {
@@ -546,9 +499,10 @@ class _CleanerGameState extends State<CleanerGame> {
       if (vibe < 0) vibe = 0;
     }
 
-    await _playBinnedSound(); // play when item is binned
-    _startCleaningAnim();     // trigger cleaner animation
+    await _playBinnedSound();
+    _startCleaningAnim();
 
+    if (!mounted) return;
     setState(() {
       trashItems.removeWhere((t) => t.id == item.id);
     });
@@ -586,7 +540,7 @@ class _CleanerGameState extends State<CleanerGame> {
     );
   }
 
-  // INTRO 
+  // ---------------- INTRO ----------------
 
   Widget _buildIntro() {
     final bool isLast = _introPage >= _introBackgrounds.length - 1;
@@ -610,8 +564,7 @@ class _CleanerGameState extends State<CleanerGame> {
           child: Center(
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor:
-                    const Color.fromARGB(255, 48, 159, 193),
+                backgroundColor: const Color.fromARGB(255, 48, 159, 193),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 42,
                   vertical: 20,
@@ -658,7 +611,7 @@ class _CleanerGameState extends State<CleanerGame> {
     );
   }
 
-  // GAME 
+  // ---------------- GAME ----------------
 
   Widget _buildGame() {
     return LayoutBuilder(
@@ -684,16 +637,12 @@ class _CleanerGameState extends State<CleanerGame> {
                   return Stack(
                     children: [
                       ...trashItems.map((item) {
-                        final left =
-                            item.x * playConstraints.maxWidth - 24;
-                        final top =
-                            item.y * playConstraints.maxHeight - 24;
+                        final left = item.x * playConstraints.maxWidth - 24;
+                        final top = item.y * playConstraints.maxHeight - 24;
 
                         return Positioned(
-                          left: left
-                              .clamp(0, playConstraints.maxWidth - 48),
-                          top: top
-                              .clamp(0, playConstraints.maxHeight - 48),
+                          left: left.clamp(0, playConstraints.maxWidth - 48),
+                          top: top.clamp(0, playConstraints.maxHeight - 48),
                           child: Draggable<TrashItem>(
                             data: item,
                             onDragStarted: () {
@@ -710,8 +659,7 @@ class _CleanerGameState extends State<CleanerGame> {
                                     )
                                   : Text(
                                       trashEmojis[item.type] ?? "❓",
-                                      style:
-                                          const TextStyle(fontSize: 40),
+                                      style: const TextStyle(fontSize: 40),
                                     ),
                             ),
                             childWhenDragging: Opacity(
@@ -767,18 +715,12 @@ class _CleanerGameState extends State<CleanerGame> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "",
-          style: TextStyle(fontSize: 24, color: Colors.white),
-        ),
+        const Text("", style: TextStyle(fontSize: 24, color: Colors.white)),
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              "Vibe: $vibe/100",
-              style: const TextStyle(color: Colors.white),
-            ),
+            Text("Vibe: $vibe/100", style: const TextStyle(color: Colors.white)),
             Row(
               children: [
                 Text(
@@ -798,15 +740,11 @@ class _CleanerGameState extends State<CleanerGame> {
             ),
           ],
         ),
-        Text(
-          vibeText,
-          style: const TextStyle(color: Colors.white),
-        ),
+        Text(vibeText, style: const TextStyle(color: Colors.white)),
       ],
     );
   }
 
-  // cleaner sprite
   Widget _buildCleaner() {
     final String asset =
         _cleanerUseFirstFrame ? _cleanerIdleAsset : _cleanerSweepAsset;
@@ -828,7 +766,7 @@ class _CleanerGameState extends State<CleanerGame> {
       builder: (context, constraints) {
         const double imgWidth = 160;
         const double gap = 0;
-        const double slotWidth = 140; 
+        const double slotWidth = 140;
         final double imgHeight = imgWidth * 1.4;
 
         final double totalWidth =
@@ -850,8 +788,7 @@ class _CleanerGameState extends State<CleanerGame> {
                           onWillAccept: (item) => item != null,
                           onAccept: (item) =>
                               _handleDropOnBin(item, bins[i]),
-                          builder:
-                              (context, candidateData, rejectedData) {
+                          builder: (context, candidateData, rejectedData) {
                             final bool isHighlighted =
                                 candidateData.isNotEmpty;
                             final asset = binAssetPaths[bins[i]];
@@ -872,8 +809,7 @@ class _CleanerGameState extends State<CleanerGame> {
                               iconWidget = Text(
                                 binEmojis[bins[i]] ?? "",
                                 style: TextStyle(
-                                  fontSize:
-                                      isHighlighted ? 48 : 44,
+                                  fontSize: isHighlighted ? 48 : 44,
                                   color: Colors.white,
                                 ),
                               );
@@ -900,7 +836,7 @@ class _CleanerGameState extends State<CleanerGame> {
                   right: slotWidth * -1.75,
                   bottom: -10,
                   child: IgnorePointer(
-                    ignoring: true, 
+                    ignoring: true,
                     child: _buildCleaner(),
                   ),
                 ),
@@ -912,7 +848,7 @@ class _CleanerGameState extends State<CleanerGame> {
     );
   }
 
-  // RESULT
+  // ---------------- RESULT ----------------
 
   Widget _buildResult() {
     String summary;
