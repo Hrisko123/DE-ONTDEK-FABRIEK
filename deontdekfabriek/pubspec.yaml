@@ -64,11 +64,38 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+
   assets:
     # General images
     - assets/Images/
-    - assets/garden/
+
+    # Hangout garden images
+    - assets/garden/Hangout_minigame.jpg
+    - assets/garden/grass_lines.png
+    - assets/garden/flowers_small.png
+    - assets/garden/butterfly_1.png
+    - assets/garden/bee.png    
+
+    # Toilet game images
     - assets/ToiletImage/
+    - assets/sounds/
+
+    # Stage images
     - assets/stage/
-    - assets/audio/
+
+    # festival cleaner images
+    
+
+    # Food game truck images
+    - assets/trucks/
+
+    # audio files
+    - assets/audio/bees.mp3
+    - assets/audio/blooming.mp3
+    - assets/audio/bubbles.mp3
+    - assets/audio/droplet.mp3
+    - assets/audio/glow.mp3
+    - assets/audio/grass.mp3
+    - assets/audio/music.mp3
+    - assets/audio/twinkle.mp3
 
