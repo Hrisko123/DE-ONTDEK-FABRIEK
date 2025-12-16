@@ -78,14 +78,18 @@ flutter:
 
     # Toilet game images
     - assets/ToiletImage/
-    - assets/sounds/
+    - assets/sounds/ 
 
     # Stage images
     - assets/stage/
 
     # festival cleaner images
-    - assets/trashgame/
-    - assets/trashgame/background/
+    - assets/trashGame/
+    - assets/trashGame/BackgroundFlow/
+    - assets/trashGame/audio/
+    - assets/trashGame/Intro and Outro/
+    - assets/trashGame/people/
+    - assets/trashGame/Cleaner/
 
     # Food game truck images
     - assets/trucks/
