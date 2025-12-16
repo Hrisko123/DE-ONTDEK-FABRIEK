@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:deontdekfabriek/ToiletGame.dart';
 import 'package:deontdekfabriek/HangOutGame.dart';
 import 'package:deontdekfabriek/FoodGame.dart';
+import 'package:deontdekfabriek/FestivalCleanerApp.dart';
 
 
 class QR extends StatefulWidget {
@@ -105,6 +106,31 @@ class _QRState extends State<QR> {
                     }
                   }
                 }
+
+                                // ---- FESTIVAL CLEANER GAME ----
+                else if (value.contains('festival.cleaner.game')) {
+                  if (_lastLaunched == value) return; // already opened
+                  _lastLaunched = value;
+
+                  if (!mounted) return;
+
+                  try {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FestivalCleanerApp(),
+                      ),
+                    );
+                  } catch (_) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Kon Festival Cleaner game niet openen'),
+                        ),
+                      );
+                    }
+                  }
+                }
+
 
                 else if (value.startsWith('http://') ||
                     value.startsWith('https://')) {
