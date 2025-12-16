@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'stage_audio_controller.dart';
 import 'festival_name_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize global music engine BEFORE app builds
   await StageAudioController.instance.initialize();
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear();
 
   runApp(const MyApp());
 }
