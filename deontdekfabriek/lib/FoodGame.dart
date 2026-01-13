@@ -39,7 +39,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   
   // Part 2 state
   bool _part2Active = false;
-  bool _part2Started = false; 
+  bool _part2Started = false;
+  int _part2TruckCount = 3; // Number of trucks to use in part 2 (1-3)
   List<int> _truckLanes = [0, 0, 0]; 
   List<_Roadblock> _roadblocks = [];
   Timer? _roadblockSpawnTimer;
@@ -62,10 +63,10 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   final Map<int, int> _previousLane = {}; 
   final Map<int, bool> _laneChangeInProgress = {}; 
 
-  Future<void> _playSound(String assetPath) async {
+  Future<void> _playSound(String assetPath, {double volume = 0.1}) async {
     try {
       final player = AudioPlayer();
-      await player.setVolume(0.1);
+      await player.setVolume(volume);
       await player.setPlayerMode(PlayerMode.lowLatency);
       await player.play(AssetSource(assetPath));
       // Dispose player when sound completes
@@ -410,7 +411,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     setState(() {
       _part2Active = true;
       _part2Started = false; // Game hasn't started yet, waiting for button click
-      // Start all trucks in the middle lane
+      _part2TruckCount = 3; // Default to 3 trucks
+      // Start all trucks in the middle lane (will be adjusted based on selection)
       _truckLanes = [1, 1, 1];
       // initialize previous lanes for interpolation
       for (int i = 0; i < _truckLanes.length; i++) {
@@ -430,6 +432,12 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     setState(() {
       _part2Started = true;
       _part2Time = 0;
+      // Adjust truck lanes based on selected count
+      _truckLanes = List.generate(_part2TruckCount, (_) => 1);
+      // Reset previous lanes for interpolation
+      for (int i = 0; i < _truckLanes.length; i++) {
+        _previousLane[i] = _truckLanes[i];
+      }
     });
     _startPart2Timers();
   }
@@ -514,10 +522,10 @@ class _FoodTruckPageState extends State<FoodTruckPage>
           
           final screenHeight = _part2ScreenHeight;
           final laneHeight = screenHeight / 3;
-          final truckSize = 140.0; // Updated to match new truck size
+          final truckSize = 160.0; // Updated to match new truck size
           final roadblockSize = 60.0;
           
-          for (int i = 0; i < _truckLanes.length; i++) {
+          for (int i = 0; i < _part2TruckCount && i < _truckLanes.length; i++) {
             // Calculate actual visual Y position of truck (with interpolation)
             final targetLane = _truckLanes[i];
             final prevLane = _previousLane[i] ?? targetLane;
@@ -645,6 +653,9 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       _part2GameOver = true;
     });
     _stopPart2Timers();
+    
+    // Play win sound at higher volume
+    _playSound('ToiletImage/WinToilet.mp3', volume: 0.6);
     
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
@@ -822,8 +833,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
           final roadWidth =
               max(constraints.maxWidth - (horizontalPadding * 2), 320.0);
           final roadHeight = max(constraints.maxHeight - 140, 280.0);
-          final truckHeight = roadHeight * 0.22;
-          final truckWidth = roadWidth * 0.3;
+          final truckHeight = roadHeight * 0.26; // Increased from 0.22
+          final truckWidth = roadWidth * 0.35; // Increased from 0.3
           final travelDistance = roadWidth - truckWidth;
 
           return Column(
@@ -1000,7 +1011,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
               }).toList(),
               
               // Player trucks - optimized with single drag handler and smooth animation
-              for (int i = 0; i < _selectedTrucks.length && i < 3; i++)
+              for (int i = 0; i < _selectedTrucks.length && i < _part2TruckCount; i++)
                 Positioned(
                   left: 50 + i * 160, // Increased horizontal spacing between trucks
                   top: (() {
@@ -1013,7 +1024,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                     final lerped = (anim != null)
                         ? lerpDouble(fromY, toY, anim.value) ?? toY
                         : toY;
-                    return lerped + laneHeight / 2 - 70; // Updated for 140px truck size
+                    return lerped + laneHeight / 2 - 80; // Updated for 160px truck size
                   })(),
                   child: MouseRegion(
                     cursor: (_isDragging[i] ?? false)
@@ -1063,8 +1074,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                       },
 
                       child: _TruckCard(
-                        width: 140,
-                        height: 140,
+                        width: 160,
+                        height: 160,
                         truck: _selectedTrucks[i],
                       ),
                     ),
@@ -1117,8 +1128,57 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                             ),
                             const SizedBox(height: 16),
                             const Text(
+                              'Choose how many trucks to use:',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [1, 2, 3].map((count) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _part2TruckCount = count;
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _part2TruckCount == count
+                                          ? Colors.green.shade700
+                                          : Colors.grey.shade300,
+                                      foregroundColor: _part2TruckCount == count
+                                          ? Colors.white
+                                          : Colors.black87,
+                                      minimumSize: const Size(60, 60),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '$count',
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 24),
+                            const Text(
                               'Drag your trucks up or down to switch lanes',
                               style: TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'If you are more than 1 person, each player choose which truck to move',
+                              style: TextStyle(fontSize: 16),
+                              textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 8),
                             const Text(
