@@ -7,7 +7,7 @@ import 'package:flutter/gestures.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 
-// FOOD TRUCK MINI-GAME
+
 class FoodTruckPage extends StatefulWidget {
   const FoodTruckPage({super.key});
 
@@ -39,8 +39,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   
   // Part 2 state
   bool _part2Active = false;
-  bool _part2Started = false; // Track if part 2 game has started
-  List<int> _truckLanes = [0, 0, 0]; // 0=top, 1=mid, 2=bottom for each truck
+  bool _part2Started = false; 
+  List<int> _truckLanes = [0, 0, 0]; 
   List<_Roadblock> _roadblocks = [];
   Timer? _roadblockSpawnTimer;
   Timer? _part2GameTimer;
@@ -54,13 +54,13 @@ class _FoodTruckPageState extends State<FoodTruckPage>
 
   String _formatScore(int value) => value >= 0 ? '+$value' : value.toString();
 
-  // --- Drag & lane animation helpers ---
-  final Map<int, double> _dragAccum = {}; // accumulated drag distance per truck
-  final Map<int, bool> _isDragging = {}; // cursor feedback per truck
+  // --- Drag lane animation helpers ---
+  final Map<int, double> _dragAccum = {}; 
+  final Map<int, bool> _isDragging = {}; 
   final Map<int, AnimationController> _laneControllers = {};
   final Map<int, Animation<double>> _laneAnimations = {};
-  final Map<int, int> _previousLane = {}; // previous lane for interpolation
-  final Map<int, bool> _laneChangeInProgress = {}; // prevent multiple lane changes
+  final Map<int, int> _previousLane = {}; 
+  final Map<int, bool> _laneChangeInProgress = {}; 
 
   Future<void> _playSound(String assetPath) async {
     try {
