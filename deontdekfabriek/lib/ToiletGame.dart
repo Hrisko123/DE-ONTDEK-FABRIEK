@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'ui_styles.dart';
 import 'services/led_service.dart';
@@ -17,18 +16,11 @@ class ToiletGamePage extends StatefulWidget {
 class _ToiletGamePageState extends State<ToiletGamePage> {
   final Random _rnd = Random();
   final List<_FallingItem> _items = [];
-  StreamSubscription<dynamic>? _gyroSub;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   String? _feedbackMessage;
   bool _feedbackIsGood = false;
   Timer? _feedbackTimer;
-
-  // gyro tuning
-  double _gyroSensitivity = 2350.0;
-  double _gyroSmooth = 0.05;
-  double _gyroVelocity = 0.0;
-  int? _lastGyroMillis;
 
   Timer? _gameTimer;
   Timer? _spawnTimer;
@@ -36,14 +28,21 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
   double _bucketX = 0;
   double _bucketWidth = 100;
   double _bucketY = 0;
-  int _caught = 0;
+
+  // Players score
   int _hearts = 3;
+  int _score = 0;
   bool _isRunning = true;
-  int _totalPoints = 0;
 
   bool _showIntro = true;
 
   static const int targetToFill = 10;
+  static const int numSlots = 3;
+  static const double slotWidth = 100;
+  static const double slotHeight = 100;
+
+  // Top slots
+  late List<_SlotItem?> _slots;
 
   static final List<_ItemSpec> _specs = <_ItemSpec>[
     _ItemSpec('bananapeel', 'assets/ToiletImage/Bananapeel.png', true),
@@ -57,6 +56,7 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
   @override
   void initState() {
     super.initState();
+    _slots = List<_SlotItem?>.filled(numSlots, null);
 
     // Check assets in console
     for (final s in _specs) {
@@ -72,8 +72,6 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     rootBundle.load('assets/ToiletImage/Bucket.png');
     rootBundle.load('assets/ToiletImage/Sun.png');
     rootBundle.load('assets/ToiletImage/Cloud.png');
-
-    // timers and gyro are started when the player taps "Start" (_startGame)
   }
 
   void _startGame() {
@@ -81,17 +79,27 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     setState(() {
       _showIntro = false;
       _isRunning = true;
-      _caught = 0;
       _hearts = 3;
+      _score = 0;
       _items.clear();
+      _slots = List<_SlotItem?>.filled(numSlots, null);
+
+      // Initialize slots with random items
+      for (int i = 0; i < numSlots; i++) {
+        _slots[i] = _createSlotItem();
+      }
     });
 
-    // Item spawner
+    // Item spawner - fill empty slots
     _spawnTimer?.cancel();
-    _spawnTimer = Timer.periodic(const Duration(milliseconds: 700), (_) {
+    _spawnTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
       if (!_isRunning || !mounted) return;
       setState(() {
-        _items.add(_createRandomItem());
+        for (int i = 0; i < numSlots; i++) {
+          if (_slots[i] == null) {
+            _slots[i] = _createSlotItem();
+          }
+        }
       });
     });
 
@@ -101,54 +109,39 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
       if (!_isRunning || !mounted) return;
       _updateGame(16 / 1000);
     });
-
-    // Gyroscope subscription
-    try {
-      _lastGyroMillis = DateTime.now().millisecondsSinceEpoch;
-      _gyroSub?.cancel();
-      _gyroSub = gyroscopeEvents.listen((dynamic e) {
-        try {
-          final now = DateTime.now().millisecondsSinceEpoch;
-          final dt = ((now - (_lastGyroMillis ?? now)) / 1000.0).clamp(
-            0.0,
-            0.2,
-          );
-          _lastGyroMillis = now;
-
-          final double rawTilt = (e is GyroscopeEvent) ? e.z : (e?.z ?? 0.0);
-          final double targetVel = -rawTilt * _gyroSensitivity;
-          _gyroVelocity += (targetVel - _gyroVelocity) * _gyroSmooth;
-          final dx = _gyroVelocity * dt;
-          if (!mounted) return;
-
-          setState(() {
-            _bucketX = (_bucketX + dx).clamp(
-              0.0,
-              _screenWidth - _bucketWidth - 120,
-            );
-          });
-        } catch (_) {}
-      });
-    } catch (e) {
-      debugPrint('Gyroscope not available: $e');
-      _gyroSub = null;
-    }
   }
 
   double get _screenWidth => MediaQuery.of(context).size.width;
   double get _screenHeight => MediaQuery.of(context).size.height;
 
-  _FallingItem _createRandomItem() {
+  _SlotItem _createSlotItem() {
     final spec = _specs[_rnd.nextInt(_specs.length)];
-    final size = 36.0 + _rnd.nextDouble() * 36.0;
-    final speed = 80.0 + _rnd.nextDouble() * 120.0;
-    final x = _rnd.nextDouble() * (_screenWidth - size - 140);
-    return _FallingItem(x: x, y: -size, size: size, speed: speed, spec: spec);
+    return _SlotItem(spec: spec);
+  }
+
+  void _onSlotTapped(int slotIndex) {
+    if (!_isRunning || _slots[slotIndex] == null) return;
+
+    final item = _slots[slotIndex]!;
+    final randomX = _rnd.nextDouble() * (_screenWidth - 36);
+
+    setState(() {
+      _items.add(
+        _FallingItem(
+          x: randomX,
+          y: 100 + slotHeight,
+          size: 36,
+          speed: 200 + _rnd.nextDouble() * 100,
+          spec: item.spec,
+        ),
+      );
+      _slots[slotIndex] = null;
+    });
   }
 
   void _updateGame(double dt) {
     setState(() {
-      if (_bucketX == 0) _bucketX = (_screenWidth - _bucketWidth) / 2;
+      _bucketX = _bucketX.clamp(0.0, _screenWidth - _bucketWidth - 120);
       _bucketY = _screenHeight - 160;
 
       for (final it in _items) {
@@ -159,7 +152,9 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
       final remove = <_FallingItem>[];
 
       for (final it in _items) {
-        if (_checkCollision(it)) {
+        bool caughtByBucket = _checkCollision(it, _bucketX);
+
+        if (caughtByBucket) {
           caught.add(it);
         } else if (it.y > _screenHeight + 60) {
           remove.add(it);
@@ -174,8 +169,8 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
         _feedbackTimer?.cancel();
         if (it.spec.good) {
           _feedbackIsGood = true;
-          _caught++;
-          if (_caught >= targetToFill) {
+          _score++;
+          if (_score >= targetToFill) {
             _isRunning = false;
             _showWin();
           }
@@ -203,9 +198,9 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     });
   }
 
-  bool _checkCollision(_FallingItem it) {
-    final bucketLeft = _bucketX;
-    final bucketRight = _bucketX + _bucketWidth;
+  bool _checkCollision(_FallingItem it, double bucketX) {
+    final bucketLeft = bucketX;
+    final bucketRight = bucketX + _bucketWidth;
     final itemLeft = it.x;
     final itemRight = it.x + it.size;
     final bucketTop = _bucketY;
@@ -217,24 +212,15 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     return verticalOverlap && horizontalOverlap;
   }
 
-  int _calculatePoints() {
-    final double ratio = _caught / targetToFill;
-    final int points = (ratio * 10).clamp(0, 10).round();
-    return points;
-  }
-
   Future<void> _showWin() async {
     if (!mounted) return;
     _audioPlayer.play(AssetSource('ToiletImage/WinToilet.mp3'));
-
-    _totalPoints = _calculatePoints();
-    await LedService.updateLeds(_totalPoints);
 
     await showDialog(
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('Je hebt gewonnen!'),
-        content: Text('Je hebt 10 eco punten verdiend!'),
+        content: const Text('Goed gedaan!'),
         actions: [
           TextButton(
             onPressed: () {
@@ -272,7 +258,6 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
   void dispose() {
     _gameTimer?.cancel();
     _spawnTimer?.cancel();
-    _gyroSub?.cancel();
     _feedbackTimer?.cancel();
     _audioPlayer.dispose();
     super.dispose();
@@ -283,7 +268,7 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     // Show intro/instructions until player starts the game
     if (_showIntro) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Toilet game intro')),
+        appBar: AppBar(title: const Text('Toilet Game')),
         backgroundColor: const Color.fromARGB(255, 139, 210, 142),
         body: Center(
           child: Padding(
@@ -292,9 +277,9 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Draai de tablet van links naar rechts om de emmer te bewegen\n\n'
-                  'Vang de juiste spullen om een compost toilet te maken!\n\n'
-                  'Als je 3x fouten dingen vangt ben je af',
+                  'Tap de vakjes bovenin om items te laten vallen!\n\n'
+                  'Vang de juiste spullen met je emmer.\n\n'
+                  'Als je 3x foute dingen vangt ben je af',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18),
                 ),
@@ -311,123 +296,126 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
       );
     }
 
-    _bucketX = _bucketX.clamp(0.0, _screenWidth - _bucketWidth - 120);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Toilet Catch')),
       backgroundColor: const Color.fromARGB(255, 135, 206, 235),
-      body: GestureDetector(
-        onPanUpdate: (details) {
-          setState(() {
-            _bucketX = (_bucketX + details.delta.dx).clamp(
-              0.0,
-              _screenWidth - _bucketWidth - 120,
-            );
-          });
-        },
-        child: Stack(
-          children: [
-            Positioned(
-              top: 30,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: SizedBox(
-                  width: 80,
-                  height: 80,
-                  child: Image.asset(
-                    'assets/ToiletImage/Sun.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 20,
-              top: 120,
+      body: Stack(
+        children: [
+          // Background elements
+          Positioned(
+            top: 30,
+            left: 0,
+            right: 0,
+            child: Center(
               child: SizedBox(
-                width: 100,
-                height: 60,
+                width: 80,
+                height: 80,
                 child: Image.asset(
-                  'assets/ToiletImage/Cloud.png',
+                  'assets/ToiletImage/Sun.png',
                   fit: BoxFit.contain,
                 ),
               ),
             ),
-            Positioned(
-              right: 120,
-              top: 140,
-              child: SizedBox(
-                width: 100,
-                height: 60,
-                child: Image.asset(
-                  'assets/ToiletImage/Cloud.png',
-                  fit: BoxFit.contain,
-                ),
+          ),
+          Positioned(
+            left: 20,
+            top: 120,
+            child: SizedBox(
+              width: 100,
+              height: 60,
+              child: Image.asset(
+                'assets/ToiletImage/Cloud.png',
+                fit: BoxFit.contain,
               ),
             ),
-            Positioned(
-              left: 200,
-              top: 160,
-              child: SizedBox(
-                width: 100,
-                height: 60,
-                child: Image.asset(
-                  'assets/ToiletImage/Cloud.png',
-                  fit: BoxFit.contain,
-                ),
+          ),
+          Positioned(
+            right: 120,
+            top: 140,
+            child: SizedBox(
+              width: 100,
+              height: 60,
+              child: Image.asset(
+                'assets/ToiletImage/Cloud.png',
+                fit: BoxFit.contain,
               ),
             ),
-            for (final it in _items)
-              Positioned(
-                left: it.x,
-                top: it.y,
-                child: SizedBox(
-                  width: it.size,
-                  height: it.size,
-                  child: Image.asset(it.spec.asset, fit: BoxFit.contain),
-                ),
+          ),
+
+          // Top slots
+          Positioned(
+            top: 100,
+            left: 0,
+            right: 0,
+            child: SizedBox(
+              height: slotHeight,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(numSlots, (i) {
+                  return Listener(
+                    onPointerDown: (_) => _onSlotTapped(i),
+                    child: Container(
+                      width: slotWidth,
+                      height: slotHeight,
+                      decoration: BoxDecoration(
+                        color: Colors.brown.shade100,
+                        border: Border.all(color: Colors.brown, width: 2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: _slots[i] != null
+                          ? Image.asset(
+                              _slots[i]!.spec.asset,
+                              fit: BoxFit.contain,
+                            )
+                          : const SizedBox(),
+                    ),
+                  );
+                }),
               ),
+            ),
+          ),
+
+          // Falling items
+          for (final it in _items)
             Positioned(
-              left: _bucketX,
-              top: _bucketY,
+              left: it.x,
+              top: it.y,
+              child: SizedBox(
+                width: it.size,
+                height: it.size,
+                child: Image.asset(it.spec.asset, fit: BoxFit.contain),
+              ),
+            ),
+
+          // Player bucket (catcher)
+          Positioned(
+            left: _bucketX,
+            top: _bucketY,
+            child: Listener(
+              onPointerMove: (details) {
+                setState(() {
+                  _bucketX = (_bucketX + details.delta.dx).clamp(
+                    0.0,
+                    _screenWidth - _bucketWidth - 120,
+                  );
+                });
+              },
               child: SizedBox(
                 width: _bucketWidth,
                 height: 80,
                 child: Image.asset('assets/ToiletImage/Bucket.png'),
               ),
             ),
-            Positioned(
-              right: 16,
-              top: 80,
-              bottom: 80,
-              width: 48,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.brown.shade200,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.brown.shade700, width: 2),
-                ),
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: FractionallySizedBox(
-                    heightFactor: (_caught / targetToFill).clamp(0.0, 1.0),
-                    widthFactor: 1.0,
-                    child: Container(
-                      margin: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.brown,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 90,
-              top: 20,
+          ),
+
+          // Hearts
+          Positioned(
+            top: 60,
+            left: 0,
+            right: 0,
+            child: Center(
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(3, (i) {
                   final alive = i < _hearts;
                   return Padding(
@@ -441,34 +429,65 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
                 }),
               ),
             ),
-            Positioned(
-              left: 12,
-              top: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white70,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.black26),
-                ),
-                child: Text('Gevangen: $_caught / $targetToFill'),
+          ),
+
+          // Score bar (rechts)
+          Positioned(
+            right: 20,
+            top: 100,
+            child: Container(
+              width: 60,
+              height: 400,
+              decoration: BoxDecoration(
+                color: Colors.brown.shade200,
+                border: Border.all(color: Colors.brown.shade800, width: 3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  // Filled portion
+                  Container(
+                    width: double.infinity,
+                    height: (400 - 8) * (_score / targetToFill),
+                    decoration: BoxDecoration(
+                      color: Colors.brown.shade600,
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(8),
+                        bottomRight: Radius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            if (_feedbackMessage != null)
-              Positioned(
-                left: _bucketX + 40,
-                top: _bucketY - 40,
-                child: Icon(
-                  _feedbackIsGood ? Icons.check_circle : Icons.cancel,
-                  color: _feedbackIsGood ? Colors.green : Colors.red,
-                  size: 32,
+          ),
+
+          // Score text
+          Positioned(
+            right: 20,
+            top: 510,
+            child: Container(
+              width: 60,
+              alignment: Alignment.center,
+              child: Text(
+                '$_score/$targetToFill',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(1, 1),
+                      blurRadius: 3,
+                      color: Colors.black,
+                    ),
+                  ],
                 ),
               ),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -481,12 +500,19 @@ class _ItemSpec {
   const _ItemSpec(this.name, this.asset, this.good);
 }
 
+class _SlotItem {
+  final _ItemSpec spec;
+  _SlotItem({required this.spec});
+}
+
 class _FallingItem {
   double x;
   double y;
   final double size;
   final double speed;
   final _ItemSpec spec;
+  int caughtByPlayer = 0;
+
   _FallingItem({
     required this.x,
     required this.y,
