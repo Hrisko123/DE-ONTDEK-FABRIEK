@@ -39,6 +39,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   
   // Part 2 state
   bool _part2Active = false;
+  bool _part2Started = false; // Track if part 2 game has started
   List<int> _truckLanes = [0, 0, 0]; // 0=top, 1=mid, 2=bottom for each truck
   List<_Roadblock> _roadblocks = [];
   Timer? _roadblockSpawnTimer;
@@ -408,6 +409,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   void _startPart2() {
     setState(() {
       _part2Active = true;
+      _part2Started = false; // Game hasn't started yet, waiting for button click
       // Start all trucks in the middle lane
       _truckLanes = [1, 1, 1];
       // initialize previous lanes for interpolation
@@ -421,6 +423,14 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     });
     
     _generatePredeterminedPath();
+    // Don't start timers yet - wait for button click
+  }
+  
+  void _startPart2Game() {
+    setState(() {
+      _part2Started = true;
+      _part2Time = 0;
+    });
     _startPart2Timers();
   }
   
@@ -472,7 +482,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   void _startPart2Timers() {
     // Game timer - spawns from predetermined path
     _part2GameTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted || _part2GameOver) {
+      if (!mounted || _part2GameOver || !_part2Started) {
         timer.cancel();
         return;
       }
@@ -504,7 +514,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
           
           final screenHeight = _part2ScreenHeight;
           final laneHeight = screenHeight / 3;
-          final truckSize = 80.0;
+          final truckSize = 140.0; // Updated to match new truck size
           final roadblockSize = 60.0;
           
           for (int i = 0; i < _truckLanes.length; i++) {
@@ -532,8 +542,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
             // Check horizontal overlap (roadblock X position)
             final blockLeft = block.position * _part2ScreenWidth;
             final blockRight = blockLeft + roadblockSize;
-            final truckLeft = 50.0 + i * 100.0;
-            final truckRight = truckLeft + truckSize;
+            final truckLeft = 50.0 + i * 160.0; // Updated to match visual spacing
+            final truckRight = truckLeft + truckSize; // truckSize is now 140.0
             
             final horizontalOverlap = !(truckRight < blockLeft || truckLeft > blockRight);
             
@@ -703,6 +713,9 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     
     // Prevent multiple lane changes - only allow one lane change at a time
     if (_laneChangeInProgress[truckIndex] == true) return;
+    
+    // Play tire sound effect when lane changes
+    _playSound('sounds/swoop.mp3');
     
     // Mark lane change as in progress
     _laneChangeInProgress[truckIndex] = true;
@@ -989,7 +1002,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
               // Player trucks - optimized with single drag handler and smooth animation
               for (int i = 0; i < _selectedTrucks.length && i < 3; i++)
                 Positioned(
-                  left: 50 + i * 100, // Maximum horizontal spacing between trucks
+                  left: 50 + i * 160, // Increased horizontal spacing between trucks
                   top: (() {
                     // compute top with interpolation if animating
                     final targetLane = _truckLanes[i];
@@ -1000,7 +1013,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                     final lerped = (anim != null)
                         ? lerpDouble(fromY, toY, anim.value) ?? toY
                         : toY;
-                    return lerped + laneHeight / 2 - 40;
+                    return lerped + laneHeight / 2 - 70; // Updated for 140px truck size
                   })(),
                   child: MouseRegion(
                     cursor: (_isDragging[i] ?? false)
@@ -1049,36 +1062,38 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                         setState(() => _isDragging[i] = false);
                       },
 
-                      child: _ChibiTruck(
+                      child: _TruckCard(
+                        width: 140,
+                        height: 140,
                         truck: _selectedTrucks[i],
-                        size: 80,
                       ),
                     ),
                   ),
                 ),
               
-              // UI Overlay - Only show timer, no score
-              Positioned(
-                top: 16,
-                right: 16,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Time: ${(30 - (_part2Time / 1000)).clamp(0.0, 30.0).toStringAsFixed(1)}s',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+              // UI Overlay - Only show timer when game has started, no score
+              if (_part2Started)
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Time: ${(30 - (_part2Time / 1000)).clamp(0.0, 30.0).toStringAsFixed(1)}s',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
-              ),
               
-              // Instructions overlay
-              if (_part2Time < 3000)
+              // Start button overlay - show before game starts
+              if (!_part2Started)
                 Positioned.fill(
                   child: Container(
                     color: Colors.black.withValues(alpha: 0.5),
@@ -1090,33 +1105,50 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Column(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
+                            const Text(
                               'Part 2: Avoid the Roadblocks!',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 16),
-                            Text(
+                            const SizedBox(height: 16),
+                            const Text(
                               'Drag your trucks up or down to switch lanes',
                               style: TextStyle(fontSize: 16),
                             ),
-                            SizedBox(height: 8),
-                            Text(
+                            const SizedBox(height: 8),
+                            const Text(
                               'Avoid the red roadblocks!',
                               style: TextStyle(fontSize: 16),
                             ),
-                            SizedBox(height: 8),
-                            Text(
+                            const SizedBox(height: 8),
+                            const Text(
                               'Survive for 30 seconds!',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: _startPart2Game,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green.shade700,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                  vertical: 16,
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              child: const Text('Start'),
                             ),
                           ],
                         ),
@@ -1197,82 +1229,6 @@ class _RoadLinesPainter extends CustomPainter {
   
   @override
   bool shouldRepaint(_RoadLinesPainter oldDelegate) => false;
-}
-
-class _ChibiTruck extends StatelessWidget {
-  final _TruckInfo truck;
-  final double size;
-  
-  const _ChibiTruck({
-    required this.truck,
-    required this.size,
-  });
-  
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        children: [
-          // Main truck body (chibi style - more rounded and cute)
-          Container(
-            width: size,
-            height: size * 0.75,
-            decoration: BoxDecoration(
-              color: truck.color,
-              borderRadius: BorderRadius.circular(size * 0.2),
-              border: Border.all(color: Colors.black, width: 2),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(size * 0.1),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    truck.name.split(' ')[0], // Just first word for chibi
-                    style: TextStyle(
-                      fontSize: size * 0.18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Chibi wheels
-          Positioned(
-            bottom: 0,
-            left: size * 0.15,
-            child: Container(
-              width: size * 0.25,
-              height: size * 0.25,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.black,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: size * 0.15,
-            child: Container(
-              width: size * 0.25,
-              height: size * 0.25,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.black,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _TruckInfo {
