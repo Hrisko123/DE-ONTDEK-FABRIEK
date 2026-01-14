@@ -22,7 +22,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
   @override
   void initState() {
     super.initState();
-    controller = MobileScannerController();
+    controller = MobileScannerController(facing: CameraFacing.front);
   }
 
   @override
