@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'QR.dart'; // 🔹 import QR.dart
+import 'result_page.dart';
 
 class FestivalNamePage extends StatefulWidget {
   const FestivalNamePage({super.key});
@@ -76,6 +77,37 @@ class _FestivalNamePageState extends State<FestivalNamePage> {
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        final name = _controller.text.trim().isEmpty
+                            ? 'EcoFest'
+                            : _controller.text.trim();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ResultPage(
+                              score: 8,
+                              bandName: 'Test Band',
+                              festivalName: name,
+                              onMinigameCompleted: () {},
+                            ),
+                          ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: const Text(
+                        'test outro',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white70,
                         ),
                       ),
                     ),

@@ -43,6 +43,7 @@ dependencies:
   just_audio: ^0.9.37
   audio_session: ^0.1.18
   fftea: ^1.5.0
+  video_player: ^2.8.2
 
 dev_dependencies:
   flutter_test:
@@ -100,6 +101,9 @@ flutter:
 
     # Food game truck images
     - assets/trucks/
+
+    # Video files
+    - assets/videos/outro.mp4
 
     # audio files
     - assets/audio/bees.mp3

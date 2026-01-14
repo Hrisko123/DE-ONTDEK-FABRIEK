@@ -1,245 +1,464 @@
-    import 'dart:math';
-    import 'dart:ui';
-    import 'package:flutter/material.dart';
-    import 'package:confetti/confetti.dart';
+import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
-    class ResultPage extends StatefulWidget {
-    final int score;
-    final String bandName;
-    final String festivalName;
-    final VoidCallback onMinigameCompleted;
+class ResultPage extends StatefulWidget {
+  final int score;
+  final String bandName;
+  final String festivalName;
+  final VoidCallback onMinigameCompleted;
 
-    const ResultPage({
+  const ResultPage({
     super.key,
     required this.score,
     required this.bandName,
     required this.festivalName,
     required this.onMinigameCompleted,
-    });
+  });
 
-    @override
-    State<ResultPage> createState() => _ResultPageState();
-    }
+  @override
+  State<ResultPage> createState() => _ResultPageState();
+}
 
-    class _ResultPageState extends State<ResultPage>
-    with TickerProviderStateMixin {
-    late AnimationController shakeCtrl;
-    late AnimationController revealCtrl;
-    late ConfettiController confettiCtrl;
+class _ResultPageState extends State<ResultPage> {
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
+  String? _videoError;
+  bool _isPlaying = false;
+  bool _isLiked = false;
+  int _likeCount = 1234;
+  final List<String> _comments = [
+    'Amazing festival! ',
+    'Love the eco-friendly vibes!',
+    'Food was yummy',
+    'Great job on the stage!',
+    'Goated Festival',
+  ];
 
-    @override
-    void initState() {
+  @override
+  void initState() {
     super.initState();
-
-    shakeCtrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 600),
-    );
-
-    revealCtrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 650),
-    )..forward();
-
-    confettiCtrl = ConfettiController(
-    duration: const Duration(seconds: 1),
-    )..play();
-
-    Future.delayed(const Duration(milliseconds: 300), () {
-    if (mounted) shakeCtrl.forward();
+    // Delay initialization to ensure widget is fully built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeVideo();
     });
-    }
+  }
 
-    @override
-    void dispose() {
-    shakeCtrl.dispose();
-    revealCtrl.dispose();
-    confettiCtrl.dispose();
-    super.dispose();
-    }
-
-    Offset _shake() {
-      final t = shakeCtrl.value;
-      return Offset(
-        sin(t * pi * 10) * 6,
-        cos(t * pi * 12) * 4,
+  Future<void> _initializeVideo() async {
+    if (!mounted) return;
+    
+    try {
+      // Load video from assets
+      _videoController = VideoPlayerController.asset(
+        'assets/videos/outro.mp4',
       );
+      
+      // Add listener for errors
+      _videoController!.addListener(() {
+        if (_videoController!.value.hasError) {
+          if (mounted) {
+            setState(() {
+              _videoError = _videoController!.value.errorDescription ?? 'Video error';
+            });
+          }
+        }
+      });
+      
+      // Initialize the controller
+      await _videoController!.initialize();
+      
+      if (!mounted) {
+        _videoController?.dispose();
+        return;
+      }
+      
+      if (_videoController!.value.hasError) {
+        setState(() {
+          _videoError = _videoController!.value.errorDescription ?? 'Unknown error';
+        });
+        return;
+      }
+      
+      setState(() {
+        _isVideoInitialized = true;
+        _isPlaying = true;
+      });
+      
+      _videoController!.setLooping(true);
+      await _videoController!.play();
+      
+      // Listen to playback state changes
+      _videoController!.addListener(() {
+        if (mounted) {
+          setState(() {
+            _isPlaying = _videoController!.value.isPlaying;
+          });
+        }
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Error initializing video: $error');
+      debugPrint('Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          _videoError = 'Failed to load video: ${error.toString()}';
+        });
+      }
     }
+  }
 
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
 
-    String get title {
-    if (widget.score >= 8) return "Eco Hero Stage ";
-    if (widget.score >= 3) return "Nice Try Stage ";
-    return "Eco Disaster Stage ";
-    }
+  void _toggleLike() {
+    setState(() {
+      _isLiked = !_isLiked;
+      if (_isLiked) {
+        _likeCount++;
+      } else {
+        _likeCount--;
+      }
+    });
+  }
 
+  void _showComments() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _buildCommentsSheet(),
+    );
+  }
 
-    String get message {
-    if (widget.score >= 8) {
-    return "Your stage is super eco-friendly! Amazing choices!";
-    } else if (widget.score >= 3) {
-    return "Good job! Some eco improvements are still possible.";
-    } else {
-    return "Your stage is NOT eco-friendly.\nTry choosing greener options next time!";
-    }
-    }
-
-    @override
-    Widget build(BuildContext context) {
-    return Scaffold(
-    backgroundColor: Colors.black,
-    appBar: AppBar(
-    title: const Text("Stage Result"),
-    backgroundColor: Colors.black,
-    ),
-    body: Stack(
-    children: [
-    Container(color: Colors.black),
-
-    Align(
-      alignment: Alignment.topCenter,
-      child: ConfettiWidget(
-        confettiController: confettiCtrl,
-        blastDirectionality: BlastDirectionality.explosive,
-        emissionFrequency: 0.03,
-        numberOfParticles: 25,
-        gravity: 0.35,
+  Widget _buildCommentsSheet() {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-    ),
-
-    AnimatedBuilder(
-      animation: Listenable.merge([shakeCtrl, revealCtrl]),
-      builder: (_, child) {
-        final scale = 0.7 + revealCtrl.value * 0.3;
-        final opacity = revealCtrl.value;
-
-        return Transform.translate(
-          offset: _shake(),
-          child: Transform.scale(
-            scale: scale,
-            child: Opacity(
-              opacity: opacity,
-              child: child,
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade600,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-        );
-      },
-      child: _buildCard(),
-    ),
-    ],
-    ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Text(
+                  'Comments',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _comments.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey.shade800,
+                        child: const Icon(Icons.person, color: Colors.white),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'User${index + 1}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _comments[index],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
-    }
+  }
 
-    Widget _buildCard() {
-    return Center(
-    child: Container(
-    padding: const EdgeInsets.all(26),
-    margin: const EdgeInsets.symmetric(horizontal: 20),
-    decoration: BoxDecoration(
-    color: Colors.black.withOpacity(0.75),
-    borderRadius: BorderRadius.circular(22),
-    border: Border.all(color: Colors.greenAccent.withOpacity(0.4)),
-    ),
-    child: Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-        widget.festivalName,
-        style: const TextStyle(
-          fontSize: 26,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final phoneWidth = size.width * 0.25; // Even narrower phone frame
+    final phoneHeight = phoneWidth * 1.9; // Phone aspect ratio
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Container(
+          width: phoneWidth,
+          height: phoneHeight,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade900,
+            borderRadius: BorderRadius.circular(35),
+            border: Border.all(
+              color: Colors.grey.shade700,
+              width: 10,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 20,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(25),
+            child: Stack(
+              children: [
+                // Video player (center area)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black,
+                    child: _isVideoInitialized && _videoController != null
+                        ? Stack(
+                            children: [
+                              Center(
+                                child: AspectRatio(
+                                  aspectRatio: _videoController!.value.aspectRatio,
+                                  child: VideoPlayer(_videoController!),
+                                ),
+                              ),
+                              // Pause/Play button overlay (fades out when playing)
+                              AnimatedOpacity(
+                                opacity: _isPlaying ? 0.0 : 1.0,
+                                duration: const Duration(milliseconds: 300),
+                                child: Center(
+                                  child: Container(
+                                    width: 70,
+                                    height: 70,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.6),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.play_arrow,
+                                      color: Colors.white,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Tap area to pause/play (always active)
+                              Positioned.fill(
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    if (_videoController!.value.isPlaying) {
+                                      await _videoController!.pause();
+                                    } else {
+                                      await _videoController!.play();
+                                    }
+                                    setState(() {
+                                      _isPlaying = _videoController!.value.isPlaying;
+                                    });
+                                  },
+                                  child: Container(
+                                    color: Colors.transparent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Container(
+                            color: Colors.grey.shade800,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (_videoError != null) ...[
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 60,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const Text(
+                                      'Video Error',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                                      child: Text(
+                                        _videoError!,
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Check console for details',
+                                      style: TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    const CircularProgressIndicator(
+                                      color: Colors.white54,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const Text(
+                                      'Loading video...',
+                                      style: TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+                // TikTok-like UI buttons inside the frame on the right side
+                Positioned(
+                  right: 12,
+                  bottom: phoneHeight * 0.15,
+                  child: Column(
+                    children: [
+                      // Like button
+                      GestureDetector(
+                        onTap: _toggleLike,
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.3),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _isLiked ? Icons.favorite : Icons.favorite_border,
+                                color: _isLiked ? Colors.red : Colors.white,
+                                size: 32,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                _formatCount(_likeCount),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Comments button
+                      GestureDetector(
+                        onTap: _showComments,
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.3),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.comment_outlined,
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                _formatCount(_comments.length),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      const SizedBox(height: 16),
-
-      Text(
-        title,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 30,
-          color: Colors.greenAccent,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-
-      const SizedBox(height: 18),
-
-      Text("Performer: ${widget.bandName}",
-          style: const TextStyle(fontSize: 20, color: Colors.white)),
-      Text("Eco Score: ${widget.score}",
-          style: const TextStyle(fontSize: 20, color: Colors.white)),
-
-      const SizedBox(height: 20),
-
-      Text(
-        message,
-        style: const TextStyle(fontSize: 16, color: Colors.white70),
-        textAlign: TextAlign.center,
-      ),
-
-      const SizedBox(height: 30),
-
-      ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.greenAccent,
-          foregroundColor: Colors.black,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
-        ),
-        onPressed: () {
-    widget.onMinigameCompleted();
-    Navigator.of(context).popUntil((route) => route.isFirst);
-  },
-
-        child: const Text("Back to Festival Map"),
-      ),
-    ],
-    ),
-    ),
     );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
     }
-    }
-
-
-    class SpotlightPainter extends CustomPainter {
-    final double progress;
-    final bool reveal;
-
-    SpotlightPainter({required this.progress, required this.reveal});
-
-    @override
-    void paint(Canvas canvas, Size size) {
-
-    canvas.saveLayer(
-    Rect.fromLTWH(0, 0, size.width, size.height),
-    Paint(),
-    );
-
-    final dark = Paint()..color = Colors.black.withOpacity(0.90);
-    canvas.drawRect(
-    Rect.fromLTWH(0, 0, size.width, size.height),
-    dark,
-    );
-
-    double radius = size.width * 0.33;
-
-    double x = lerpDouble(-150, size.width + 150, progress)!;
-    double y = size.height * 0.35 + sin(progress * 6) * 60;
-
-    if (reveal) {
-    x = size.width / 2;
-    y = size.height * 0.55;
-    radius = size.width * 0.45;
-    }
-
-    final clear = Paint()..blendMode = BlendMode.clear;
-    canvas.drawCircle(Offset(x, y), radius, clear);
-
-    canvas.restore();
-    }
-
-    @override
-    bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-    }
+    return count.toString();
+  }
+}
