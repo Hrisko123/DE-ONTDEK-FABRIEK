@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'QR.dart'; // 🔹 import QR.dart
-import 'result_page.dart';
+import 'game_over_page.dart';
 
 class FestivalNamePage extends StatefulWidget {
   const FestivalNamePage({super.key});
@@ -81,35 +81,73 @@ class _FestivalNamePageState extends State<FestivalNamePage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () {
-                        final name = _controller.text.trim().isEmpty
-                            ? 'EcoFest'
-                            : _controller.text.trim();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ResultPage(
-                              score: 8,
-                              bandName: 'Test Band',
-                              festivalName: name,
-                              onMinigameCompleted: () {},
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            final name = _controller.text.trim().isEmpty
+                                ? 'EcoFest'
+                                : _controller.text.trim();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => GameOverPage(
+                                  ecoScore: 8,
+                                  bandName: 'Test Band',
+                                  festivalName: name,
+                                  onMinigameCompleted: () {},
+                                  isGoodEnding: true,
+                                ),
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
                           ),
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                          child: const Text(
+                            'test outro',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'test outro',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white70,
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {
+                            final name = _controller.text.trim().isEmpty
+                                ? 'EcoFest'
+                                : _controller.text.trim();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => GameOverPage(
+                                  ecoScore: 2,
+                                  bandName: 'Test Band',
+                                  festivalName: name,
+                                  onMinigameCompleted: () {},
+                                  isGoodEnding: false,
+                                ),
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                          ),
+                          child: const Text(
+                            'test outro 2',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),

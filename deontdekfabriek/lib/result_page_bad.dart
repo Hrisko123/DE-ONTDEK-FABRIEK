@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-class ResultPage extends StatefulWidget {
+class ResultPageBad extends StatefulWidget {
   final int score;
   final String bandName;
   final String festivalName;
   final VoidCallback onMinigameCompleted;
 
-  const ResultPage({
+  const ResultPageBad({
     super.key,
     required this.score,
     required this.bandName,
@@ -16,25 +16,25 @@ class ResultPage extends StatefulWidget {
   });
 
   @override
-  State<ResultPage> createState() => _ResultPageState();
+  State<ResultPageBad> createState() => _ResultPageBadState();
 }
 
-class _ResultPageState extends State<ResultPage> {
+class _ResultPageBadState extends State<ResultPageBad> {
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
   String? _videoError;
   bool _isPlaying = false;
   bool _isLiked = false;
   bool _showComments = false;
-  int _likeCount = 1234;
+  int _likeCount = 456; // Lower like count for bad ending
   
-  // Good comments for the first ending
+  // Bad comments for the second ending
   final List<String> _comments = [
-    'Amazing festival! ',
-    'Love the eco-friendly vibes!',
-    'Food was yummy',
-    'Great job on the stage!',
-    'Goated Festival',
+    'bad',
+    'bad',
+    'bad',
+    'bad',
+    'bad',
   ];
 
   @override
@@ -187,7 +187,7 @@ class _ResultPageState extends State<ResultPage> {
                                       color: Colors.black.withOpacity(0.6),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: Icon(
+                                    child: const Icon(
                                       Icons.play_arrow,
                                       color: Colors.white,
                                       size: 40,
