@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'services/led_service.dart';
 
 class FestivalCleanerApp extends StatelessWidget {
   const FestivalCleanerApp({super.key});
@@ -92,8 +93,7 @@ class _CleanerGameState extends State<CleanerGame> {
 
   /// Intro & outro track (YOUR NEW PATH)
   /// NOTE: this is the AssetSource path, so it must match what you list in pubspec.yaml
-  final String _introOutroTrack =
-      'trashGame/audio/golden instrumental.mp3';
+  final String _introOutroTrack = 'trashGame/audio/golden instrumental.mp3';
 
   /// Game background tracks
   final List<String> _bgTracks = [
@@ -182,16 +182,12 @@ class _CleanerGameState extends State<CleanerGame> {
   Future<void> _configureAudio() async {
     // Background music: normal focus
     await _bgPlayer.setAudioContext(
-      AudioContextConfig(
-        focus: AudioContextConfigFocus.gain,
-      ).build(),
+      AudioContextConfig(focus: AudioContextConfigFocus.gain).build(),
     );
 
     // SFX: do NOT request focus (prevents bg music cutting off when SFX plays)
     await _sfxPlayer.setAudioContext(
-      AudioContextConfig(
-        focus: AudioContextConfigFocus.mixWithOthers,
-      ).build(),
+      AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers).build(),
     );
 
     // Low-latency SFX (this works even if your audioplayers doesn't support constructor "mode")
@@ -241,8 +237,10 @@ class _CleanerGameState extends State<CleanerGame> {
     }
 
     final double t = (100 - vibe).clamp(0, 100) / 100.0;
-    final int idx =
-        (t * (_backgrounds.length - 1)).round().clamp(0, _backgrounds.length - 1);
+    final int idx = (t * (_backgrounds.length - 1)).round().clamp(
+      0,
+      _backgrounds.length - 1,
+    );
 
     return _backgrounds[idx];
   }
@@ -286,7 +284,8 @@ class _CleanerGameState extends State<CleanerGame> {
   Future<void> _playSpawnSound() => _playSfx('trashGame/audio/TrashSpawn.mp3');
   Future<void> _playPickupSound() =>
       _playSfx('trashGame/audio/pickupTrash.mp3');
-  Future<void> _playBinnedSound() => _playSfx('trashGame/audio/binnedTrash.mp3');
+  Future<void> _playBinnedSound() =>
+      _playSfx('trashGame/audio/binnedTrash.mp3');
 
   IconData _bgVolumeIcon() {
     if (_bgVolume == 0) return Icons.volume_off;
@@ -316,8 +315,9 @@ class _CleanerGameState extends State<CleanerGame> {
     _cleanerAnimTimer?.cancel();
     int ticks = 0;
 
-    _cleanerAnimTimer =
-        Timer.periodic(const Duration(milliseconds: 120), (timer) {
+    _cleanerAnimTimer = Timer.periodic(const Duration(milliseconds: 120), (
+      timer,
+    ) {
       if (!mounted) return;
 
       setState(() {
@@ -418,6 +418,16 @@ class _CleanerGameState extends State<CleanerGame> {
         if (tick >= maxTicks) {
           ended = true;
           phase = 2;
+
+          // Add 5 points for completing cleaner game
+          debugPrint('🎉 CLEANER GAME COMPLETED! Attempting to award 5 points');
+          LedService.addPoints(5)
+              .then((_) {
+                debugPrint('✅ Points awarded successfully for cleaner game');
+              })
+              .catchError((e) {
+                debugPrint('❌ Error adding points: $e');
+              });
         }
       });
 
@@ -458,13 +468,7 @@ class _CleanerGameState extends State<CleanerGame> {
     }
 
     trashItems.add(
-      TrashItem(
-        id: _nextId++,
-        type: type,
-        assetPath: assetPath,
-        x: x,
-        y: y,
-      ),
+      TrashItem(id: _nextId++, type: type, assetPath: assetPath, x: x, y: y),
     );
 
     _playSpawnSound();
@@ -517,10 +521,7 @@ class _CleanerGameState extends State<CleanerGame> {
         elevation: 0,
         title: const Text(
           'Festival Cleaner',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -551,12 +552,7 @@ class _CleanerGameState extends State<CleanerGame> {
 
     return Stack(
       children: [
-        Positioned.fill(
-          child: Image.asset(
-            bg,
-            fit: BoxFit.cover,
-          ),
-        ),
+        Positioned.fill(child: Image.asset(bg, fit: BoxFit.cover)),
         Positioned(
           bottom: 50,
           left: 0,
@@ -625,12 +621,7 @@ class _CleanerGameState extends State<CleanerGame> {
                 gaplessPlayback: true,
               ),
             ),
-            Positioned(
-              left: 16,
-              right: 16,
-              top: 8,
-              child: _buildCrowdAndHud(),
-            ),
+            Positioned(left: 16, right: 16, top: 8, child: _buildCrowdAndHud()),
             Positioned.fill(
               child: LayoutBuilder(
                 builder: (context, playConstraints) {
@@ -680,8 +671,7 @@ class _CleanerGameState extends State<CleanerGame> {
               right: 0,
               bottom: 0,
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: _buildBinsRow(),
               ),
             ),
@@ -720,7 +710,10 @@ class _CleanerGameState extends State<CleanerGame> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Vibe: $vibe/100", style: const TextStyle(color: Colors.white)),
+            Text(
+              "Vibe: $vibe/100",
+              style: const TextStyle(color: Colors.white),
+            ),
             Row(
               children: [
                 Text(
@@ -730,10 +723,7 @@ class _CleanerGameState extends State<CleanerGame> {
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: _cycleBgVolume,
-                  icon: Icon(
-                    _bgVolumeIcon(),
-                    color: Colors.white,
-                  ),
+                  icon: Icon(_bgVolumeIcon(), color: Colors.white),
                   tooltip: 'Muziek volume',
                 ),
               ],
@@ -746,16 +736,13 @@ class _CleanerGameState extends State<CleanerGame> {
   }
 
   Widget _buildCleaner() {
-    final String asset =
-        _cleanerUseFirstFrame ? _cleanerIdleAsset : _cleanerSweepAsset;
+    final String asset = _cleanerUseFirstFrame
+        ? _cleanerIdleAsset
+        : _cleanerSweepAsset;
 
     return SizedBox(
       height: 430,
-      child: Image.asset(
-        asset,
-        fit: BoxFit.contain,
-        gaplessPlayback: true,
-      ),
+      child: Image.asset(asset, fit: BoxFit.contain, gaplessPlayback: true),
     );
   }
 
@@ -786,11 +773,9 @@ class _CleanerGameState extends State<CleanerGame> {
                         width: slotWidth,
                         child: DragTarget<TrashItem>(
                           onWillAccept: (item) => item != null,
-                          onAccept: (item) =>
-                              _handleDropOnBin(item, bins[i]),
+                          onAccept: (item) => _handleDropOnBin(item, bins[i]),
                           builder: (context, candidateData, rejectedData) {
-                            final bool isHighlighted =
-                                candidateData.isNotEmpty;
+                            final bool isHighlighted = candidateData.isNotEmpty;
                             final asset = binAssetPaths[bins[i]];
 
                             Widget iconWidget;
@@ -819,8 +804,7 @@ class _CleanerGameState extends State<CleanerGame> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Opacity(
-                                  opacity:
-                                      isHighlighted ? 1.0 : 0.95,
+                                  opacity: isHighlighted ? 1.0 : 0.95,
                                   child: iconWidget,
                                 ),
                               ],
@@ -835,10 +819,7 @@ class _CleanerGameState extends State<CleanerGame> {
                 Positioned(
                   right: slotWidth * -1.75,
                   bottom: -10,
-                  child: IgnorePointer(
-                    ignoring: true,
-                    child: _buildCleaner(),
-                  ),
+                  child: IgnorePointer(ignoring: true, child: _buildCleaner()),
                 ),
               ],
             ),
@@ -866,10 +847,7 @@ class _CleanerGameState extends State<CleanerGame> {
     return Stack(
       children: [
         Positioned.fill(
-          child: Image.asset(
-            _outroBackground,
-            fit: BoxFit.cover,
-          ),
+          child: Image.asset(_outroBackground, fit: BoxFit.cover),
         ),
         Padding(
           padding: const EdgeInsets.all(16),
@@ -880,10 +858,7 @@ class _CleanerGameState extends State<CleanerGame> {
               children: [
                 const Text(
                   "Resultaten: Festival Cleaner",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Text("Eind-vibe: $vibe / 100"),

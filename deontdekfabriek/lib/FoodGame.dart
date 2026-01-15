@@ -5,8 +5,7 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:audioplayers/audioplayers.dart';
-
-
+import 'services/led_service.dart';
 
 class FoodTruckPage extends StatefulWidget {
   const FoodTruckPage({super.key});
@@ -36,12 +35,12 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   bool _tutorialShown = false;
   bool _trucksRunning = false;
   int _ecoScore = 0;
-  
+
   // Part 2 state
   bool _part2Active = false;
   bool _part2Started = false;
   int _part2TruckCount = 3; // Number of trucks to use in part 2 (1-3)
-  List<int> _truckLanes = [0, 0, 0]; 
+  List<int> _truckLanes = [0, 0, 0];
   List<_Roadblock> _roadblocks = [];
   Timer? _roadblockSpawnTimer;
   Timer? _part2GameTimer;
@@ -56,12 +55,12 @@ class _FoodTruckPageState extends State<FoodTruckPage>
   String _formatScore(int value) => value >= 0 ? '+$value' : value.toString();
 
   // --- Drag lane animation helpers ---
-  final Map<int, double> _dragAccum = {}; 
-  final Map<int, bool> _isDragging = {}; 
+  final Map<int, double> _dragAccum = {};
+  final Map<int, bool> _isDragging = {};
   final Map<int, AnimationController> _laneControllers = {};
   final Map<int, Animation<double>> _laneAnimations = {};
-  final Map<int, int> _previousLane = {}; 
-  final Map<int, bool> _laneChangeInProgress = {}; 
+  final Map<int, int> _previousLane = {};
+  final Map<int, bool> _laneChangeInProgress = {};
 
   Future<void> _playSound(String assetPath, {double volume = 0.1}) async {
     try {
@@ -142,7 +141,10 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     final random = Random();
     _truckSpeeds = List<double>.generate(
       _trucks.length,
-      (_) => 0.4 + random.nextDouble() * 0.4, // speeds roughly 0.4-0.8x (slightly faster)
+      (_) =>
+          0.4 +
+          random.nextDouble() *
+              0.4, // speeds roughly 0.4-0.8x (slightly faster)
     );
     _visibleTrucks = min(1, _trucks.length);
     _carsRemoved = List<bool>.filled(_trucks.length, false);
@@ -162,10 +164,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     });
     _truckAnimations = _truckControllers
         .map(
-          (controller) => CurvedAnimation(
-            parent: controller,
-            curve: Curves.linear,
-          ),
+          (controller) =>
+              CurvedAnimation(parent: controller, curve: Curves.linear),
         )
         .toList();
     _truckListenable = Listenable.merge(_truckControllers);
@@ -284,19 +284,13 @@ class _FoodTruckPageState extends State<FoodTruckPage>
               children: [
                 const Text(
                   'Food Truck Run',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
                 const Text(
                   'How to Play',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -376,10 +370,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                 children: [
                   const Text(
                     'Congrats',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -406,11 +397,12 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       );
     });
   }
-  
+
   void _startPart2() {
     setState(() {
       _part2Active = true;
-      _part2Started = false; // Game hasn't started yet, waiting for button click
+      _part2Started =
+          false; // Game hasn't started yet, waiting for button click
       _part2TruckCount = 3; // Default to 3 trucks
       // Start all trucks in the middle lane (will be adjusted based on selection)
       _truckLanes = [1, 1, 1];
@@ -423,11 +415,11 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       _roadblocks = [];
       _pathIndex = 0;
     });
-    
+
     _generatePredeterminedPath();
     // Don't start timers yet - wait for button click
   }
-  
+
   void _startPart2Game() {
     setState(() {
       _part2Started = true;
@@ -441,20 +433,21 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     });
     _startPart2Timers();
   }
-  
+
   void _generatePredeterminedPath() {
     // Generate a path for 30 seconds that always has at least one safe lane
     // Pattern: alternate between lanes, never block all 3 lanes at once
     final random = Random();
     _predeterminedPath = [];
-    
+
     int currentTime = 2500; // Start spawning after 2.5 seconds
-    
-    while (currentTime < 30000) { // 30 seconds
+
+    while (currentTime < 30000) {
+      // 30 seconds
       // Determine how many blocks to spawn (1-2) - mix of single and double blocks
       final blockCount = random.nextDouble() < 0.75 ? 1 : 2;
       final lanesToSpawn = <int>[];
-      
+
       if (blockCount == 1) {
         // Single block - pick any lane, ensure at least one safe lane remains
         final availableLanes = [0, 1, 2];
@@ -467,48 +460,54 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         lanesToSpawn.add(availableLanes[0]);
         lanesToSpawn.add(availableLanes[1]);
       }
-      
+
       // Add blocks to predetermined path
       for (final lane in lanesToSpawn) {
-        _predeterminedPath.add(_PredeterminedRoadblock(
-          spawnTime: currentTime,
-          lane: lane,
-          speed: 0.012 + random.nextDouble() * 0.006,
-        ));
+        _predeterminedPath.add(
+          _PredeterminedRoadblock(
+            spawnTime: currentTime,
+            lane: lane,
+            speed: 0.012 + random.nextDouble() * 0.006,
+          ),
+        );
       }
-      
+
       // Progress time with moderate difficulty progressio
       final difficultyLevel = (currentTime / 5000).floor();
       final interval = max(1600, 2500 - difficultyLevel * 60);
       currentTime += interval;
     }
-    
+
     // Sort by spawn time
     _predeterminedPath.sort((a, b) => a.spawnTime.compareTo(b.spawnTime));
   }
-  
+
   void _startPart2Timers() {
     // Game timer - spawns from predetermined path
-    _part2GameTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    _part2GameTimer = Timer.periodic(const Duration(milliseconds: 100), (
+      timer,
+    ) {
       if (!mounted || _part2GameOver || !_part2Started) {
         timer.cancel();
         return;
       }
       setState(() {
         _part2Time += 100;
-        
+
         // Spawn roadblocks from predetermined path
-        while (_pathIndex < _predeterminedPath.length && 
-               _predeterminedPath[_pathIndex].spawnTime <= _part2Time) {
+        while (_pathIndex < _predeterminedPath.length &&
+            _predeterminedPath[_pathIndex].spawnTime <= _part2Time) {
           final predBlock = _predeterminedPath[_pathIndex];
-          _roadblocks.add(_Roadblock(
-            lane: predBlock.lane,
-            position: 1.0,
-            speed: predBlock.speed,
-          ));
+          _roadblocks.add(
+            _Roadblock(
+              lane: predBlock.lane,
+              position: 1.0,
+              speed: predBlock.speed,
+            ),
+          );
           _pathIndex++;
         }
-        
+
         // Update roadblock positions
         _roadblocks.removeWhere((block) {
           block.position -= block.speed;
@@ -516,15 +515,15 @@ class _FoodTruckPageState extends State<FoodTruckPage>
             // Roadblock passed
             return true;
           }
-          
+
           // Check collision with trucks using actual visual positions
           if (_part2ScreenHeight == 0 || _part2ScreenWidth == 0) return false;
-          
+
           final screenHeight = _part2ScreenHeight;
           final laneHeight = screenHeight / 3;
           final truckSize = 160.0; // Updated to match new truck size
           final roadblockSize = 60.0;
-          
+
           for (int i = 0; i < _part2TruckCount && i < _truckLanes.length; i++) {
             // Calculate actual visual Y position of truck (with interpolation)
             final targetLane = _truckLanes[i];
@@ -535,26 +534,29 @@ class _FoodTruckPageState extends State<FoodTruckPage>
             final truckCenterY = (anim != null)
                 ? (lerpDouble(fromY, toY, anim.value) ?? toY) + laneHeight / 2
                 : toY + laneHeight / 2;
-            
+
             // Calculate roadblock Y position
             final blockCenterY = block.lane * laneHeight + laneHeight / 2;
-            
+
             // Check if truck and roadblock overlap vertically
             final truckTop = truckCenterY - truckSize / 2;
             final truckBottom = truckCenterY + truckSize / 2;
             final blockTop = blockCenterY - roadblockSize / 2;
             final blockBottom = blockCenterY + roadblockSize / 2;
-            
-            final verticalOverlap = !(truckBottom < blockTop || truckTop > blockBottom);
-            
+
+            final verticalOverlap =
+                !(truckBottom < blockTop || truckTop > blockBottom);
+
             // Check horizontal overlap (roadblock X position)
             final blockLeft = block.position * _part2ScreenWidth;
             final blockRight = blockLeft + roadblockSize;
-            final truckLeft = 50.0 + i * 160.0; // Updated to match visual spacing
+            final truckLeft =
+                50.0 + i * 160.0; // Updated to match visual spacing
             final truckRight = truckLeft + truckSize; // truckSize is now 140.0
-            
-            final horizontalOverlap = !(truckRight < blockLeft || truckLeft > blockRight);
-            
+
+            final horizontalOverlap =
+                !(truckRight < blockLeft || truckLeft > blockRight);
+
             if (verticalOverlap && horizontalOverlap) {
               // Play crash sound
               _playSound('sounds/crash.mp3');
@@ -566,27 +568,27 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         });
       });
     });
-    
+
     // Win condition: survive 30 seconds
     _part2WinTimer = Timer(const Duration(seconds: 30), () {
       if (!mounted || _part2GameOver) return;
       _handlePart2Win();
     });
   }
-  
+
   void _stopPart2Timers() {
     _roadblockSpawnTimer?.cancel();
     _part2GameTimer?.cancel();
     _part2WinTimer?.cancel();
   }
-  
+
   void _handlePart2GameOver() {
     if (_part2GameOver) return;
     setState(() {
       _part2GameOver = true;
     });
     _stopPart2Timers();
-    
+
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
       showDialog(
@@ -603,10 +605,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                 children: [
                   const Text(
                     'Game Over',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -646,17 +645,27 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       );
     });
   }
-  
+
   void _handlePart2Win() {
     if (_part2GameOver) return;
     setState(() {
       _part2GameOver = true;
     });
     _stopPart2Timers();
-    
+
     // Play win sound at higher volume
     _playSound('ToiletImage/WinToilet.mp3', volume: 0.6);
-    
+
+    // Add 5 points for completing food game
+    debugPrint('🎉 FOOD GAME COMPLETED! Attempting to award 5 points');
+    LedService.addPoints(5)
+        .then((_) {
+          debugPrint('✅ Points awarded successfully for food game');
+        })
+        .catchError((e) {
+          debugPrint('❌ Error adding points: $e');
+        });
+
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
       showDialog(
@@ -673,10 +682,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                 children: [
                   const Text(
                     'Congrats',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -715,19 +721,19 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       );
     });
   }
-  
+
   void _moveTruckToLane(int truckIndex, int lane) {
     if (_part2GameOver || truckIndex >= _truckLanes.length) return;
     final newLane = lane.clamp(0, 2);
     final oldLane = _truckLanes[truckIndex];
     if (oldLane == newLane) return;
-    
+
     // Prevent multiple lane changes - only allow one lane change at a time
     if (_laneChangeInProgress[truckIndex] == true) return;
-    
+
     // Play tire sound effect when lane changes
     _playSound('sounds/swoop.mp3');
-    
+
     // Mark lane change as in progress
     _laneChangeInProgress[truckIndex] = true;
 
@@ -745,14 +751,13 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     controller.reset();
 
     // assign animation
-    _laneAnimations[truckIndex] = CurvedAnimation(
-      parent: controller,
-      curve: Curves.easeOutCubic,
-    )..addListener(() {
-        // animation changes need re-render to move the widget smoothly
-        if (mounted) setState(() {});
-      });
-    
+    _laneAnimations[truckIndex] =
+        CurvedAnimation(parent: controller, curve: Curves.easeOutCubic)
+          ..addListener(() {
+            // animation changes need re-render to move the widget smoothly
+            if (mounted) setState(() {});
+          });
+
     // Reset lane change flag when animation completes
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -786,10 +791,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
               children: [
                 const Text(
                   'Time\'s Up',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
@@ -820,7 +822,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     if (_part2Active) {
       return _buildPart2();
     }
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFB3E5FC),
       appBar: AppBar(
@@ -830,8 +832,10 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       body: LayoutBuilder(
         builder: (context, constraints) {
           const horizontalPadding = 16.0;
-          final roadWidth =
-              max(constraints.maxWidth - (horizontalPadding * 2), 320.0);
+          final roadWidth = max(
+            constraints.maxWidth - (horizontalPadding * 2),
+            320.0,
+          );
           final roadHeight = max(constraints.maxHeight - 140, 280.0);
           final truckHeight = roadHeight * 0.26; // Increased from 0.22
           final truckWidth = roadWidth * 0.35; // Increased from 0.3
@@ -840,8 +844,10 @@ class _FoodTruckPageState extends State<FoodTruckPage>
           return Column(
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -849,8 +855,11 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.timer,
-                            color: Colors.black87, size: 32),
+                        const Icon(
+                          Icons.timer,
+                          color: Colors.black87,
+                          size: 32,
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           '00:${_timeLeft.toString().padLeft(2, '0')}',
@@ -892,16 +901,18 @@ class _FoodTruckPageState extends State<FoodTruckPage>
               // Road area
               Expanded(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                  ),
                   child: Center(
                     child: AnimatedBuilder(
                       animation: _truckListenable,
                       builder: (context, child) {
-                        final carPositions =
-                            List.generate(_visibleTrucks, (index) {
-                          final animationValue =
-                              _truckAnimations[index].value.clamp(0.0, 1.0);
+                        final carPositions = List.generate(_visibleTrucks, (
+                          index,
+                        ) {
+                          final animationValue = _truckAnimations[index].value
+                              .clamp(0.0, 1.0);
                           return animationValue * travelDistance;
                         });
                         final laneCount = max(_visibleTrucks, 4);
@@ -932,7 +943,8 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                               for (int i = 0; i < _visibleTrucks; i++)
                                 if (!_carsRemoved[i] && _truckVisible[i])
                                   Positioned(
-                                    top: roadHeight *
+                                    top:
+                                        roadHeight *
                                         (0.04 +
                                             i * (0.9 / max(_visibleTrucks, 1))),
                                     left: carPositions[i],
@@ -959,7 +971,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       ),
     );
   }
-  
+
   Widget _buildPart2() {
     return Scaffold(
       backgroundColor: const Color(0xFF2E7D32),
@@ -972,24 +984,39 @@ class _FoodTruckPageState extends State<FoodTruckPage>
           final screenWidth = constraints.maxWidth;
           final screenHeight = constraints.maxHeight - kToolbarHeight;
           final laneHeight = screenHeight / 3;
-          
+
           // Update screen dimensions for collision detection
           _part2ScreenWidth = screenWidth;
           _part2ScreenHeight = screenHeight;
-          
+
           return Stack(
             children: [
               // Road background with lanes
               Positioned.fill(
                 child: Column(
                   children: [
-                    _buildLane(0, laneHeight, screenWidth, Colors.grey.shade800),
-                    _buildLane(1, laneHeight, screenWidth, Colors.grey.shade700),
-                    _buildLane(2, laneHeight, screenWidth, Colors.grey.shade800),
+                    _buildLane(
+                      0,
+                      laneHeight,
+                      screenWidth,
+                      Colors.grey.shade800,
+                    ),
+                    _buildLane(
+                      1,
+                      laneHeight,
+                      screenWidth,
+                      Colors.grey.shade700,
+                    ),
+                    _buildLane(
+                      2,
+                      laneHeight,
+                      screenWidth,
+                      Colors.grey.shade800,
+                    ),
                   ],
                 ),
               ),
-              
+
               // Roadblocks
               ..._roadblocks.map((block) {
                 final laneY = block.lane * laneHeight;
@@ -1005,15 +1032,25 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.black, width: 3),
                     ),
-                    child: const Icon(Icons.block, color: Colors.white, size: 40),
+                    child: const Icon(
+                      Icons.block,
+                      color: Colors.white,
+                      size: 40,
+                    ),
                   ),
                 );
               }).toList(),
-              
+
               // Player trucks - optimized with single drag handler and smooth animation
-              for (int i = 0; i < _selectedTrucks.length && i < _part2TruckCount; i++)
+              for (
+                int i = 0;
+                i < _selectedTrucks.length && i < _part2TruckCount;
+                i++
+              )
                 Positioned(
-                  left: 50 + i * 160, // Increased horizontal spacing between trucks
+                  left:
+                      50 +
+                      i * 160, // Increased horizontal spacing between trucks
                   top: (() {
                     // compute top with interpolation if animating
                     final targetLane = _truckLanes[i];
@@ -1024,7 +1061,9 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                     final lerped = (anim != null)
                         ? lerpDouble(fromY, toY, anim.value) ?? toY
                         : toY;
-                    return lerped + laneHeight / 2 - 80; // Updated for 160px truck size
+                    return lerped +
+                        laneHeight / 2 -
+                        80; // Updated for 160px truck size
                   })(),
                   child: MouseRegion(
                     cursor: (_isDragging[i] ?? false)
@@ -1041,35 +1080,42 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                       onPanUpdate: (details) {
                         // Don't process if lane change is in progress
                         if (_laneChangeInProgress[i] == true) return;
-                        
-                        _dragAccum[i] = (_dragAccum[i] ?? 0.0) + details.delta.dy;
+
+                        _dragAccum[i] =
+                            (_dragAccum[i] ?? 0.0) + details.delta.dy;
 
                         const double minPx = 22.0; // works well for mouse
-                        final double threshold =
-                            minPx.clamp(0, laneHeight * 0.22); // scales for mobile
+                        final double threshold = minPx.clamp(
+                          0,
+                          laneHeight * 0.22,
+                        ); // scales for mobile
 
                         if (_dragAccum[i]!.abs() >= threshold) {
                           final currentLane = _truckLanes[i];
                           // Only allow one lane change at a time
                           if (_dragAccum[i]! < 0 && currentLane > 0) {
                             _moveTruckToLane(i, currentLane - 1);
-                            _dragAccum[i] = 0.0; // reset accumulator immediately
+                            _dragAccum[i] =
+                                0.0; // reset accumulator immediately
                           } else if (_dragAccum[i]! > 0 && currentLane < 2) {
                             _moveTruckToLane(i, currentLane + 1);
-                            _dragAccum[i] = 0.0; // reset accumulator immediately
+                            _dragAccum[i] =
+                                0.0; // reset accumulator immediately
                           }
                         }
                       },
 
                       onPanEnd: (_) {
                         _dragAccum[i] = 0.0;
-                        _laneChangeInProgress[i] = false; // Reset on gesture end
+                        _laneChangeInProgress[i] =
+                            false; // Reset on gesture end
                         setState(() => _isDragging[i] = false);
                       },
 
                       onPanCancel: () {
                         _dragAccum[i] = 0.0;
-                        _laneChangeInProgress[i] = false; // Reset on gesture cancel
+                        _laneChangeInProgress[i] =
+                            false; // Reset on gesture cancel
                         setState(() => _isDragging[i] = false);
                       },
 
@@ -1081,7 +1127,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                     ),
                   ),
                 ),
-              
+
               // UI Overlay - Only show timer when game has started, no score
               if (_part2Started)
                 Positioned(
@@ -1095,14 +1141,11 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                     ),
                     child: Text(
                       'Time: ${(30 - (_part2Time / 1000)).clamp(0.0, 30.0).toStringAsFixed(1)}s',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 ),
-              
+
               // Start button overlay - show before game starts
               if (!_part2Started)
                 Positioned.fill(
@@ -1139,7 +1182,9 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [1, 2, 3].map((count) {
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
                                   child: ElevatedButton(
                                     onPressed: () {
                                       setState(() {
@@ -1222,7 +1267,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
       ),
     );
   }
-  
+
   Widget _buildLane(int laneIndex, double height, double width, Color color) {
     return Container(
       width: width,
@@ -1231,12 +1276,13 @@ class _FoodTruckPageState extends State<FoodTruckPage>
         color: color,
         border: Border(
           top: BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 2),
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 2),
+          bottom: BorderSide(
+            color: Colors.white.withValues(alpha: 0.3),
+            width: 2,
+          ),
         ),
       ),
-      child: CustomPaint(
-        painter: _RoadLinesPainter(),
-      ),
+      child: CustomPaint(painter: _RoadLinesPainter()),
     );
   }
 }
@@ -1245,19 +1291,15 @@ class _Roadblock {
   int lane;
   double position;
   double speed;
-  
-  _Roadblock({
-    required this.lane,
-    required this.position,
-    required this.speed,
-  });
+
+  _Roadblock({required this.lane, required this.position, required this.speed});
 }
 
 class _PredeterminedRoadblock {
   final int spawnTime; // milliseconds when to spawn
   final int lane; // 0, 1, or 2
   final double speed;
-  
+
   _PredeterminedRoadblock({
     required this.spawnTime,
     required this.lane,
@@ -1272,7 +1314,7 @@ class _RoadLinesPainter extends CustomPainter {
       ..color = Colors.yellow.withValues(alpha: 0.6)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
-    
+
     // Draw dashed center line
     const dashWidth = 20.0;
     const dashSpace = 15.0;
@@ -1286,7 +1328,7 @@ class _RoadLinesPainter extends CustomPainter {
       startX += dashWidth + dashSpace;
     }
   }
-  
+
   @override
   bool shouldRepaint(_RoadLinesPainter oldDelegate) => false;
 }
@@ -1356,4 +1398,3 @@ class _TruckCard extends StatelessWidget {
     );
   }
 }
-

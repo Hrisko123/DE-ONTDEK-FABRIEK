@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
-import 'dart:ui'; 
+import 'dart:ui';
 import 'home_page.dart';
+import 'services/led_service.dart';
 
 // HANGOUT AREA MINI-GAME
 class EcoQuestion {
@@ -104,10 +105,9 @@ class _HangoutQuizPageState extends State<HangoutQuizPage>
   int _currentIndex = 0;
   int _gardenStage = 0; // grows only when eco option is selected
   bool _showIntro = true;
-  bool _muted = false; 
+  bool _muted = false;
   int _ecoScore = 0;
   int _comfortScore = 0;
-
 
   late final AnimationController _ecoPulseCtrl;
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -129,26 +129,23 @@ class _HangoutQuizPageState extends State<HangoutQuizPage>
     super.dispose();
   }
 
-void _goBackToMain() {
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(builder: (_) => const MyHomePage(festivalName: "")),
-    (route) => false,
-  );
-}
-
+  void _goBackToMain() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const MyHomePage(festivalName: "")),
+      (route) => false,
+    );
+  }
 
   // ---------- sound helpers ----------
-Future<void> _playSfx(String fileName) async {
-  if (_muted) return; // if muted, do nothing
+  Future<void> _playSfx(String fileName) async {
+    if (_muted) return; // if muted, do nothing
 
-  try {
-    await _audioPlayer.play(
-      AssetSource('audio/$fileName'),
-    );
-  } catch (e) {
-    // ignore for now
+    try {
+      await _audioPlayer.play(AssetSource('audio/$fileName'));
+    } catch (e) {
+      // ignore for now
+    }
   }
-}
 
   void _playStageSound() {
     // clamp just in case
@@ -183,117 +180,48 @@ Future<void> _playSfx(String fileName) async {
         break;
     }
   }
+
   // ---------- logic on tap ----------
   void _onOptionSelected(int optionIndex) {
     final question = _questions[_currentIndex];
     final bool isEco = optionIndex == question.ecoOptionIndex;
 
-  setState(() {
-  if (isEco) {
-    _ecoScore += 2;
-    _comfortScore += 1;
-    _gardenStage++; // grow garden ONLY once
-  } else {
-    _ecoScore -= 1;
-  }
+    setState(() {
+      if (isEco) {
+        _ecoScore += 2;
+        _comfortScore += 1;
+        _gardenStage++; // grow garden ONLY once
+      } else {
+        _ecoScore -= 1;
+      }
 
-  if (_currentIndex < _questions.length - 1) {
-    _currentIndex++;
-  } else {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return _buildEndDialog();
-      },
-    );
-  }
-});
+      if (_currentIndex < _questions.length - 1) {
+        _currentIndex++;
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return _buildEndDialog();
+          },
+        );
+      }
+    });
 
     // Sounds happen after the UI updates
     if (isEco) {
-      _playStageSound(); 
+      _playStageSound();
     }
   }
-Widget _buildEndDialog() {
-  return Dialog(
-    backgroundColor: Colors.transparent,
-    child: Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF4E6A4B), // green tone
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            "Thanks!",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
 
-          const SizedBox(height: 12),
-
-          Text(
-            _summaryMessage(),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white70,
-              height: 1.4,
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.9),
-              foregroundColor: const Color(0xFF2E4A2A),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-            ),
-            onPressed: _goBackToMain,
-            child: const Text(
-              "Back to main page",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-// INTRO MESSAGE
-Widget _buildIntro() {
-  return Center(
-    child: Dialog(
+  Widget _buildEndDialog() {
+    return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFF4E6A4B), 
+          color: const Color(0xFF4E6A4B), // green tone
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.3),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
@@ -306,379 +234,462 @@ Widget _buildIntro() {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              "Welcome to the Hangout Area!",
+              "Thanks!",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 26,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
-            const Text(
-              "For each eco-friendly choice,\nwatch the garden bloom 🌿",
+            Text(
+              _summaryMessage(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
+              style: const TextStyle(
+                fontSize: 16,
                 color: Colors.white70,
+                height: 1.4,
               ),
             ),
 
             const SizedBox(height: 24),
 
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _showIntro = false;
-                });
-              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white.withOpacity(0.9),
                 foregroundColor: const Color(0xFF2E4A2A),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
-              ),
-              child: const Text(
-                "Start",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
                 ),
+              ),
+              onPressed: () async {
+                // Add 5 points for completing hangout quiz
+                debugPrint(
+                  '🎉 HANGOUT QUIZ COMPLETED! Attempting to award 5 points',
+                );
+                await LedService.addPoints(5)
+                    .then((_) {
+                      debugPrint(
+                        '✅ Points awarded successfully for hangout quiz',
+                      );
+                    })
+                    .catchError((e) {
+                      debugPrint('❌ Error adding points: $e');
+                    });
+
+                _goBackToMain();
+              },
+              child: const Text(
+                "Back to main page",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-// ---------- FINAL SUMMARY MESSAGE ----------
-String _summaryMessage() {
-  return 'Your eco choices helped the hangout garden grow! 🌿\n\n'
-      'Eco Score: $_ecoScore\n'
-      'Comfort Score: $_comfortScore\n\n'
-      'At real festivals, small actions like sorting waste, using clean '
-      'transport and keeping the park tidy make the hangout area calmer, '
-      'cleaner and more fun for everyone.';
-}
+  // INTRO MESSAGE
+  Widget _buildIntro() {
+    return Center(
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF4E6A4B),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Welcome to the Hangout Area!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
 
+              const SizedBox(height: 16),
+
+              const Text(
+                "For each eco-friendly choice,\nwatch the garden bloom 🌿",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, color: Colors.white70),
+              ),
+
+              const SizedBox(height: 24),
+
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _showIntro = false;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.9),
+                  foregroundColor: const Color(0xFF2E4A2A),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: const Text(
+                  "Start",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------- FINAL SUMMARY MESSAGE ----------
+  String _summaryMessage() {
+    return 'Your eco choices helped the hangout garden grow! 🌿\n\n'
+        'Eco Score: $_ecoScore\n'
+        'Comfort Score: $_comfortScore\n\n'
+        'At real festivals, small actions like sorting waste, using clean '
+        'transport and keeping the park tidy make the hangout area calmer, '
+        'cleaner and more fun for everyone.';
+  }
 
   @override
   Widget build(BuildContext context) {
-if (_showIntro) {
-  return Scaffold(
-    extendBodyBehindAppBar: true,
-    backgroundColor: Colors.transparent,
-    appBar: AppBar(
-      elevation: 0,
-      backgroundColor: Colors.black.withOpacity(0.20),
-      title: const Text(
-        'Hangout Park Eco Quiz',
-        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-      ),
-      centerTitle: true,
-      actions: [
-        IconButton(
-          icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
-          onPressed: () {
-            setState(() {
-              _muted = !_muted;
-            });
-            if (_muted) _audioPlayer.stop();
-          },
-        ),
-      ],
-    ),
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF2E7D32),
-            Color(0xFF4CAF50),
-            Color(0xFF81C784),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: _buildIntro(),
-    ),
-  );
-}
-
-
-final question = _questions[_currentIndex];
-
-return Scaffold(
-  backgroundColor: Colors.transparent,
-  extendBodyBehindAppBar: true,
-  appBar: AppBar(
-    elevation: 0,
-    backgroundColor: Colors.black.withOpacity(0.20),
-    title: const Text(
-      'Hangout Park Eco Quiz',
-      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-    ),
-    centerTitle: true,
-    actions: [
-      IconButton(
-        icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
-        onPressed: () {
-          setState(() => _muted = !_muted);
-          if (_muted) _audioPlayer.stop();
-        },
-      ),
-    ],
-  ),
-
-  // ---------- BODY + FLOATING MUTE ----------
-  body: Stack(
-    children: [
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final cardWidth  = constraints.maxWidth.clamp(600.0, 900.0);
-          final cardHeight =
-              (constraints.maxHeight * 0.90).clamp(650.0, 790.0);
-
-          return Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF2E7D32),
-                  Color(0xFF4CAF50),
-                  Color(0xFF81C784),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+    if (_showIntro) {
+      return Scaffold(
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.black.withOpacity(0.20),
+          title: const Text(
+            'Hangout Park Eco Quiz',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
+              onPressed: () {
+                setState(() {
+                  _muted = !_muted;
+                });
+                if (_muted) _audioPlayer.stop();
+              },
             ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: cardWidth,
-                  maxHeight: cardHeight,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.10),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.22),
-                          width: 1.4,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.20),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
+          ],
+        ),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF2E7D32), Color(0xFF4CAF50), Color(0xFF81C784)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: _buildIntro(),
+        ),
+      );
+    }
 
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // ---------- GARDEN & MUTE BUTTON ----------
-                        SizedBox(
-                          height: cardHeight * 0.56, 
-                          child: Stack(
+    final question = _questions[_currentIndex];
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.black.withOpacity(0.20),
+        title: const Text(
+          'Hangout Park Eco Quiz',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(_muted ? Icons.volume_off : Icons.volume_up),
+            onPressed: () {
+              setState(() => _muted = !_muted);
+              if (_muted) _audioPlayer.stop();
+            },
+          ),
+        ],
+      ),
+
+      // ---------- BODY + FLOATING MUTE ----------
+      body: Stack(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = constraints.maxWidth.clamp(600.0, 900.0);
+              final cardHeight = (constraints.maxHeight * 0.90).clamp(
+                650.0,
+                790.0,
+              );
+
+              return Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF2E7D32),
+                      Color(0xFF4CAF50),
+                      Color(0xFF81C784),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: cardWidth,
+                      maxHeight: cardHeight,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.10),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.22),
+                              width: 1.4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.20),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(24),
-                                child: AnimatedGarden(stage: _gardenStage),
+                              // ---------- GARDEN & MUTE BUTTON ----------
+                              SizedBox(
+                                height: cardHeight * 0.56,
+                                child: Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(24),
+                                      child: AnimatedGarden(
+                                        stage: _gardenStage,
+                                      ),
+                                    ),
+
+                                    // MUTE BUTTON ON TOP-RIGHT OF THE GARDEN
+                                    Positioned(
+                                      top: 10,
+                                      right: 10,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() => _muted = !_muted);
+                                          if (_muted) _audioPlayer.stop();
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(
+                                              0.35,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            _muted
+                                                ? Icons.volume_off
+                                                : Icons.volume_up,
+                                            color: Colors.white,
+                                            size: 26,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // ---------- QUESTION COUNTER ----------
+                              Text(
+                                'Question ${_currentIndex + 1} of ${_questions.length}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+
+                              // ---------- QUESTION TEXT ----------
+                              Text(
+                                question.text,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
 
-                              // MUTE BUTTON ON TOP-RIGHT OF THE GARDEN
-                              Positioned(
-                                top: 10,
-                                right: 10,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() => _muted = !_muted);
-                                    if (_muted) _audioPlayer.stop();
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.35),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      _muted ? Icons.volume_off : Icons.volume_up,
-                                      color: Colors.white,
-                                      size: 26,
-                                    ),
-                                  ),
+                              const SizedBox(height: 14),
+
+                              // ---------- ANSWERS----------
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: List.generate(question.options.length, (
+                                    index,
+                                  ) {
+                                    final text = question.options[index];
+                                    final ecoIdx = question.ecoOptionIndex;
+                                    final isEco = index == ecoIdx;
+
+                                    return Expanded(
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(
+                                          vertical: 3,
+                                        ),
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                          onTap: () => _onOptionSelected(index),
+                                          child: AnimatedContainer(
+                                            duration: const Duration(
+                                              milliseconds: 160,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 18,
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                              color: isEco
+                                                  ? Colors.greenAccent
+                                                        .withOpacity(0.12)
+                                                  : Colors.black.withOpacity(
+                                                      0.22,
+                                                    ),
+                                              border: Border.all(
+                                                color: isEco
+                                                    ? Colors.greenAccent
+                                                          .withOpacity(0.9)
+                                                    : Colors.white24,
+                                                width: isEco ? 2.0 : 1.2,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                if (isEco)
+                                                  AnimatedBuilder(
+                                                    animation: _ecoPulseCtrl,
+                                                    builder: (context, child) {
+                                                      final t =
+                                                          _ecoPulseCtrl.value;
+                                                      final scaleY =
+                                                          1 +
+                                                          sin(t * 2 * pi) *
+                                                              0.25;
+                                                      return Transform.scale(
+                                                        scaleY: scaleY,
+                                                        child: Container(
+                                                          width: 8,
+                                                          height:
+                                                              double.infinity,
+                                                          decoration: BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  4,
+                                                                ),
+                                                            color: Colors
+                                                                .greenAccent
+                                                                .shade400,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  )
+                                                else
+                                                  Container(
+                                                    width: 6,
+                                                    height: double.infinity,
+                                                    decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            4,
+                                                          ),
+                                                      color: Colors.white
+                                                          .withOpacity(0.35),
+                                                    ),
+                                                  ),
+
+                                                const SizedBox(width: 14),
+
+                                                Expanded(
+                                                  child: Text(
+                                                    text,
+                                                    style: const TextStyle(
+                                                      fontSize: 18,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                          // ---------- QUESTION COUNTER ----------
-                          Text(
-                            'Question ${_currentIndex + 1} of ${_questions.length}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-
-                          // ---------- QUESTION TEXT ----------
-                          Text(
-                            question.text,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // ---------- ANSWERS----------
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceEvenly,
-                              children: List.generate(
-                                question.options.length,
-                                (index) {
-                                  final text   = question.options[index];
-                                  final ecoIdx = question.ecoOptionIndex;
-                                  final isEco  = index == ecoIdx;
-
-                                  return Expanded(
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 3),
-                                      child: InkWell(
-                                        borderRadius:
-                                            BorderRadius.circular(18),
-                                        onTap: () => _onOptionSelected(index),
-                                        child: AnimatedContainer(
-                                          duration: const Duration(
-                                              milliseconds: 160),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 18,
-                                            vertical: 10,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(18),
-                                            color: isEco
-                                                ? Colors.greenAccent
-                                                    .withOpacity(0.12)
-                                                : Colors.black
-                                                    .withOpacity(0.22),
-                                            border: Border.all(
-                                              color: isEco
-                                                  ? Colors.greenAccent
-                                                      .withOpacity(0.9)
-                                                  : Colors.white24,
-                                              width: isEco ? 2.0 : 1.2,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              if (isEco)
-                                                AnimatedBuilder(
-                                                  animation: _ecoPulseCtrl,
-                                                  builder:
-                                                      (context, child) {
-                                                    final t =
-                                                        _ecoPulseCtrl.value;
-                                                    final scaleY = 1 +
-                                                        sin(t * 2 * pi) *
-                                                            0.25;
-                                                    return Transform.scale(
-                                                      scaleY: scaleY,
-                                                      child: Container(
-                                                        width: 8,
-                                                        height:
-                                                            double.infinity,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      4),
-                                                          color: Colors
-                                                              .greenAccent
-                                                              .shade400,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                )
-                                              else
-                                                Container(
-                                                  width: 6,
-                                                  height: double.infinity,
-                                                  decoration:
-                                                      BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius
-                                                            .circular(4),
-                                                    color: Colors.white
-                                                        .withOpacity(0.35),
-                                                  ),
-                                                ),
-
-                                              const SizedBox(width: 14),
-
-                                              Expanded(
-                                                child: Text(
-                                                  text,
-                                                  style:
-                                                      const TextStyle(
-                                                    fontSize: 18,
-                                                    fontWeight:
-                                                        FontWeight.w500,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ],
       ),
-    ],
-  ),
-);
+    );
   }
 }
 
@@ -712,16 +723,16 @@ class _AnimatedGardenState extends State<AnimatedGarden>
 
   @override
   Widget build(BuildContext context) {
-  final s = widget.stage.clamp(0, 8); // 8 visual stages 
+    final s = widget.stage.clamp(0, 8); // 8 visual stages
 
-  final showGrassLines   = s >= 1; // stage 1 - grass
-  final showFlowersSmall = s >= 2; // stage 2 - flowers
-  final showButterflies  = s >= 3; // stage 3 - butterflies
-  final showBeesLow      = s >= 4; // stage 4 - bees low
-  final showBeesHigh     = s >= 5; // stage 5 - bees high 
-  final showGlow         = s >= 6; // stage 6 - glow overlay
-  final showFireflies    = s >= 7; // stage 7 - fireflies
-  final showCenterAura   = s >= 8; // stage 8 - strong gold aura
+    final showGrassLines = s >= 1; // stage 1 - grass
+    final showFlowersSmall = s >= 2; // stage 2 - flowers
+    final showButterflies = s >= 3; // stage 3 - butterflies
+    final showBeesLow = s >= 4; // stage 4 - bees low
+    final showBeesHigh = s >= 5; // stage 5 - bees high
+    final showGlow = s >= 6; // stage 6 - glow overlay
+    final showFireflies = s >= 7; // stage 7 - fireflies
+    final showCenterAura = s >= 8; // stage 8 - strong gold aura
 
     return Container(
       height: 340,
@@ -869,7 +880,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 spreadY: 0.10,
                 count: 6,
                 size: 12,
-                asset: "assets/garden/bee.png", 
+                asset: "assets/garden/bee.png",
               ),
 
             // STAGE 5: bees high
@@ -880,7 +891,7 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 spreadY: 0.08,
                 count: 5,
                 size: 10,
-                asset: "assets/garden/bee.png", 
+                asset: "assets/garden/bee.png",
               ),
 
             // STAGE 6: magical global glow
@@ -899,13 +910,9 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                 ),
               ),
 
-              // STAGE 7: fireflies
+            // STAGE 7: fireflies
             if (showFireflies)
-              _FireflyLayer(
-                controller: _butterflyCtrl,
-                count: 10,
-                size: 9,
-              ),
+              _FireflyLayer(controller: _butterflyCtrl, count: 10, size: 9),
 
             // STAGE 8: strong center aura
             if (showCenterAura)
@@ -935,7 +942,6 @@ class _AnimatedGardenState extends State<AnimatedGarden>
                   ),
                 ),
               ),
-
           ],
         ),
       ),
@@ -1114,10 +1120,7 @@ class _BeeLayer extends StatelessWidget {
                     child: SizedBox(
                       width: size * 1.5,
                       height: size * 3.0,
-                      child: Image.asset(
-                        asset,      
-                        fit: BoxFit.contain,
-                      ),
+                      child: Image.asset(asset, fit: BoxFit.contain),
                     ),
                   ),
                 );
@@ -1155,8 +1158,7 @@ class _FireflyLayer extends StatelessWidget {
                 final phase = t + i * 0.9;
                 final x = -0.9 + (i / (count - 1)) * 1.8;
                 final y = 0.25 + sin(phase * 1.2) * 0.25;
-                final opacity =
-                    0.3 + 0.7 * (sin(phase * 2.5) + 1) / 2;
+                final opacity = 0.3 + 0.7 * (sin(phase * 2.5) + 1) / 2;
 
                 return Align(
                   alignment: Alignment(x, y),
@@ -1170,8 +1172,9 @@ class _FireflyLayer extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.greenAccent
-                                .withOpacity(opacity * 0.8),
+                            color: Colors.greenAccent.withOpacity(
+                              opacity * 0.8,
+                            ),
                             blurRadius: 10,
                             spreadRadius: 2,
                           ),

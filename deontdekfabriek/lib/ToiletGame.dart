@@ -33,6 +33,8 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
   int _hearts = 3;
   int _score = 0;
   bool _isRunning = true;
+  bool _winGame = false;
+  bool _gameOver = false;
 
   bool _showIntro = true;
 
@@ -172,14 +174,14 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
           _score++;
           if (_score >= targetToFill) {
             _isRunning = false;
-            _showWin();
+            _winGame = true;
           }
         } else {
           _feedbackIsGood = false;
           _hearts--;
           if (_hearts <= 0) {
             _isRunning = false;
-            _showGameOver();
+            _gameOver = true;
           }
         }
         _feedbackMessage = 'show';
@@ -196,6 +198,15 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
         _items.remove(it);
       }
     });
+
+    // Call game completion outside setState
+    if (_winGame) {
+      _winGame = false;
+      _completeGame(5);
+    } else if (_gameOver) {
+      _gameOver = false;
+      _showGameOver();
+    }
   }
 
   bool _checkCollision(_FallingItem it, double bucketX) {
@@ -212,15 +223,25 @@ class _ToiletGamePageState extends State<ToiletGamePage> {
     return verticalOverlap && horizontalOverlap;
   }
 
-  Future<void> _showWin() async {
+  Future<void> _completeGame(int points) async {
     if (!mounted) return;
     _audioPlayer.play(AssetSource('ToiletImage/WinToilet.mp3'));
+
+    debugPrint('🎉 GAME WON! Attempting to award $points points');
+
+    // Add points via LedService
+    try {
+      await LedService.addPoints(points);
+      debugPrint('✅ Points awarded successfully: $points');
+    } catch (e) {
+      debugPrint('❌ Error adding points: $e');
+    }
 
     await showDialog(
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('Je hebt gewonnen!'),
-        content: const Text('Goed gedaan!'),
+        content: Text('Goed gedaan! +$points punten'),
         actions: [
           TextButton(
             onPressed: () {
