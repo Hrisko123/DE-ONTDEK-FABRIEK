@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'QR.dart';
 import 'result_page.dart';
-import 'CompostCatchGame.dart'; // 🔹 Import Compost Catch
+import 'CompostCatchGame.dart';
 
 class FestivalNamePage extends StatefulWidget {
   const FestivalNamePage({super.key});
