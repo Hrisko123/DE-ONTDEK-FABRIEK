@@ -64,11 +64,7 @@ dev_dependencies:
 
 flutter:
 
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
-
 
   assets:
     # General images
@@ -89,15 +85,12 @@ flutter:
     - assets/stage/
 
     # festival cleaner images
-       # festival cleaner images
     - assets/trashGame/
     - assets/trashGame/BackgroundFlow/
     - assets/trashGame/audio/
     - assets/trashGame/Intro and Outro/
     - assets/trashGame/people/
     - assets/trashGame/Cleaner/
-
-    
 
     # Food game truck images
     - assets/trucks/
@@ -114,7 +107,9 @@ flutter:
     - assets/audio/grass.mp3
     - assets/audio/music.mp3
     - assets/audio/twinkle.mp3
- # Audio files
+    - assets/audio/ToiletMusic1.mp3
+    - assets/audio/ToiletMusic2.mp3
+    - assets/audio/ToiletMusic3.mp3
     - assets/audio/band/
     - assets/audio/dj/
     - assets/audio/pop/
