@@ -104,6 +104,29 @@ class _CleanerGameState extends State<CleanerGame> {
   int missedTrash = 0;
   int wrongSorting = 0;
 
+  // ✅ ECO TIPS: track what goes wrong (so tips can be specific)
+  final Map<String, int> _wrongBinChosenCount = {
+    "gft": 0,
+    "rest": 0,
+    "plastic": 0,
+    "cups": 0,
+  };
+
+  final Map<String, int> _correctBinCount = {
+    "gft": 0,
+    "rest": 0,
+    "plastic": 0,
+    "cups": 0,
+  };
+
+  // Track per trash type too (optional but makes tips nicer)
+  final Map<String, int> _wrongTypeCount = {
+    "cup": 0,
+    "food": 0,
+    "plastic": 0,
+    "cigarette": 0,
+  };
+
   // Cleaner animation (2-frame puppet)
   final String _cleanerIdleAsset = 'assets/trashGame/Cleaner/puppet1.png';
   final String _cleanerSweepAsset = 'assets/trashGame/Cleaner/puppet2.png';
@@ -428,6 +451,13 @@ class _CleanerGameState extends State<CleanerGame> {
     super.dispose();
   }
 
+  void _resetEcoTipStats() {
+    // ✅ ECO TIPS: reset tracking
+    _wrongBinChosenCount.updateAll((k, v) => 0);
+    _correctBinCount.updateAll((k, v) => 0);
+    _wrongTypeCount.updateAll((k, v) => 0);
+  }
+
   void _resetGame() {
     gameTimer?.cancel();
     _cleanerAnimTimer?.cancel();
@@ -446,6 +476,9 @@ class _CleanerGameState extends State<CleanerGame> {
       correctlySorted = 0;
       missedTrash = 0;
       wrongSorting = 0;
+
+      _resetEcoTipStats(); // ✅ ECO TIPS
+
       _nextId = 0;
       _introPage = 0;
       _cleanerUseFirstFrame = true;
@@ -495,6 +528,9 @@ class _CleanerGameState extends State<CleanerGame> {
       correctlySorted = 0;
       missedTrash = 0;
       wrongSorting = 0;
+
+      _resetEcoTipStats(); // ✅ ECO TIPS
+
       _nextId = 0;
       _cleanerUseFirstFrame = true;
     });
@@ -594,6 +630,125 @@ class _CleanerGameState extends State<CleanerGame> {
     _playSpawnSound();
   }
 
+  // ✅ ECO TIPS: helpers for nicer text
+  String _binNiceName(String bin) {
+    switch (bin) {
+      case "gft":
+        return "GFT";
+      case "rest":
+        return "restafval";
+      case "plastic":
+        return "plastic";
+      case "cups":
+        return "bekers";
+      default:
+        return bin;
+    }
+  }
+
+  String _typeNiceName(String type) {
+    switch (type) {
+      case "cup":
+        return "bekers";
+      case "food":
+        return "etensresten (GFT)";
+      case "plastic":
+        return "plastic";
+      case "cigarette":
+        return "sigarettenpeuken";
+      default:
+        return type;
+    }
+  }
+
+  List<String> _buildEcoTips() {
+    final tips = <String>[];
+
+    final totalDrops = correctlySorted + wrongSorting;
+    final accuracy = totalDrops == 0 ? 0.0 : correctlySorted / totalDrops;
+
+    // Find worst bin & worst type
+    String? worstBin;
+    int worstBinCount = 0;
+    _wrongBinChosenCount.forEach((bin, c) {
+      if (c > worstBinCount) {
+        worstBinCount = c;
+        worstBin = bin;
+      }
+    });
+
+    String? worstType;
+    int worstTypeCount = 0;
+    _wrongTypeCount.forEach((type, c) {
+      if (c > worstTypeCount) {
+        worstTypeCount = c;
+        worstType = type;
+      }
+    });
+
+    // 1) Recycling / sorting focus
+    if (accuracy < 0.55) {
+      tips.add(
+        "Je sorteerde vaak verkeerd dat maakt recyclen lastig en de crowd merkt het meteen. Kijk eerst naar het type afval voordat je dropt.",
+      );
+    } else if (accuracy < 0.8) {
+      tips.add(
+        "Je bent goed bezig! Met net iets preciezer sorteren kan er meer gerecycled worden en blijft de festival-vibe beter.",
+      );
+    } else if (totalDrops > 0) {
+      tips.add(
+        "Nice! Door goed te sorteren help je recycling én blijft het terrein fijner voor iedereen.",
+      );
+    } else {
+      tips.add(
+        "Tip: pak afval sneller op en sorteer bewust minder rommel op de grond is beter voor natuur én festivalgevoel.",
+      );
+    }
+
+    // 2) Litter / missed trash
+    if (missedTrash >= 6) {
+      tips.add(
+        "Je liet veel afval liggen. Dat kan de natuur vervuilen en de sfeer zakt sneller. Probeer eerst het oudste afval op te ruimen.",
+      );
+    } else if (missedTrash >= 2) {
+      tips.add(
+        "Je mist soms afval. Als je het veld schoon houdt, blijft de crowd langer blij en voorkom je puntenverlies.",
+      );
+    } else {
+      tips.add(
+        "Top: je houdt het terrein schoon. Minder zwerfafval = beter voor het milieu én een chillere crowd.",
+      );
+    }
+
+    // 3) Crowd mood / points
+    if (points <= 3) {
+      tips.add(
+        "De crowd was bijna klaar ermee. Neem liever 1 seconde extra om goed te sorteren dan een punt te verliezen.",
+      );
+    } else if (points >= 8) {
+      tips.add(
+        "Sterke vibe! Goed sorteren en snel opruimen = eco-friendly festival met happy crowd.",
+      );
+    }
+
+    // 4) Specific “what to improve” tip
+    if (worstBin != null && worstBinCount >= 2) {
+      tips.add(
+        "Let extra op: je gooide relatief vaak iets in ${_binNiceName(worstBin!)}. Dat maakt hergebruik/recycling lastiger en oogt rommelig voor de crowd.",
+      );
+    } else if (worstType != null && worstTypeCount >= 2) {
+      tips.add(
+        "Let extra op bij ${_typeNiceName(worstType!)}  daar ging het het vaakst mis. Goed sorteren helpt de afvalstroom en houdt het terrein groen.",
+      );
+    } else {
+      tips.add(
+        "Mini-challenge: probeer in de volgende ronde 0 verkeerd gesorteerde items te halen dat geeft de beste eco-impact én vibe.",
+      );
+    }
+
+    return tips.take(4).toList();
+  }
+
   void _handleDropOnBin(TrashItem item, String chosenBin) async {
     String correctBin;
     switch (item.type) {
@@ -614,11 +769,18 @@ class _CleanerGameState extends State<CleanerGame> {
     }
 
     if (chosenBin == correctBin) {
+      // ✅ ECO TIPS: record correct bin
+      _correctBinCount[correctBin] = (_correctBinCount[correctBin] ?? 0) + 1;
+
       setState(() {
         correctlySorted++;
         _gainPoint(); // ✅ reward +1 point (max 10) so background can recover
       });
     } else {
+      // ✅ ECO TIPS: record mistakes (bin + type)
+      _wrongBinChosenCount[chosenBin] = (_wrongBinChosenCount[chosenBin] ?? 0) + 1;
+      _wrongTypeCount[item.type] = (_wrongTypeCount[item.type] ?? 0) + 1;
+
       wrongSorting++;
       setState(() {
         _losePoint();
@@ -982,9 +1144,8 @@ class _CleanerGameState extends State<CleanerGame> {
                                 asset,
                                 width:
                                     isHighlighted ? imgWidth * 1.05 : imgWidth,
-                                height: isHighlighted
-                                    ? imgHeight * 1.05
-                                    : imgHeight,
+                                height:
+                                    isHighlighted ? imgHeight * 1.05 : imgHeight,
                                 fit: BoxFit.contain,
                               );
                             } else {
@@ -1038,6 +1199,8 @@ class _CleanerGameState extends State<CleanerGame> {
         ? "Je punten zijn op… de crowd is er klaar mee 😵"
         : "Tijd is om! Goed geprobeerd 💪";
 
+    final tips = _buildEcoTips(); // ✅ ECO TIPS
+
     return Stack(
       children: [
         Positioned.fill(
@@ -1068,6 +1231,21 @@ class _CleanerGameState extends State<CleanerGame> {
                 Text("Verkeerd gesorteerd: $wrongSorting"),
                 const SizedBox(height: 16),
                 Text(summary),
+
+                // ✅ ECO TIPS UI (local “API”)
+                const SizedBox(height: 18),
+                const Text(
+                  "Eco-tips voor de volgende ronde:",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                ...tips.map(
+                  (t) => Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text("• $t"),
+                  ),
+                ),
+
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
