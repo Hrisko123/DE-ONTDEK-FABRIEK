@@ -60,10 +60,12 @@ class CleanerGame extends StatefulWidget {
 class _CleanerGameState extends State<CleanerGame> {
   int phase = 0; // 0 = intro, 1 = game, 2 = result
 
-  // ✅ LOADING GATE
-  bool _assetsReady = false;      // only true when everything is warmed + ready
-  bool _assetsCached = false;     // precache finished
+  // ✅ Background precache starts in background during intro (NO overlay at app open)
   bool _precacheStarted = false;
+  Future<void>? _assetPrecacheFuture;
+
+  // ✅ Loading overlay shown ONLY right before the game starts
+  bool _showStartGameLoader = false;
 
   // Game state
   List<TrashItem> trashItems = [];
@@ -72,18 +74,30 @@ class _CleanerGameState extends State<CleanerGame> {
   // Timing
   Timer? gameTimer;
   int tick = 0;
-  final int maxTicks = 40; // how long the game lasts
-  final int maxTrashAge = 8; // ticks before trash counts as "missed"
+  final int maxTicks = 40;
+  final int maxTrashAge = 8;
 
-  // ✅ NEW: Points (10..0)
+  // ✅ Points (10..0)
   static const int maxPoints = 10;
   int points = maxPoints;
   bool _failedByPoints = false;
 
-  // ✅ GUARANTEE AT LEAST 10 TRASH SPAWNS
+  // ✅ GUARANTEE AT LEAST 10 TRASH SPAWNS, but paced
   static const int minTrashToSpawn = 10;
-  static const int maxTrashOnScreen = 10; // allow up to 10 visible
+
+  // Keep clutter down
+  static const int maxTrashOnScreen = 7;
+
+  // after hitting 10 spawns, occasional extras
+  static const double extraSpawnChance = 0.22;
+
   int _spawnedTrashCount = 0;
+
+  // paced guarantee schedule (ticks are seconds)
+  // spawn-check happens every 2 seconds (tick % 2 == 0)
+  final List<int> _guaranteedTicks =
+      const [2, 4, 6, 10, 14, 18, 21, 23, 26, 30, 34, 36, 38];
+  int _guaranteeIndex = 0;
 
   // Stats
   int correctlySorted = 0;
@@ -104,16 +118,13 @@ class _CleanerGameState extends State<CleanerGame> {
   late final AudioPlayer _sfxPlayer;
   double _bgVolume = 0.5;
 
-  /// Intro & outro track
   final String _introOutroTrack = 'trashGame/audio/golden instrumental.mp3';
 
-  /// Game background tracks
   final List<String> _bgTracks = [
     'trashGame/audio/Soda pop (Instrumental).mp3',
   ];
 
-  // ---------- BACKGROUNDS (YOUR NEW FLOW) ----------
-
+  // ---------- BACKGROUNDS (YOUR FLOW) ----------
   final String _bgNormal =
       'assets/trashGame/BackgroundFlow/Background_Normal.png';
   final String _bgMoodLow =
@@ -132,7 +143,6 @@ class _CleanerGameState extends State<CleanerGame> {
   final String _bgEndIfDoneWrong =
       'assets/trashGame/BackgroundFlow/EndIfDoneWrong.gif';
 
-  // Used for precache
   late final List<String> _allGameBackgrounds = [
     _bgNormal,
     _bgMoodLow,
@@ -190,13 +200,17 @@ class _CleanerGameState extends State<CleanerGame> {
     SpawnZone(left: 0.815, top: 0.554, width: 0.071, height: 0.061),
   ];
 
-  Future<void>? _assetPrecacheFuture;
-
   @override
   void initState() {
     super.initState();
     _bgPlayer = AudioPlayer();
     _sfxPlayer = AudioPlayer();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _configureAudio();
+      if (!mounted) return;
+      await _playIntroOutroMusic();
+    });
   }
 
   @override
@@ -205,37 +219,8 @@ class _CleanerGameState extends State<CleanerGame> {
     if (_precacheStarted) return;
     _precacheStarted = true;
 
-    // ✅ Start boot AFTER first frame so we show loader immediately with no flash
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _assetPrecacheFuture = _boot(context);
-    });
-  }
-
-  Future<void> _boot(BuildContext context) async {
-    await _configureAudio();
-    await _precacheAssets(context);
-
-    if (!mounted) return;
-    setState(() => _assetsCached = true);
-
-    // ✅ BIG FIX:
-    // Render the real game layout BEHIND an opaque loading overlay
-    // for a couple frames, so cleaner/bins upload to GPU BEFORE user sees it.
-    await _waitFrames(2);
-
-    if (!mounted) return;
-    setState(() => _assetsReady = true);
-
-    await _playIntroOutroMusic();
-  }
-
-  Future<void> _waitFrames(int n) async {
-    for (int i = 0; i < n; i++) {
-      final c = Completer<void>();
-      WidgetsBinding.instance.addPostFrameCallback((_) => c.complete());
-      await c.future;
-    }
+    // ✅ Start precaching while intro is showing (no overlay yet)
+    _assetPrecacheFuture = _precacheAssets(context);
   }
 
   Future<void> _configureAudio() async {
@@ -256,7 +241,6 @@ class _CleanerGameState extends State<CleanerGame> {
   }
 
   Future<void> _precacheAssets(BuildContext context) async {
-    // ✅ Game backgrounds (including fail gif)
     for (final path in _allGameBackgrounds) {
       await precacheImage(AssetImage(path), context);
     }
@@ -267,7 +251,7 @@ class _CleanerGameState extends State<CleanerGame> {
 
     await precacheImage(AssetImage(_outroBackground), context);
 
-    // ✅ both cleaner frames
+    // IMPORTANT: precache both cleaner frames + bins
     await precacheImage(AssetImage(_cleanerIdleAsset), context);
     await precacheImage(AssetImage(_cleanerSweepAsset), context);
 
@@ -291,7 +275,7 @@ class _CleanerGameState extends State<CleanerGame> {
   String _currentGameBackground() {
     if (points <= 0) return _bgEndIfDoneWrong;
 
-    final mistakes = maxPoints - points; // 0..10
+    final mistakes = maxPoints - points;
 
     if (mistakes == 0) return _bgNormal;
     if (mistakes == 1) return _bgMoodLow;
@@ -300,13 +284,17 @@ class _CleanerGameState extends State<CleanerGame> {
     if (mistakes == 4) return _bgNoDancingNoPlant;
     if (mistakes == 5) return _bgNoDancingNoPlantNoNormal;
 
-    // 6+ mistakes but still alive
     return _bgEmpty;
   }
 
   void _losePoint() {
     points -= 1;
     if (points < 0) points = 0;
+  }
+
+  void _gainPoint() {
+    points += 1;
+    if (points > maxPoints) points = maxPoints;
   }
 
   void _endGame({required bool failed}) {
@@ -400,11 +388,35 @@ class _CleanerGameState extends State<CleanerGame> {
         timer.cancel();
         if (mounted) {
           setState(() {
-            _cleanerUseFirstFrame = true; // end in idle pose
+            _cleanerUseFirstFrame = true;
           });
         }
       }
     });
+  }
+
+  Future<void> _waitFrames(int n) async {
+    for (int i = 0; i < n; i++) {
+      final c = Completer<void>();
+      WidgetsBinding.instance.addPostFrameCallback((_) => c.complete());
+      await c.future;
+    }
+  }
+
+  /// ✅ GPU warmup while loader is showing
+  Future<void> _gpuWarmupWhileLoading() async {
+    if (!mounted) return;
+
+    setState(() => _cleanerUseFirstFrame = true);
+    await _waitFrames(1);
+
+    if (!mounted) return;
+    setState(() => _cleanerUseFirstFrame = false);
+    await _waitFrames(1);
+
+    if (!mounted) return;
+    setState(() => _cleanerUseFirstFrame = true);
+    await _waitFrames(1);
   }
 
   @override
@@ -428,8 +440,8 @@ class _CleanerGameState extends State<CleanerGame> {
       points = maxPoints;
       _failedByPoints = false;
 
-      // ✅ reset guaranteed spawn counter
       _spawnedTrashCount = 0;
+      _guaranteeIndex = 0;
 
       correctlySorted = 0;
       missedTrash = 0;
@@ -437,20 +449,37 @@ class _CleanerGameState extends State<CleanerGame> {
       _nextId = 0;
       _introPage = 0;
       _cleanerUseFirstFrame = true;
+      _showStartGameLoader = false;
     });
 
     _playIntroOutroMusic();
   }
 
-  Future<void> _startGame() async {
-    gameTimer?.cancel();
-    _cleanerAnimTimer?.cancel();
+  /// ✅ loader only after last intro page
+  Future<void> _startGameWithProperLoading() async {
+    if (_showStartGameLoader) return;
 
-    // If for any reason assets aren't ready yet, wait
+    setState(() => _showStartGameLoader = true);
+
+    await _waitFrames(1);
+    if (!mounted) return;
+
     if (_assetPrecacheFuture != null) {
       await _assetPrecacheFuture;
       if (!mounted) return;
     }
+
+    await _gpuWarmupWhileLoading();
+    if (!mounted) return;
+
+    setState(() => _showStartGameLoader = false);
+
+    await _startGameInternal();
+  }
+
+  Future<void> _startGameInternal() async {
+    gameTimer?.cancel();
+    _cleanerAnimTimer?.cancel();
 
     setState(() {
       phase = 1;
@@ -460,8 +489,8 @@ class _CleanerGameState extends State<CleanerGame> {
       points = maxPoints;
       _failedByPoints = false;
 
-      // ✅ reset guaranteed spawn counter
       _spawnedTrashCount = 0;
+      _guaranteeIndex = 0;
 
       correctlySorted = 0;
       missedTrash = 0;
@@ -478,6 +507,7 @@ class _CleanerGameState extends State<CleanerGame> {
       setState(() {
         tick++;
 
+        // age trash + missed penalty
         final List<TrashItem> stillThere = [];
         for (var t in trashItems) {
           t.age += 1;
@@ -490,16 +520,24 @@ class _CleanerGameState extends State<CleanerGame> {
         }
         trashItems = stillThere;
 
-        // ✅ spawn logic: force spawns until we've spawned at least 10 total
+        // ✅ PACED spawn check (every 2 seconds)
         if (tick % 2 == 0 && trashItems.length < maxTrashOnScreen) {
-          if (_spawnedTrashCount < minTrashToSpawn) {
-            _spawnTrash();
+          final needGuarantee = _spawnedTrashCount < minTrashToSpawn;
+
+          if (needGuarantee) {
+            if (_guaranteeIndex < _guaranteedTicks.length &&
+                tick >= _guaranteedTicks[_guaranteeIndex]) {
+              _spawnTrash();
+              _guaranteeIndex++;
+            }
           } else {
-            if (random.nextBool()) _spawnTrash();
+            if (random.nextDouble() < extraSpawnChance) {
+              _spawnTrash();
+            }
           }
         }
 
-        // ✅ immediate fail at 0 points
+        // fail at 0 points
         if (points <= 0) {
           _endGame(failed: true);
           return;
@@ -552,9 +590,7 @@ class _CleanerGameState extends State<CleanerGame> {
       ),
     );
 
-    // ✅ count spawns to guarantee at least 10
     _spawnedTrashCount++;
-
     _playSpawnSound();
   }
 
@@ -578,7 +614,10 @@ class _CleanerGameState extends State<CleanerGame> {
     }
 
     if (chosenBin == correctBin) {
-      correctlySorted++;
+      setState(() {
+        correctlySorted++;
+        _gainPoint(); // ✅ reward +1 point (max 10) so background can recover
+      });
     } else {
       wrongSorting++;
       setState(() {
@@ -606,100 +645,32 @@ class _CleanerGameState extends State<CleanerGame> {
     });
   }
 
-  // ✅ Warmup layer: paints the SAME bins + cleaner behind loading overlay.
-  // We paint BOTH cleaner frames so neither pops later.
-  Widget _warmupGamePaint() {
-    return IgnorePointer(
-      ignoring: true,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              _bgNormal,
-              fit: BoxFit.cover,
-              gaplessPlayback: true,
-            ),
+  /// Warmup scene used during loader (paint bins+cleaner for GPU upload)
+  Widget _buildWarmupScene() {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.asset(
+            _bgNormal,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: _buildBinsRow(),
-            ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: _buildBinsRow(),
           ),
-          // paint both cleaner frames at the same size (hidden by overlay)
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Opacity(
-              opacity: 1.0,
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 430,
-                    child: Image.asset(
-                      _cleanerIdleAsset,
-                      fit: BoxFit.contain,
-                      gaplessPlayback: true,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 430,
-                    child: Image.asset(
-                      _cleanerSweepAsset,
-                      fit: BoxFit.contain,
-                      gaplessPlayback: true,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ While loading: show warmup behind a FULLY OPAQUE overlay.
-    // That means warmup can render & upload to GPU, but user sees only the loader.
-    if (!_assetsReady) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black.withOpacity(0.7),
-          elevation: 0,
-          title: const Text(
-            'Festival Cleaner',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              if (_assetsCached) Positioned.fill(child: _warmupGamePaint()),
-              Positioned.fill(child: Container(color: Colors.black)), // opaque cover
-              const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 12),
-                    Text('Loading…', style: TextStyle(color: Colors.white70)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // ✅ After ready: normal UI
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -715,16 +686,44 @@ class _CleanerGameState extends State<CleanerGame> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SafeArea(
-        child: Builder(
-          builder: (context) {
-            if (phase == 0) {
-              return _buildIntro();
-            } else if (phase == 1) {
-              return _buildGame();
-            } else {
-              return _buildResult();
-            }
-          },
+        child: Stack(
+          children: [
+            Builder(
+              builder: (context) {
+                if (phase == 0) return _buildIntro();
+                if (phase == 1) return _buildGame();
+                return _buildResult();
+              },
+            ),
+
+            // ✅ Loader ONLY right before starting the game
+            if (_showStartGameLoader) ...[
+              // paint warmup scene at tiny opacity ON TOP (forces raster, but invisible)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.001,
+                  child: IgnorePointer(
+                    ignoring: true,
+                    child: _buildWarmupScene(),
+                  ),
+                ),
+              ),
+              Positioned.fill(child: Container(color: Colors.black)),
+              const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text(
+                      'Loading…',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -764,15 +763,15 @@ class _CleanerGameState extends State<CleanerGame> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              onPressed: () async {
-                if (isLast) {
-                  await _startGame();
-                } else {
-                  setState(() {
-                    _introPage++;
-                  });
-                }
-              },
+              onPressed: _showStartGameLoader
+                  ? null
+                  : () async {
+                      if (isLast) {
+                        await _startGameWithProperLoading();
+                      } else {
+                        setState(() => _introPage++);
+                      }
+                    },
               child: Text(isLast ? 'Start spel' : 'Volgende ▶'),
             ),
           ),
@@ -782,11 +781,9 @@ class _CleanerGameState extends State<CleanerGame> {
             left: 16,
             bottom: 30,
             child: TextButton(
-              onPressed: () {
-                setState(() {
-                  _introPage = max(0, _introPage - 1);
-                });
-              },
+              onPressed: _showStartGameLoader
+                  ? null
+                  : () => setState(() => _introPage = max(0, _introPage - 1)),
               child: const Text(
                 'Terug',
                 style: TextStyle(
@@ -835,9 +832,7 @@ class _CleanerGameState extends State<CleanerGame> {
                           top: top.clamp(0, playConstraints.maxHeight - 48),
                           child: Draggable<TrashItem>(
                             data: item,
-                            onDragStarted: () {
-                              _playPickupSound();
-                            },
+                            onDragStarted: _playPickupSound,
                             feedback: Material(
                               color: Colors.transparent,
                               child: item.assetPath != null
@@ -922,10 +917,7 @@ class _CleanerGameState extends State<CleanerGame> {
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: _cycleBgVolume,
-                  icon: Icon(
-                    _bgVolumeIcon(),
-                    color: Colors.white,
-                  ),
+                  icon: Icon(_bgVolumeIcon(), color: Colors.white),
                   tooltip: 'Muziek volume',
                 ),
               ],
@@ -951,6 +943,7 @@ class _CleanerGameState extends State<CleanerGame> {
     );
   }
 
+  // ✅ DO NOT TOUCH: your bin layout exactly as you posted
   Widget _buildBinsRow() {
     final List<String> bins = ["gft", "rest", "plastic", "cups"];
 
