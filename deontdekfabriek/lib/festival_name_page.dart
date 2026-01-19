@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'QR.dart';
 import 'result_page.dart';
 import 'CompostCatchGame.dart';
+import 'home_page.dart';
 
 class FestivalNamePage extends StatefulWidget {
   const FestivalNamePage({super.key});
@@ -165,6 +166,28 @@ class _FestivalNamePageState extends State<FestivalNamePage> {
                 child: const Text(
                   'Enter the festival',
                   style: TextStyle(color: Colors.white),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                ),
+                onPressed: () {
+                  final name = _controller.text.trim().isEmpty
+                      ? 'EcoFest'
+                      : _controller.text.trim();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => MyHomePage(festivalName: name),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Go to Games Hub',
+                  style: TextStyle(color: Color(0xFF2E7D32)),
                 ),
               ),
             ],

@@ -1725,23 +1725,15 @@ class _StagePageState extends State<StagePage> with TickerProviderStateMixin {
           debugPrint('❌ Error adding points: $e');
         });
 
+    // Call the completion callback
+    widget.onMinigameCompleted();
+
     Future.delayed(const Duration(seconds: 5), () {
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          opaque: true,
-          pageBuilder: (_, __, ___) => ResultPage(
-            score: ecoScore,
-            bandName: band.name,
-            festivalName: widget.festivalName,
-            onMinigameCompleted: widget.onMinigameCompleted,
-          ),
-          transitionDuration: const Duration(milliseconds: 400),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-        ),
-      );
+      // Pop back to home page instead of navigating to ResultPage
+      // The home page will handle showing ResultPage when all games are completed
+      Navigator.of(context).pop();
     });
   }
 

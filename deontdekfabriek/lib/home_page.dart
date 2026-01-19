@@ -5,6 +5,7 @@ import 'FestivalCleanerApp.dart';
 import 'HangOutGame.dart';
 import 'ToiletGame.dart';
 import 'QR.dart'; // 🔹 QRScannerPage is defined here
+import 'game_over_page.dart';
 
 class MyHomePage extends StatefulWidget {
   final String festivalName;
@@ -24,48 +25,93 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // ----------- NAVIGATION -----------
   Future<void> _navigateToStage() async {
-    final result = await Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => StagePage(
           festivalName: widget.festivalName,
           onMinigameCompleted: () {
-            setState(() => _stageCompleted = true);
+            setState(() {
+              _stageCompleted = true;
+            });
+            _checkAllGamesCompleted();
           },
         ),
       ),
     );
-
-    if (result == true) {
+    // Mark as completed when returning (either finished or back button)
+    if (!_stageCompleted) {
       setState(() => _stageCompleted = true);
+      _checkAllGamesCompleted();
     }
   }
 
-  void _navigateToFoodTruck() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const FoodTruckPage()));
-    setState(() => _foodCompleted = true);
+  Future<void> _navigateToFoodTruck() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const FoodTruckPage()),
+    );
+    // Mark as completed when returning (either finished or back button)
+    if (!_foodCompleted) {
+      setState(() => _foodCompleted = true);
+      _checkAllGamesCompleted();
+    }
   }
 
-  void _navigateToHangout() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const HangoutQuizPage()));
-    setState(() => _hangoutCompleted = true);
+  Future<void> _navigateToHangout() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const HangoutQuizPage()),
+    );
+    // Mark as completed when returning (either finished or back button)
+    if (!_hangoutCompleted) {
+      setState(() => _hangoutCompleted = true);
+      _checkAllGamesCompleted();
+    }
   }
 
-  void _navigateToCleaner() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const FestivalCleanerApp()));
-    setState(() => _wasteCompleted = true);
+  Future<void> _navigateToCleaner() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const FestivalCleanerApp()),
+    );
+    // Mark as completed when returning (either finished or back button)
+    if (!_wasteCompleted) {
+      setState(() => _wasteCompleted = true);
+      _checkAllGamesCompleted();
+    }
   }
 
-  void _navigateToToiletGame() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const ToiletGamePage()));
-    setState(() => _toiletCompleted = true);
+  Future<void> _navigateToToiletGame() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ToiletGamePage()),
+    );
+    // Mark as completed when returning (either finished or back button)
+    if (!_toiletCompleted) {
+      setState(() => _toiletCompleted = true);
+      _checkAllGamesCompleted();
+    }
+  }
+
+  void _checkAllGamesCompleted() {
+    if (_stageCompleted &&
+        _toiletCompleted &&
+        _hangoutCompleted &&
+        _foodCompleted &&
+        _wasteCompleted) {
+      // All 5 games completed, trigger score page
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => GameOverPage(
+                ecoScore: 8, // You can calculate actual score if needed
+                bandName: 'Your Band',
+                festivalName: widget.festivalName,
+                onMinigameCompleted: () {},
+                isGoodEnding: true, // Set based on score threshold if needed
+              ),
+            ),
+          );
+        }
+      });
+    }
   }
 
   void _navigateToQR() {
@@ -157,10 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: ColorFiltered(
                 colorFilter: _gray(_wasteCompleted),
                 child: GestureDetector(
-                  onTap: () {
-                    _navigateToCleaner();
-                    setState(() => _wasteCompleted = true);
-                  },
+                  onTap: _navigateToCleaner,
                   child: _buildSquare(
                     squareSize,
                     label: "waste",
