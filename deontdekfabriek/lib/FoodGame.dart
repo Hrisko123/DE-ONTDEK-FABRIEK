@@ -289,14 +289,14 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'How to Play',
+                  'Hoe te spelen',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'In this mini-game you will have to collect 3 food trucks by clicking on them for your festival. '
-                  'Some food trucks are more eco friendly than others and you will have 30 seconds to complete the game. '
-                  'The trucks will come one at a time choose carefully which ones you want for your festival.',
+                  'In deze mini-game moet je 3 food trucks verzamelen door erop te klikken voor je festival. '
+                  'Sommige food trucks zijn milieuvriendelijker dan andere en je hebt 30 seconden om het spel te voltooien. '
+                  'De trucks komen één voor één, kies zorgvuldig welke je voor je festival wilt.',
                   style: TextStyle(fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
@@ -369,15 +369,15 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
-                    'Congrats',
+                    'Gefeliciteerd',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'You successfully collected 3 food trucks!\n\n'
-                    'Total Eco Score: ${_formatScore(_ecoScore)}\n\n'
-                    'Now guide your trucks through the roadblocks!',
+                    'Je hebt succesvol 3 food trucks verzameld!\n\n'
+                    'Totaal Eco Score: ${_formatScore(_ecoScore)}\n\n'
+                    'Leid nu je trucks door de wegversperringen!',
                     style: const TextStyle(fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
@@ -387,7 +387,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                       Navigator.of(context).pop();
                       _startPart2();
                     },
-                    child: const Text('Start Part 2'),
+                    child: const Text('Start Deel 2'),
                   ),
                 ],
               ),
@@ -604,15 +604,15 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
-                    'Game Over',
+                    'Spel voorbij',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Your trucks hit a roadblock!\n\n'
-                    'Time Survived: ${(_part2Time / 1000).toStringAsFixed(1)}s\n'
-                    'Total Eco Score: ${_formatScore(_ecoScore)}',
+                    'Je trucks hebben een wegversperring geraakt!\n\n'
+                    'Tijd overleefd: ${(_part2Time / 1000).toStringAsFixed(1)}s\n'
+                    'Totaal Eco Score: ${_formatScore(_ecoScore)}',
                     style: const TextStyle(fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
@@ -625,7 +625,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                           Navigator.of(context).pop();
                           _startPart2();
                         },
-                        child: const Text('Replay Game'),
+                        child: const Text('Spel opnieuw'),
                       ),
                       const SizedBox(width: 12),
                       TextButton(
@@ -633,7 +633,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                           Navigator.of(context).pop();
                           Navigator.of(context).pop();
                         },
-                        child: const Text('Go Back to Map'),
+                        child: const Text('Terug naar kaart'),
                       ),
                     ],
                   ),
@@ -681,14 +681,14 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
-                    'Congrats',
+                    'Gefeliciteerd',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'You successfully guided all your trucks!\n\n'
-                    'Total Eco Score: ${_formatScore(_ecoScore)}',
+                    'Je hebt succesvol al je trucks geleid!\n\n'
+                    'Totaal Eco Score: ${_formatScore(_ecoScore)}',
                     style: const TextStyle(fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
@@ -701,7 +701,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                           Navigator.of(context).pop();
                           _startPart2();
                         },
-                        child: const Text('Replay Game'),
+                        child: const Text('Spel opnieuw'),
                       ),
                       const SizedBox(width: 12),
                       TextButton(
@@ -709,7 +709,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                           Navigator.of(context).pop();
                           Navigator.of(context).pop();
                         },
-                        child: const Text('Go Back to Map'),
+                        child: const Text('Terug naar kaart'),
                       ),
                     ],
                   ),
@@ -790,14 +790,14 @@ class _FoodTruckPageState extends State<FoodTruckPage>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text(
-                  'Time\'s Up',
+                  'Tijd is op',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'You collected ${_selectedTrucks.length} out of 3 trucks.\n\n'
-                  'Total Eco Score: ${_formatScore(_ecoScore)}',
+                  'Je hebt ${_selectedTrucks.length} van de 3 trucks verzameld.\n\n'
+                  'Totaal Eco Score: ${_formatScore(_ecoScore)}',
                   style: const TextStyle(fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
@@ -807,7 +807,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Go Back to Map'),
+                  child: const Text('Terug naar kaart'),
                 ),
               ],
             ),
@@ -976,7 +976,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
     return Scaffold(
       backgroundColor: const Color(0xFF2E7D32),
       appBar: AppBar(
-        title: const Text('Food Truck Run - Part 2'),
+        title: const Text('Food Truck Run - Deel 2'),
         backgroundColor: Colors.green.shade900,
       ),
       body: LayoutBuilder(
@@ -1140,7 +1140,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'Time: ${(30 - (_part2Time / 1000)).clamp(0.0, 30.0).toStringAsFixed(1)}s',
+                      'Tijd: ${(30 - (_part2Time / 1000)).clamp(0.0, 30.0).toStringAsFixed(1)}s',
                       style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
@@ -1163,7 +1163,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text(
-                              'Part 2: Avoid the Roadblocks!',
+                              'Deel 2: Vermijd de wegversperringen!',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -1171,7 +1171,7 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                             ),
                             const SizedBox(height: 16),
                             const Text(
-                              'Choose how many trucks to use:',
+                              'Kies hoeveel trucks je wilt gebruiken:',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
@@ -1216,23 +1216,23 @@ class _FoodTruckPageState extends State<FoodTruckPage>
                             ),
                             const SizedBox(height: 24),
                             const Text(
-                              'Drag your trucks up or down to switch lanes',
+                              'Sleep je trucks omhoog of omlaag om van rijstrook te wisselen',
                               style: TextStyle(fontSize: 16),
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'If you are more than 1 person, each player choose which truck to move',
+                              'Als je met meer dan 1 persoon bent, kiest elke speler welke truck te bewegen',
                               style: TextStyle(fontSize: 16),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'Avoid the red roadblocks!',
+                              'Vermijd de rode wegversperringen!',
                               style: TextStyle(fontSize: 16),
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'Survive for 30 seconds!',
+                              'Overleef 30 seconden!',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
