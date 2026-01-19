@@ -53,7 +53,7 @@ class _ResultPageState extends State<ResultPage> {
     try {
       // Load video from assets
       _videoController = VideoPlayerController.asset(
-        'assets/videos/outro.mp4',
+        'assets/videos/outrogood.mp4',
       );
       
       // Add listener for errors

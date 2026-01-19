@@ -96,7 +96,8 @@ flutter:
     - assets/trucks/
 
     # Video files
-    - assets/videos/outro.mp4
+    - assets/videos/outrogood.mp4
+    - assets/videos/outrobad.mp4
 
     # audio files
     - assets/audio/bees.mp3
