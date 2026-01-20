@@ -111,7 +111,7 @@
     },
     {
       "name": "ffi",
-      "rootUri": "file:///C:/Users/acer/AppData/Local/Pub/Cache/hosted/pub.dev/ffi-2.1.5",
+      "rootUri": "file:///C:/Users/acer/AppData/Local/Pub/Cache/hosted/pub.dev/ffi-2.1.4",
       "packageUri": "lib/",
       "languageVersion": "3.7"
     },
@@ -126,12 +126,6 @@
       "rootUri": "file:///C:/Users/acer/AppData/Local/Pub/Cache/hosted/pub.dev/file-7.0.1",
       "packageUri": "lib/",
       "languageVersion": "3.0"
-    },
-    {
-      "name": "fixnum",
-      "rootUri": "file:///C:/Users/acer/AppData/Local/Pub/Cache/hosted/pub.dev/fixnum-1.1.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.1"
     },
     {
       "name": "flutter",
@@ -165,9 +159,9 @@
     },
     {
       "name": "http",
-      "rootUri": "file:///C:/Users/acer/AppData/Local/Pub/Cache/hosted/pub.dev/http-1.6.0",
+      "rootUri": "file:///C:/Users/acer/AppData/Local/Pub/Cache/hosted/pub.dev/http-0.13.6",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.19"
     },
     {
       "name": "http_parser",
@@ -465,9 +459,9 @@
     },
     {
       "name": "uuid",
-      "rootUri": "file:///C:/Users/acer/AppData/Local/Pub/Cache/hosted/pub.dev/uuid-4.5.2",
+      "rootUri": "file:///C:/Users/acer/AppData/Local/Pub/Cache/hosted/pub.dev/uuid-3.0.7",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "2.12"
     },
     {
       "name": "vector_math",
